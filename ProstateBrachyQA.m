@@ -81,6 +81,7 @@ set(handles.lateralResolution_panel,'Parent',tab4);
 set(handles.axialDistance_panel,'Parent',tab5);
 set(handles.lateralDistance_panel,'Parent',tab6);
 set(handles.area_panel,'Parent',tab7);
+set(handles.volume_panel,'Parent',tab8);
 
 % Update handles structure
 guidata(hObject, handles);
@@ -105,6 +106,10 @@ function button_images_Callback(hObject, eventdata, handles)
 % hObject    handle to grayscale_button_images (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+% Get test number
+testNum = get(handles.tabgroup,'SelectedIndex');
+
 % Open dialog for selecting image(s)
 [filenames,pathname] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
     '*.*','All Files' },'Select Image(s)','MultiSelect','on');
@@ -113,7 +118,7 @@ if ischar(filenames)
 end
 % If filenames is not 0 (0 if user pressed cancel)
 if ~isnumeric(filenames)
-    handles.imageFiles = fullfile(pathname,filenames);
+    handles.imageFiles{testNum} = fullfile(pathname,filenames);
     % Get the panel this button is on
     panel = get(hObject,'Parent');
     % Get the listbox that is also on this panel
@@ -173,39 +178,46 @@ switch testNum
 end
 % Get function handle for correct test
 testFunction = eval(['@' testName 'TestAuto']);
+% Get handle of axes/panel to plot on
+if strcmp(testName,'volume')
+    parent = handles.([testName,'_panel_figure']);
+else
+    parent = handles.([testName,'_axes']);
+end
 
 if isfield(handles,'imageFiles')
-    % Get image filename
-    imageFile = handles.imageFiles{1};
-    
-    % Run test, plot on given axes
-    % Check if scale readings were set manually
-    if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
-        % Scale readings were inputted
-        [result,baselineVal,newVal] = testFunction(imageFile,...
-            'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-            'AxesHandle',handles.([testName,'_axes']));
-    else
-        % Read scale automatically from image
-        [result,baselineVal,newVal] = testFunction(imageFile,'AxesHandle',handles.([testName,'_axes']));
-    end
-    % Units for labels depends on test type
-    if strcmp(testName,'area')
-        units = 'cm^2';
-    elseif strcmp(testName,'volume')
-        units = 'cm^3';
-    else
-        units = 'mm';
-    end
-    % Set baseline value label
-    set(handles.([testName,'_text_baselineVal']),'String',sprintf('%.2f %s',baselineVal,units));
-    % Set new value label
-    set(handles.([testName,'_text_newVal']),'String',sprintf('%.2f %s',newVal,units));
-    % Set test result label
-    if result == 1
-        set(handles.([testName,'_text_result']),'ForegroundColor',[0 0.75 0],'String','PASS');
-    else
-        set(handles.([testName,'_text_result']),'ForegroundColor',[1 0 0],'String','FAIL');
+    if numel(handles.imageFiles) >= testNum
+        if ~isempty(handles.imageFiles{testNum})
+            % Run test, plot on given axes
+            % Check if scale readings were set manually
+            if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+                % Scale readings were inputted
+                [result,baselineVal,newVal] = testFunction(handles.imageFiles{testNum}{:},...
+                    'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                    'AxesHandle',parent);
+            else
+                % Read scale automatically from image
+                [result,baselineVal,newVal] = testFunction(handles.imageFiles{testNum}{:},'AxesHandle',parent);
+            end
+            % Units for labels depends on test type
+            if strcmp(testName,'area')
+                units = 'cm^2';
+            elseif strcmp(testName,'volume')
+                units = 'cm^3';
+            else
+                units = 'mm';
+            end
+            % Set baseline value label
+            set(handles.([testName,'_text_baselineVal']),'String',sprintf('%.2f %s',baselineVal,units));
+            % Set new value label
+            set(handles.([testName,'_text_newVal']),'String',sprintf('%.2f %s',newVal,units));
+            % Set test result label
+            if result == 1
+                set(handles.([testName,'_text_result']),'ForegroundColor',[0 0.75 0],'String','PASS');
+            else
+                set(handles.([testName,'_text_result']),'ForegroundColor',[1 0 0],'String','FAIL');
+            end
+        end
     end
 end
 

@@ -5,13 +5,20 @@ function [result,baselineVal,newVal] = volumeTestAuto(imageFile1,varargin)
 
 % Input parser
 p = inputParser;
-% Require at least one image 
+% Require at least one image
 addRequired(p,'imageFile1',@ischar);
-% % Additional images
-% for n = 2:10
-%     addOptional(p,['imageFile' num2str(n)],@ischar);
-% end
-addOptional(p,'imageFile2',[],@ischar);
+% Variables for storing additional images
+stringInputs = varargin(cellfun(@ischar,varargin));
+% Get inputs ending with these image file extensions
+fileExts = '^.+((\.bmp)|(\.jpg)|(\.tif)|(\.gif)|(\.dcm))$';
+imageInputs = regexp(stringInputs,fileExts,'match');
+imageInputs = [imageInputs{:}]';
+% Add the first required image filename to list of images
+imageInputs = [{imageFile1};imageInputs];
+% Add enough optional inputs for the number of images given
+for n = 2:numel(imageInputs)
+    addOptional(p,['imageFile' num2str(n)],[],@ischar);
+end
 addParameter(p,'UpperScale',[]);
 addParameter(p,'LowerScale',[]);
 % Default step size 0.5 cm
@@ -23,8 +30,6 @@ upper = p.Results.UpperScale;
 lower = p.Results.LowerScale;
 stepSize = p.Results.StepSize;
 axesHandle = p.Results.AxesHandle;
-% Group image filenames in cell array
-
 
 % Get baseline values
 if ~exist('Baseline.mat','file')
@@ -42,11 +47,21 @@ for i = 1:size(baselineVals,1)
     end
 end
 
+if ~isempty(axesHandle)
+    % Plot on specified axes if given as input
+    parent = axesHandle;
+else
+    % Otherwise, plot on new figure
+    fig = figure;
+    parent = fig;
+end
 
+% Clear axes first
+clf(parent);
 
 % Load images and read labels
-for i = imageInputs
-    imageFile = varargin{i};
+for i = 1:numel(imageInputs)
+    imageFile = imageInputs{i};
     
     if isempty(upper) && isempty(lower)
         % Get the pixel to mm conversion ratio, automatically reading scale
@@ -61,19 +76,34 @@ for i = imageInputs
     [center,radius] = segmentCircle(imageFile);
     
     % Code for plotting the segmented circle on original image
-    im = imread(imageFile);
-%     figure;imshow(im);
+    im_orig = imread(imageFile);
+    
+%     if ~isempty(axesHandle)
+%         % Plot on specified axes if given as input
+%         parent = axesHandle;
+%     else
+%         % Otherwise, plot on new figure
+%         parent = gca;
+%     end
+%     
+%     % Clear axes first
+%     cla(parent);
+%     % Plot image on axes
+%     imshow(im_orig,'Parent',parent);
+%     % Hold on
+%     set(parent,'NextPlot','add');
+    
     numImages = numel(imageInputs);
-    if numImages <= 3
-        gridSize = [1,numImages];
-    elseif numImages <= 10
-        gridSize = [2,round(numImages/2)];
-    else
-        gridSize = [3,round(numImages/3)];
-    end
-    subaxis(gridSize(1),gridSize(2),i,'Spacing',0.01,'Margin',0.01);
-    imshow(im);
+    % Set size of image grid based on number of inputted images
+    gridSize = [floor(sqrt(numImages)),ceil(sqrt(numImages))];
+    n = gridSize(1);
+    m = gridSize(2);
+    [c,r] = ind2sub([gridSize(2) gridSize(1)], i);
+    % Create subplots
+    subplot('Position', [(c-1)/m, 1-(r)/n, 1/m, 1/n],'Parent',parent);
+    imshow(im_orig);
     hold on
+    % Visualize the segmented circle
     c1 = viscircles(center,radius);
     
     if isempty(radius)
@@ -99,7 +129,9 @@ for i = imageInputs
 end
 
 % Resize and position figure
-set(fig,'Units','normalized','Position',[0.05 0.05 0.9 0.85]);
+if exist('fig','var')
+    set(parent,'Units','normalized','Position',[0.05 0.05 0.9 0.85]);
+end
 
 % Calculate volume
 vol = sum(areas)*stepSize;
