@@ -80,13 +80,15 @@ end
 % Figure title
 % title(['Area = ' sprintf('%.2f',newVal) texlabel(' cm^2')]);
 % Legend
-l = legend(c1,['Area: ' sprintf('%.2f',newVal) ' cm^2'],...
-    'Location','southeast','Orientation','horizontal');
-% Decrease legend marker size
-markerObjs = findobj(get(l,'children'), 'type', 'line');
-set(markerObjs, 'Markersize', 12);
-% Change legend text and background colour
-set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
+if ~isempty(c1)
+    l = legend(c1,['Area: ' sprintf('%.2f',newVal) ' cm^2'],...
+        'Location','southeast','Orientation','horizontal');
+    % Decrease legend marker size
+    markerObjs = findobj(get(l,'children'), 'type', 'line');
+    set(markerObjs, 'Markersize', 12);
+    % Change legend text and background colour
+    set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
+end
 
 disp(['Baseline value: ' sprintf('%.2f',baselineVal) ' cm^2']);
 disp(['New value: ' sprintf('%.2f',newVal) ' cm^2']);
