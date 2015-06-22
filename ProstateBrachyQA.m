@@ -82,6 +82,7 @@ set(handles.axialDistance_panel,'Parent',tab5);
 set(handles.lateralDistance_panel,'Parent',tab6);
 set(handles.area_panel,'Parent',tab7);
 set(handles.volume_panel,'Parent',tab8);
+set(handles.gridAlignment_panel,'Parent',tab9);
 
 % Update handles structure
 guidata(hObject, handles);
@@ -179,7 +180,7 @@ end
 % Get function handle for correct test
 testFunction = eval(['@' testName 'TestAuto']);
 % Get handle of axes/panel to plot on
-if strcmp(testName,'volume')
+if any(strcmp(testName,{'volume','gridAlignment'}))
     parent = handles.([testName,'_panel_figure']);
 else
     parent = handles.([testName,'_axes']);
@@ -207,10 +208,21 @@ if isfield(handles,'imageFiles')
             else
                 units = 'mm';
             end
+            
+            if isempty(baselineVal) && isempty(newVal)
+                % If baselineVal and newVal returned empty, show 'N/A'
+                baselineValText = 'N/A';
+                newValText = 'N/A';
+            else
+                % Otherwise, display values with 2 decimal places
+                baselineValText = sprintf('%.2f %s',baselineVal,units);
+                newValText = sprintf('%.2f %s',newVal,units);
+            end
+            
             % Set baseline value label
-            set(handles.([testName,'_text_baselineVal']),'String',sprintf('%.2f %s',baselineVal,units));
+            set(handles.([testName,'_text_baselineVal']),'String',baselineValText);
             % Set new value label
-            set(handles.([testName,'_text_newVal']),'String',sprintf('%.2f %s',newVal,units));
+            set(handles.([testName,'_text_newVal']),'String',newValText);
             % Set test result label
             if result == 1
                 set(handles.([testName,'_text_result']),'ForegroundColor',[0 0.75 0],'String','PASS');

@@ -1,26 +1,50 @@
-function result = gridAlignmentTestAuto(varargin)
+function [result,baselineVal,newVal] = gridAlignmentTestAuto(imageFile1,varargin)
 % GRIDALIGNMENTEST is for the needle template alignment quality control test.
 % The function checks the difference between the actual needle location 
 % (using the needle template) and the corresponding point on the electronic
 % grid overlay. The four corners and the center of the grid are tested. 
 % Alignment must be correct to within 3 mm.
 
-% If last two inputs are numbers
-if numel(varargin) >= 3
-    if isnumeric(varargin{end-1}) && isnumeric(varargin{end})
-        upper = varargin{end-1};
-        lower = varargin{end};
-        imageInputs = 1:numel(varargin)-2;
-    else
-        upper = [];
-        lower = [];
-        imageInputs = 1:numel(varargin);
-    end
+% Input parser
+p = inputParser;
+% Require at least one image
+addRequired(p,'imageFile1',@ischar);
+% Variables for storing additional images
+stringInputs = varargin(cellfun(@ischar,varargin));
+% Get inputs ending with these image file extensions
+fileExts = '^.+((\.bmp)|(\.jpg)|(\.tif)|(\.gif)|(\.dcm))$';
+imageInputs = regexp(stringInputs,fileExts,'match');
+imageInputs = [imageInputs{:}]';
+% Add the first required image filename to list of images
+imageInputs = [{imageFile1};imageInputs];
+% Add enough optional inputs for the number of images given
+for n = 2:numel(imageInputs)
+    addOptional(p,['imageFile' num2str(n)],[],@ischar);
+end
+addParameter(p,'UpperScale',[]);
+addParameter(p,'LowerScale',[]);
+addParameter(p,'AxesHandle',[]);
+% Parse inputs
+parse(p,imageFile1,varargin{:});
+upper = p.Results.UpperScale;
+lower = p.Results.LowerScale;
+axesHandle = p.Results.AxesHandle;
+
+if ~isempty(axesHandle)
+    % Plot on specified axes if given as input
+    parent = axesHandle;
+else
+    % Otherwise, plot on new figure
+    fig = figure;
+    parent = fig;
 end
 
+% Clear axes first
+clf(parent);
+
 % Load images and read labels
-for i = imageInputs
-    imageFile = varargin{i};
+for i = 1:numel(imageInputs)
+    imageFile = imageInputs{i};
     
     if isempty(upper) && isempty(lower)
         % Get the pixel to mm conversion ratio, automatically reading scale
@@ -140,8 +164,8 @@ for i = imageInputs
     for n = gridIndices
         point = centroids(n,:);
         % Get region around current grid point
-        region{n} = im_tight(point(2)-regionHeight/2:point(2)+regionHeight/2,...
-            point(1)-regionWidth/2:point(1)+regionWidth/2,:);
+        region{n} = im_tight(round(point(2)-regionHeight/2:point(2)+regionHeight/2),...
+            round(point(1)-regionWidth/2:point(1)+regionWidth/2),:);
         % Convert to grayscale
         region_gray{n} = rgb2gray(region{n});
         % Measure total intensity by summing all pixels
@@ -154,8 +178,8 @@ for i = imageInputs
     
     % Region mask
     regionMask = zeros(size(im_tight,1),size(im_tight,2));
-    regionMask(gridPoint(2)-regionHeight/2:gridPoint(2)+regionHeight/2,...
-        gridPoint(1)-regionWidth/2:gridPoint(1)+regionWidth/2) = 1;
+    regionMask(round(gridPoint(2)-regionHeight/2:gridPoint(2)+regionHeight/2),...
+        round(gridPoint(1)-regionWidth/2:gridPoint(1)+regionWidth/2)) = 1;
     % Restrict image to region of interest
     reg = rgb2gray(im_tight).*uint8(regionMask);
     regBW = im2bw(reg);
@@ -188,8 +212,16 @@ for i = imageInputs
     % ---------------------------------------------------------------------
     % Plot markers on figure to show grid and needle points that were found
     % Create column vectors for offsets, used for plotting markers
-    figure;imshow(im_orig);
-    hold on;
+    numImages = numel(imageInputs);
+    % Set size of image grid based on number of inputted images
+    gridSize = [floor(sqrt(numImages)),ceil(sqrt(numImages))];
+    n = gridSize(1);
+    m = gridSize(2);
+    [c,r] = ind2sub([gridSize(2) gridSize(1)], i);
+    % Create subplots
+    subplot('Position', [(c-1)/m, 1-(r)/n, 1/m, 1/n],'Parent',parent);
+    imshow(im_orig);
+    hold on
     % Plot markers
     gridMarker = plot(gridPoint(1),gridPoint(2),'+','MarkerSize',10,'LineWidth',2,'Color','r');
     needleMarker = plot(needlePoint(1),needlePoint(2),'+','MarkerSize',10,'LineWidth',2,'Color','c');
@@ -201,7 +233,7 @@ for i = imageInputs
     dist_mm = dist_pixels*pixelScale;
     
     % Figure title
-    title(['Error = ' sprintf('%.2f',dist_mm) ' mm']);
+%     title(['Error = ' sprintf('%.2f',dist_mm) ' mm']);
     % Legend
     l = legend(needleMarker,['Dist: ' sprintf('%.2f',dist_mm) ' mm'],...
         'Location','southeast','Orientation','horizontal');
@@ -214,6 +246,14 @@ for i = imageInputs
     errors(i) = dist_mm;
     
 end
+
+% Resize and position figure
+if exist('fig','var')
+    set(parent,'Units','normalized','Position',[0.05 0.05 0.9 0.85]);
+end
+
+baselineVal = [];
+newVal = [];
 
 disp(['Errors (mm): ' sprintf('%.2f  ',errors)]);
 
