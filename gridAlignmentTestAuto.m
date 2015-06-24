@@ -30,19 +30,15 @@ parse(p,imageFile1,varargin{:});
 upper = p.Results.UpperScale;
 lower = p.Results.LowerScale;
 panelHandle = p.Results.PanelHandle;
-axesHandle = p.Results.AxesHandle;
+axesHandles = p.Results.AxesHandle;
 
-if ~isempty(panelHandle)
-    % Plot on specified axes if given as input
-    parent = panelHandle;
-else
-    % Otherwise, plot on new figure
+% If running function without GUI, plot on new figure
+if isempty(panelHandle) && isempty(axesHandles)
     fig = figure;
-    parent = fig;
 end
 
 % Clear axes first
-clf(parent);
+% clf(parent);
 
 % Load images and read labels
 for i = 1:numel(imageInputs)
@@ -215,35 +211,73 @@ for i = 1:numel(imageInputs)
     % Plot markers on figure to show grid and needle points that were found
     % Create column vectors for offsets, used for plotting markers
     numImages = numel(imageInputs);
-    % Set size of image grid based on number of inputted images
-    gridSize = [floor(sqrt(numImages)),ceil(sqrt(numImages))];
-    n = gridSize(1);
-    m = gridSize(2);
-    [c,r] = ind2sub([gridSize(2) gridSize(1)], i);
-    % Create subplots
-    subplot('Position', [(c-1)/m, 1-(r)/n, 1/m, 1/n],'Parent',parent);
-    imshow(im_orig);
-    hold on
-    % Plot markers
-    gridMarker = plot(gridPoint(1),gridPoint(2),'+','MarkerSize',10,'LineWidth',2,'Color','r');
-    needleMarker = plot(needlePoint(1),needlePoint(2),'+','MarkerSize',10,'LineWidth',2,'Color','c');
-    % Plot distance line
-    line1 = line([gridPoint(1),needlePoint(1)],[gridPoint(2),needlePoint(2)],'LineStyle','--');
+    
+    for ii = 1:2
+        
+        if ii == 1
+            % Set size of image grid based on number of inputted images
+            gridSize = [floor(sqrt(numImages)),ceil(sqrt(numImages))];
+            n = gridSize(1);
+            m = gridSize(2);
+            [c,r] = ind2sub([gridSize(2) gridSize(1)], i);
+            % Create subplots
+            if ~isempty(panelHandle)
+                parent = subplot('Position', [(c-1)/m, 1-(r)/n, 1/m, 1/n],'Parent',panelHandle);
+            else
+                parent = subplot('Position', [(c-1)/m, 1-(r)/n, 1/m, 1/n],'Parent',fig);
+            end
+        else
+            if ~isempty(axesHandles)
+                parent = axesHandles(i);
+            else
+                % Running without GUI, break out of this second loop
+                break
+            end
+        end
+        
+        % Plot image on axes
+        im = imshow(im_orig,'Parent',parent);
+        set(im,'UserData',i);
+        % Hold on
+        set(parent,'NextPlot','add');
+        % Plot markers
+        gridMarker = plot(gridPoint(1),gridPoint(2),'+','MarkerSize',10,...
+            'LineWidth',2,'Color','r','Parent',parent);
+        needleMarker = plot(needlePoint(1),needlePoint(2),'+','MarkerSize',10,...
+            'LineWidth',2,'Color','c','Parent',parent);
+        % Plot distance line
+        line1 = line([gridPoint(1),needlePoint(1)],[gridPoint(2),needlePoint(2)],...
+            'LineStyle','--','Parent',parent);
+        
+        % Get distance between grid and needle point
+        dist_pixels = norm(needlePoint - gridPoint);
+        dist_mm = dist_pixels*pixelScale;
+        
+        % Figure title
+        %     title(['Error = ' sprintf('%.2f',dist_mm) ' mm']);
+        % Legend
+        if ~isempty(needleMarker)
+            l = legend(needleMarker,['Dist: ' sprintf('%.2f',dist_mm) ' mm'],...
+                'Location','southeast','Orientation','horizontal');
+            % Decrease legend marker size
+            markerObjs = findobj(get(l,'children'), 'type', 'line');
+            set(markerObjs, 'Markersize', 12);
+            % Change legend text and background colour
+            set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
+            % Add image index to UserData, used for finding legend
+            % associated with image
+            userData = get(l,'UserData');
+            userData.ImageIndex = i;
+            set(l,'UserData',userData);
+        end
+        
+        if ii == 2
+            % Hide axes plots, GUI function will show the current axes only
+            set([im;gridMarker;needleMarker;line1;l],'Visible','off');
+        end
+        
+    end
     % ---------------------------------------------------------------------
-    
-    dist_pixels = norm(needlePoint - gridPoint);
-    dist_mm = dist_pixels*pixelScale;
-    
-    % Figure title
-%     title(['Error = ' sprintf('%.2f',dist_mm) ' mm']);
-    % Legend
-    l = legend(needleMarker,['Dist: ' sprintf('%.2f',dist_mm) ' mm'],...
-        'Location','southeast','Orientation','horizontal');
-    % Decrease legend marker size
-    markerObjs = findobj(get(l,'children'), 'type', 'line');
-    set(markerObjs, 'Markersize', 12);
-    % Change legend text and background colour
-    set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
     
     errors(i) = dist_mm;
     
@@ -251,7 +285,7 @@ end
 
 % Resize and position figure
 if exist('fig','var')
-    set(parent,'Units','normalized','Position',[0.05 0.05 0.9 0.85]);
+    set(fig,'Units','normalized','Position',[0.05 0.05 0.9 0.85]);
 end
 
 baselineVal = [];
