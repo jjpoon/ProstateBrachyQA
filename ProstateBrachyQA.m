@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 23-Jun-2015 15:57:20
+% Last Modified by GUIDE v2.5 24-Jun-2015 17:23:57
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -513,3 +513,20 @@ end
 
 % Update handles
 guidata(hObject,handles);
+
+
+% --- Executes when figure1 is resized.
+function figure1_ResizeFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+for str = {'volume','gridAlignment'}
+    testName = str{1};
+    prevPos = get(handles.([testName '_button_prev']),'Position');
+    axesPos = get(handles.([testName '_axes']),'Position');
+    newPrevPos = [0.5-prevPos(3), axesPos(2)+axesPos(4)-prevPos(4)-0.01, prevPos(3), prevPos(4)];
+    newNextPos = [0.5, axesPos(2)+axesPos(4)-prevPos(4)-0.01, prevPos(3), prevPos(4)];
+    set(handles.([testName '_button_prev']),'Position',newPrevPos);
+    set(handles.([testName '_button_next']),'Position',newNextPos);
+end
