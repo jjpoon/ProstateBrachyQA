@@ -96,7 +96,7 @@ handles.volume_imageIndex = 1;
 handles.gridAlignment_imageIndex = 1;
 
 % Add listener for selected tab index
-addlistener(handles.tabgroup,'SelectedIndex','PostSet',@(obj,eventdata)onSelectedTabChanged(hObject,handles));
+addlistener(handles.tabgroup,'SelectedIndex','PostSet',@(obj,eventdata)onSelectedTabChanged(hObject));
 
 % Update handles structure
 guidata(hObject, handles);
@@ -116,10 +116,13 @@ function varargout = ProstateBrachyQA_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 % --- Executes when user selects different tab
-function onSelectedTabChanged(hObject,handles)
+function onSelectedTabChanged(hObject)
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+% Get updated handles
+handles = guidata(hObject);
 
 % Get test name (test function called and gui handles depend on this name)
 handles.testNum = get(handles.tabgroup,'SelectedIndex');
@@ -281,28 +284,30 @@ if numel(handles.imageFiles) >= testNum
             set(handles.([testName,'_text_result']),'ForegroundColor',[1 0 0],'String','FAIL');
         end
         
-        % If in single view mode, hide the grid panel and show current axes
-        if get(handles.([testName '_button_singleView']),'Value') == 1
-            % Hide grid panel
-            set(handles.([testName '_panel_figure']),'Visible','off');
-            % Show current image axes plots
-            imageIndex = handles.([testName '_imageIndex']);
-            currImageAxes = handles.([testName '_axes_list'])(imageIndex);
-            plots = get(currImageAxes,'Children');
-            set(plots,'Visible','on');
-            % Show legend associated with current image
-            testPanelChildren = get(handles.([testName '_panel']),'Children');
-            legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
-            for n = 1:numel(legends)
-                leg = legends(n);
-                userData = get(leg,'UserData');
-                if userData.ImageIndex == imageIndex
-                    set(leg,'Visible','on');
+        if any(strcmp(testName,{'volume','gridAlignment'}))
+            % If in single view mode, hide the grid panel and show current axes
+            if get(handles.([testName '_button_singleView']),'Value') == 1
+                % Hide grid panel
+                set(handles.([testName '_panel_figure']),'Visible','off');
+                % Show current image axes plots
+                imageIndex = handles.([testName '_imageIndex']);
+                currImageAxes = handles.([testName '_axes_list'])(imageIndex);
+                plots = get(currImageAxes,'Children');
+                set(plots,'Visible','on');
+                % Show legend associated with current image
+                testPanelChildren = get(handles.([testName '_panel']),'Children');
+                legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+                for n = 1:numel(legends)
+                    leg = legends(n);
+                    userData = get(leg,'UserData');
+                    if userData.ImageIndex == imageIndex
+                        set(leg,'Visible','on');
+                    end
                 end
+                % Show previous and next image buttons
+                set(handles.([testName '_button_prev']),'Visible','on');
+                set(handles.([testName '_button_next']),'Visible','on');
             end
-            % Show previous and next image buttons
-            set(handles.([testName '_button_prev']),'Visible','on');
-            set(handles.([testName '_button_next']),'Visible','on');
         end
         
     end
