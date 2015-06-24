@@ -23,16 +23,18 @@ for n = 2:numel(imageInputs)
 end
 addParameter(p,'UpperScale',[]);
 addParameter(p,'LowerScale',[]);
+addParameter(p,'PanelHandle',[]);
 addParameter(p,'AxesHandle',[]);
 % Parse inputs
 parse(p,imageFile1,varargin{:});
 upper = p.Results.UpperScale;
 lower = p.Results.LowerScale;
+panelHandle = p.Results.PanelHandle;
 axesHandle = p.Results.AxesHandle;
 
-if ~isempty(axesHandle)
+if ~isempty(panelHandle)
     % Plot on specified axes if given as input
-    parent = axesHandle;
+    parent = panelHandle;
 else
     % Otherwise, plot on new figure
     fig = figure;

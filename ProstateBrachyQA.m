@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 19-Jun-2015 17:47:58
+% Last Modified by GUIDE v2.5 23-Jun-2015 15:57:20
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -84,6 +84,20 @@ set(handles.area_panel,'Parent',tab7);
 set(handles.volume_panel,'Parent',tab8);
 set(handles.gridAlignment_panel,'Parent',tab9);
 
+% Initiate imageFiles
+handles.imageFiles = cell(9,1);
+
+% Initiate testNum and testName
+handles.testNum = 1;
+handles.testName = 'grayscale';
+
+% Initiate single view image index
+handles.volume_imageIndex = 1;
+handles.gridAlignment_imageIndex = 1;
+
+% Add listener for selected tab index
+addlistener(handles.tabgroup,'SelectedIndex','PostSet',@(obj,eventdata)onSelectedTabChanged(hObject,handles));
+
 % Update handles structure
 guidata(hObject, handles);
 
@@ -101,6 +115,38 @@ function varargout = ProstateBrachyQA_OutputFcn(hObject, eventdata, handles)
 % Get default command line output from handles structure
 varargout{1} = handles.output;
 
+% --- Executes when user selects different tab
+function onSelectedTabChanged(hObject,handles)
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get test name (test function called and gui handles depend on this name)
+handles.testNum = get(handles.tabgroup,'SelectedIndex');
+switch handles.testNum
+    case 1
+        testName = 'grayscale';
+    case 2
+        testName = 'depth';
+    case 3
+        testName = 'axialResolution';
+    case 4
+        testName = 'lateralResolution';
+    case 5
+        testName = 'axialDistance';
+    case 6
+        testName = 'lateralDistance';
+    case 7
+        testName = 'area';
+    case 8
+        testName = 'volume';
+    case 9
+        testName = 'gridAlignment';
+end
+handles.testName = testName;
+% Update handles
+guidata(hObject,handles);
+
 
 % --- Executes on button press in grayscale_button_images.
 function button_images_Callback(hObject, eventdata, handles)
@@ -109,7 +155,7 @@ function button_images_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Get test number
-testNum = get(handles.tabgroup,'SelectedIndex');
+testNum = handles.testNum;
 
 % Open dialog for selecting image(s)
 [filenames,pathname] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
@@ -155,83 +201,113 @@ function button_runTest_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Get test name (test function called and gui handles depend on this name)
-testNum = get(handles.tabgroup,'SelectedIndex');
-switch testNum
-    case 1
-        testName = 'grayscale';
-    case 2
-        testName = 'depth';
-    case 3
-        testName = 'axialResolution';
-    case 4
-        testName = 'lateralResolution';
-    case 5
-        testName = 'axialDistance';
-    case 6
-        testName = 'lateralDistance';
-    case 7
-        testName = 'area';
-    case 8
-        testName = 'volume';
-    case 9
-        testName = 'gridAlignment';
-end
+% Get test number and name (test function called and gui handles depend on this name)
+testNum = handles.testNum;
+testName = handles.testName;
 % Get function handle for correct test
 testFunction = eval(['@' testName 'TestAuto']);
 % Get handle of axes/panel to plot on
 if any(strcmp(testName,{'volume','gridAlignment'}))
-    parent = handles.([testName,'_panel_figure']);
-else
-    parent = handles.([testName,'_axes']);
+    panelHandle = handles.([testName,'_panel_figure']);
 end
+axesHandle = handles.([testName,'_axes']);
 
-if isfield(handles,'imageFiles')
-    if numel(handles.imageFiles) >= testNum
-        if ~isempty(handles.imageFiles{testNum})
-            % Run test, plot on given axes
-            % Check if scale readings were set manually
-            if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
-                % Scale readings were inputted
+if numel(handles.imageFiles) >= testNum
+    if ~isempty(handles.imageFiles{testNum})
+        
+        if any(strcmp(testName,{'volume','gridAlignment'}))
+            % Create separate axes for each image
+            axesHandles = zeros(numel(handles.imageFiles{testNum}),1);
+            axesHandles(1) = handles.([testName,'_axes']);
+            for n = 2:numel(handles.imageFiles{testNum})
+                ax = handles.([testName,'_axes']);
+                % Create copies of existing testName_axes
+                axesHandles(n) = copyobj(ax,handles.([testName,'_panel']));
+            end
+            % Store axes handles list
+            handles.([testName '_axes_list']) = axesHandles;
+            % Bring panel_figure back on top
+            uistack(handles.([testName '_panel_figure']),'top');
+        end
+        
+        % Run test, plot on given axes
+        % Check if scale readings were set manually
+        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+            % Scale readings were inputted
+            if any(strcmp(testName,{'volume','gridAlignment'}))
                 [result,baselineVal,newVal] = testFunction(handles.imageFiles{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                    'AxesHandle',parent);
+                    'PanelHandle',panelHandle,'AxesHandle',axesHandles);
             else
-                % Read scale automatically from image
-                [result,baselineVal,newVal] = testFunction(handles.imageFiles{testNum}{:},'AxesHandle',parent);
+                [result,baselineVal,newVal] = testFunction(handles.imageFiles{testNum}{:},...
+                    'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                    'AxesHandle',axesHandle);
             end
-            % Units for labels depends on test type
-            if strcmp(testName,'area')
-                units = 'cm^2';
-            elseif strcmp(testName,'volume')
-                units = 'cm^3';
+        else
+            % Read scale automatically from image
+            if any(strcmp(testName,{'volume','gridAlignment'}))
+                [result,baselineVal,newVal] = testFunction(handles.imageFiles{testNum}{:},'PanelHandle',panelHandle,'AxesHandle',axesHandles);
             else
-                units = 'mm';
-            end
-            
-            if isempty(baselineVal) && isempty(newVal)
-                % If baselineVal and newVal returned empty, show 'N/A'
-                baselineValText = 'N/A';
-                newValText = 'N/A';
-            else
-                % Otherwise, display values with 2 decimal places
-                baselineValText = sprintf('%.2f %s',baselineVal,units);
-                newValText = sprintf('%.2f %s',newVal,units);
-            end
-            
-            % Set baseline value label
-            set(handles.([testName,'_text_baselineVal']),'String',baselineValText);
-            % Set new value label
-            set(handles.([testName,'_text_newVal']),'String',newValText);
-            % Set test result label
-            if result == 1
-                set(handles.([testName,'_text_result']),'ForegroundColor',[0 0.75 0],'String','PASS');
-            else
-                set(handles.([testName,'_text_result']),'ForegroundColor',[1 0 0],'String','FAIL');
+                [result,baselineVal,newVal] = testFunction(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
             end
         end
+        % Units for labels depends on test type
+        if strcmp(testName,'area')
+            units = 'cm^2';
+        elseif strcmp(testName,'volume')
+            units = 'cm^3';
+        else
+            units = 'mm';
+        end
+        
+        if isempty(baselineVal) && isempty(newVal)
+            % If baselineVal and newVal returned empty, show 'N/A'
+            baselineValText = 'N/A';
+            newValText = 'N/A';
+        else
+            % Otherwise, display values with 2 decimal places
+            baselineValText = sprintf('%.2f %s',baselineVal,units);
+            newValText = sprintf('%.2f %s',newVal,units);
+        end
+        
+        % Set baseline value label
+        set(handles.([testName,'_text_baselineVal']),'String',baselineValText);
+        % Set new value label
+        set(handles.([testName,'_text_newVal']),'String',newValText);
+        % Set test result label
+        if result == 1
+            set(handles.([testName,'_text_result']),'ForegroundColor',[0 0.75 0],'String','PASS');
+        else
+            set(handles.([testName,'_text_result']),'ForegroundColor',[1 0 0],'String','FAIL');
+        end
+        
+        % If in single view mode, hide the grid panel and show current axes
+        if get(handles.([testName '_button_singleView']),'Value') == 1
+            % Hide grid panel
+            set(handles.([testName '_panel_figure']),'Visible','off');
+            % Show current image axes plots
+            imageIndex = handles.([testName '_imageIndex']);
+            currImageAxes = handles.([testName '_axes_list'])(imageIndex);
+            plots = get(currImageAxes,'Children');
+            set(plots,'Visible','on');
+            % Show legend associated with current image
+            testPanelChildren = get(handles.([testName '_panel']),'Children');
+            legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+            for n = 1:numel(legends)
+                leg = legends(n);
+                userData = get(leg,'UserData');
+                if userData.ImageIndex == imageIndex
+                    set(leg,'Visible','on');
+                end
+            end
+            % Show previous and next image buttons
+            set(handles.([testName '_button_prev']),'Visible','on');
+            set(handles.([testName '_button_next']),'Visible','on');
+        end
+        
     end
 end
+guidata(hObject,handles);
 
 
 % --- Executes on button press in grayscale_button_setScale.
@@ -241,7 +317,7 @@ function button_setScale_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Get test number
-testNum = get(handles.tabgroup,'SelectedIndex');
+testNum = handles.testNum;
 
 % Manually input upper and lower scale readings
 prompt = {'Enter the upper scale reading (cm):',...
@@ -255,4 +331,180 @@ if ~isempty(answer)
     handles.upperScaleReading{testNum} = str2num(answer{1});
     handles.lowerScaleReading{testNum} = str2num(answer{2});
 end
+guidata(hObject,handles);
+
+
+% --- Executes on button press in volume_button_gridView.
+function button_gridView_Callback(hObject, eventdata, handles)
+% hObject    handle to volume_button_gridView (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of volume_button_gridView
+state = get(hObject,'Value');
+% Toggle other button
+testName = handles.testName;
+set(handles.([testName '_button_singleView']),'Value',~state);
+% Disable button when toggled on
+if state == 1
+    set(hObject,'Enable','off')
+    set(handles.([testName '_button_singleView']),'Enable','on')
+end
+
+% Hide all single view axes plots
+if isfield(handles,[testName '_axes_list'])
+    plots = get(handles.([testName '_axes_list']),'Children');
+    set(cell2mat(plots),'Visible','off');
+    % Hide all associated legends
+    testPanelChildren = get(handles.([testName '_panel']),'Children');
+    legends = findobj(testPanelChildren,'flat','Type','axes','Tag','legend');
+    set(legends,'Visible','off');
+end
+% Show grid view panel
+set(handles.([testName '_panel_figure']),'Visible','on');
+
+% Hide previous and next image buttons
+set(handles.([testName '_button_prev']),'Visible','off');
+set(handles.([testName '_button_next']),'Visible','off');
+
+guidata(hObject,handles);
+
+
+% --- Executes on button press in volume_button_singleView.
+function button_singleView_Callback(hObject, eventdata, handles)
+% hObject    handle to volume_button_singleView (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of volume_button_singleView
+state = get(hObject,'Value');
+% Toggle other button
+testName = handles.testName;
+set(handles.([testName '_button_gridView']),'Value',~state);
+% Disable button when toggled on
+if state == 1
+    set(hObject,'Enable','off')
+    set(handles.([testName '_button_gridView']),'Enable','on')
+end
+
+% Get image index
+imageIndex = handles.([testName '_imageIndex']);
+
+% Hide grid view axes plots
+set(handles.([testName '_panel_figure']),'Visible','off');
+% Show single view axes for current image
+if isfield(handles,[testName '_axes_list'])
+    currImageAxes = handles.([testName '_axes_list'])(imageIndex);
+    plots = get(currImageAxes,'Children');
+    set(plots,'Visible','on');
+    % Show legend associated with current image
+    testPanelChildren = get(handles.([testName '_panel']),'Children');
+    legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+    for n = 1:numel(legends)
+        leg = legends(n);
+        userData = get(leg,'UserData');
+        if userData.ImageIndex == imageIndex
+            set(leg,'Visible','on');
+        end
+    end
+    
+    % Show previous and next image buttons
+    set(handles.([testName '_button_prev']),'Visible','on');
+    set(handles.([testName '_button_next']),'Visible','on');
+end
+
+% Update handles
+guidata(hObject,handles);
+
+
+% --- Executes on button press in volume_button_prev.
+function button_prev_Callback(hObject, eventdata, handles)
+% hObject    handle to volume_button_prev (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Update image index
+testNum = handles.testNum;
+testName = handles.testName;
+imageIndex = handles.([testName '_imageIndex']);
+if imageIndex > 1
+    % Decrease image index by 1
+    imageIndex = imageIndex - 1;
+else
+    % If on first image, switch index to last image
+    imageIndex = numel(handles.imageFiles{testNum});
+end
+handles.([testName '_imageIndex']) = imageIndex;
+
+% Hide currently shown axes
+if isfield(handles,[testName '_axes_list'])
+    plots = get(handles.([testName '_axes_list']),'Children');
+    set(cell2mat(plots),'Visible','off');
+    % Hide all associated legends
+    testPanelChildren = get(handles.([testName '_panel']),'Children');
+    legends = findobj(testPanelChildren,'flat','Type','axes','Tag','legend');
+    set(legends,'Visible','off');
+end
+% Show previous image plots
+ax = handles.([testName '_axes_list'])(imageIndex);
+plots = get(ax,'Children');
+set(plots,'Visible','on');
+% Show legend associated with previous image
+testPanelChildren = get(handles.([testName '_panel']),'Children');
+legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+for n = 1:numel(legends)
+    leg = legends(n);
+    userData = get(leg,'UserData');
+    if userData.ImageIndex == imageIndex
+        set(leg,'Visible','on');
+    end
+end
+
+% Update handles
+guidata(hObject,handles);
+
+% --- Executes on button press in volume_button_next.
+function button_next_Callback(hObject, eventdata, handles)
+% hObject    handle to volume_button_next (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Update image index
+testNum = handles.testNum;
+testName = handles.testName;
+imageIndex = handles.([testName '_imageIndex']);
+if imageIndex < numel(handles.imageFiles{testNum})
+    % Increase image index by 1
+    imageIndex = imageIndex + 1;
+else
+    % If on last image, reset index to first image
+    imageIndex = 1;
+end
+handles.([testName '_imageIndex']) = imageIndex;
+
+% Hide currently shown axes
+if isfield(handles,[testName '_axes_list'])
+    plots = get(handles.([testName '_axes_list']),'Children');
+    set(cell2mat(plots),'Visible','off');
+    % Hide all associated legends
+    testPanelChildren = get(handles.([testName '_panel']),'Children');
+    legends = findobj(testPanelChildren,'flat','Type','axes','Tag','legend');
+    set(legends,'Visible','off');
+end
+% Show next image axes
+ax = handles.([testName '_axes_list'])(imageIndex);
+plots = get(ax,'Children');
+set(plots,'Visible','on');
+% Show legend associated with next image
+testPanelChildren = get(handles.([testName '_panel']),'Children');
+legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+for n = 1:numel(legends)
+    leg = legends(n);
+    userData = get(leg,'UserData');
+    if userData.ImageIndex == imageIndex
+        set(leg,'Visible','on');
+    end
+end
+
+% Update handles
 guidata(hObject,handles);

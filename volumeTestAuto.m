@@ -23,13 +23,15 @@ addParameter(p,'UpperScale',[]);
 addParameter(p,'LowerScale',[]);
 % Default step size 0.5 cm
 addParameter(p,'StepSize',0.5);
+addParameter(p,'PanelHandle',[]);
 addParameter(p,'AxesHandle',[]);
 % Parse inputs
 parse(p,imageFile1,varargin{:});
 upper = p.Results.UpperScale;
 lower = p.Results.LowerScale;
 stepSize = p.Results.StepSize;
-axesHandle = p.Results.AxesHandle;
+panelHandle = p.Results.PanelHandle;
+axesHandles = p.Results.AxesHandle;
 
 % Get baseline values
 if ~exist('Baseline.mat','file')
@@ -47,17 +49,13 @@ for i = 1:size(baselineVals,1)
     end
 end
 
-if ~isempty(axesHandle)
-    % Plot on specified axes if given as input
-    parent = axesHandle;
-else
-    % Otherwise, plot on new figure
+% If running function without GUI, plot on new figure
+if isempty(panelHandle) && isempty(axesHandles)
     fig = figure;
-    parent = fig;
 end
 
 % Clear axes first
-clf(parent);
+% clf(parent);
 
 % Load images and read labels
 for i = 1:numel(imageInputs)
@@ -78,61 +76,93 @@ for i = 1:numel(imageInputs)
     % Code for plotting the segmented circle on original image
     im_orig = imread(imageFile);
     
-%     if ~isempty(axesHandle)
-%         % Plot on specified axes if given as input
-%         parent = axesHandle;
-%     else
-%         % Otherwise, plot on new figure
-%         parent = gca;
-%     end
-%     
-%     % Clear axes first
-%     cla(parent);
-%     % Plot image on axes
-%     imshow(im_orig,'Parent',parent);
-%     % Hold on
-%     set(parent,'NextPlot','add');
+    %     if ~isempty(axesHandle)
+    %         % Plot on specified axes if given as input
+    %         parent = axesHandle;
+    %     else
+    %         % Otherwise, plot on new figure
+    %         parent = gca;
+    %     end
+    %
+    %     % Clear axes first
+    %     cla(parent);
+    %     % Plot image on axes
+    %     imshow(im_orig,'Parent',parent);
+    %     % Hold on
+    %     set(parent,'NextPlot','add');
     
     numImages = numel(imageInputs);
-    % Set size of image grid based on number of inputted images
-    gridSize = [floor(sqrt(numImages)),ceil(sqrt(numImages))];
-    n = gridSize(1);
-    m = gridSize(2);
-    [c,r] = ind2sub([gridSize(2) gridSize(1)], i);
-    % Create subplots
-    subplot('Position', [(c-1)/m, 1-(r)/n, 1/m, 1/n],'Parent',parent);
-    imshow(im_orig);
-    hold on
-    % Visualize the segmented circle
-    c1 = viscircles(center,radius);
     
-    if isempty(radius)
-        % If no circle was found, set area to 0
-        areas(i) = 0;
-    else
-        % Convert radius to mm
-        radius_mm = radius*pixelScale;
-        % Convert radius to cm
-        radius_cm = radius_mm/10;
-        % Calculate area in cm
-        areas(i) = pi*radius_cm^2;
-    end
-    
-    % Legend
-    if ~isempty(c1)
-        l = legend(c1,['Area: ' sprintf('%.2f',areas(i)) ' cm^2'],...
-            'Location','southeast','Orientation','horizontal');
-        % Decrease legend marker size
-        markerObjs = findobj(get(l,'children'), 'type', 'line');
-        set(markerObjs, 'Markersize', 12);
-        % Change legend text and background colour
-        set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
+    for ii = 1:2
+        
+        if ii == 1
+            % Set size of image grid based on number of inputted images
+            gridSize = [floor(sqrt(numImages)),ceil(sqrt(numImages))];
+            n = gridSize(1);
+            m = gridSize(2);
+            [c,r] = ind2sub([gridSize(2) gridSize(1)], i);
+            % Create subplots
+            if ~isempty(panelHandle)
+                parent = subplot('Position', [(c-1)/m, 1-(r)/n, 1/m, 1/n],'Parent',panelHandle);
+            else
+                parent = subplot('Position', [(c-1)/m, 1-(r)/n, 1/m, 1/n],'Parent',fig);
+            end
+        else
+            if ~isempty(axesHandles)
+                parent = axesHandles(i);
+            else
+                % Running without GUI, break out of this second loop
+                break
+            end
+        end
+        
+        % Plot image on axes
+        im = imshow(im_orig,'Parent',parent);
+        set(im,'UserData',i);
+        % Hold on
+        set(parent,'NextPlot','add');
+        % Visualize the segmented circle
+        c1 = viscircles(parent,center,radius);
+        set(c1,'UserData',i);
+        
+        if isempty(radius)
+            % If no circle was found, set area to 0
+            areas(i) = 0;
+        else
+            % Convert radius to mm
+            radius_mm = radius*pixelScale;
+            % Convert radius to cm
+            radius_cm = radius_mm/10;
+            % Calculate area in cm
+            areas(i) = pi*radius_cm^2;
+        end
+        
+        % Legend
+        if ~isempty(c1)
+            l = legend(c1,['Area: ' sprintf('%.2f',areas(i)) ' cm^2'],...
+                'Location','southeast','Orientation','horizontal');
+            % Decrease legend marker size
+            markerObjs = findobj(get(l,'children'), 'type', 'line');
+            set(markerObjs, 'Markersize', 12);
+            % Change legend text and background colour
+            set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
+            % Add image index to UserData, used for finding legend
+            % associated with image
+            userData = get(l,'UserData');
+            userData.ImageIndex = i;
+            set(l,'UserData',userData);
+        end
+        
+        if ii == 2
+            % Hide axes plots, GUI function will show the current axes only
+            set([im;c1;l],'Visible','off');
+        end
     end
 end
 
 % Resize and position figure
 if exist('fig','var')
-    set(parent,'Units','normalized','Position',[0.05 0.05 0.9 0.85]);
+    set(fig,'Units','normalized','Position',[0.05 0.05 0.9 0.85]);
 end
 
 % Calculate volume
