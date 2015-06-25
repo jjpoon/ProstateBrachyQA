@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 25-Jun-2015 15:28:51
+% Last Modified by GUIDE v2.5 25-Jun-2015 17:11:56
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -77,6 +77,7 @@ tab9 = uitab(handles.tabgroup,'Title','Grid Alignment');
 set(handles.grayscale_panel,'Parent',tab1);
 set(handles.grayscale_panel_result,'Parent',tab1);
 set(handles.depth_panel,'Parent',tab2);
+set(handles.depth_panel_result,'Parent',tab2);
 set(handles.axialResolution_panel,'Parent',tab3);
 set(handles.lateralResolution_panel,'Parent',tab4);
 set(handles.axialDistance_panel,'Parent',tab5);
@@ -95,6 +96,11 @@ handles.testName = 'grayscale';
 % Initiate single view image index
 handles.volume_imageIndex = 1;
 handles.gridAlignment_imageIndex = 1;
+
+% Initiate view plane for tests where axial/sagittal views are used
+handles.depth_plane = 'axial';
+handles.axialResolution_plane = 'axial';
+handles.lateralResolution_plane = 'axial';
 
 % Add listener for selected tab index
 addlistener(handles.tabgroup,'SelectedIndex','PostSet',@(obj,eventdata)onSelectedTabChanged(hObject));
@@ -540,10 +546,10 @@ function grayscale_table_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-data = cell(1,2);
+data = cell(1,3);
 set(hObject,'Data',data);
 set(hObject,'RowName',{'Gradient Length (mm)'});
-set(hObject,'ColumnName',{'Baseline Value','New Value'});
+set(hObject,'ColumnName',{'Baseline Value','New Value','Result'});
 set(hObject,'ColumnEditable',false(size(data)));
 
 
@@ -580,17 +586,104 @@ if numel(handles.imageFiles) >= testNum
         data = get(table,'Data');
         % Set baseline value table cell
         data{1,1} = baselineValText;
-        % Set new value label
+        % Set new value table cell
         data{1,2} = newValText;
+        % Set test result table cell
+        if result == 1
+            data{1,3} = '<html><font color="green">PASS';
+        else
+            data{1,3} = '<html><font color="red">FAIL';
+        end
         % Set table data
         set(table,'Data',data);
-        
-        % Set test result label
-        if result == 1
-            set(handles.grayscale_text_result,'ForegroundColor',[0 0.75 0],'String','Result: PASS');
-        else
-            set(handles.grayscale_text_result,'ForegroundColor',[1 0 0],'String','Result: FAIL');
-        end
     end
 end
+guidata(hObject,handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function depth_table_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to depth_table_axial (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+data = cell(1,3);
+set(hObject,'Data',data);
+set(hObject,'RowName',{'Depth (mm)'});
+set(hObject,'ColumnName',{'Baseline Value','New Value','Result'});
+set(hObject,'ColumnEditable',false(size(data)));
+
+
+% --- Executes on button press in depth_button_runTest.
+function depth_button_runTest_Callback(hObject, eventdata, handles)
+% hObject    handle to depth_button_runTest (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get test number and name (test function called and gui handles depend on this name)
+testNum = handles.testNum;
+axesHandle = handles.depth_axes;
+
+if numel(handles.imageFiles) >= testNum
+    if ~isempty(handles.imageFiles{testNum})
+        % Run test, plot on given axes
+        % Check if scale readings were set manually
+        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+            % Scale readings were inputted
+            [result,baselineVal,newVal] = depthTestAuto(handles.imageFiles{testNum}{:},...
+                'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                'AxesHandle',axesHandle);
+        else
+            % Read scale automatically from image
+            [result,baselineVal,newVal] = depthTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+        end
+        
+        % Display values with 2 decimal places
+        baselineValText = sprintf('%.2f',baselineVal);
+        newValText = sprintf('%.2f',newVal);
+        
+        % Modify table data
+        if strcmp(handles.depth_plane,'axial')
+            table = handles.depth_table_axial;
+        elseif strcmp(handles.depth_plane,'longitudinal')
+            table = handles.depth_table_long;
+        end
+        data = get(table,'Data');
+        % Set baseline value table cell
+        data{1,1} = baselineValText;
+        % Set new value table cell
+        data{1,2} = newValText;
+        % Set test result table cell
+        if result == 1
+            data{1,3} = '<html><font color="green">PASS';
+        else
+            data{1,3} = '<html><font color="red">FAIL';
+        end
+        % Set table data
+        set(table,'Data',data);
+    end
+end
+guidata(hObject,handles);
+
+
+% --- Executes when selected object is changed in depth_buttongroup.
+function depth_buttongroup_SelectionChangeFcn(hObject, eventdata, handles)
+% hObject    handle to the selected object in depth_buttongroup 
+% eventdata  structure with the following fields (see UIBUTTONGROUP)
+%	EventName: string 'SelectionChanged' (read only)
+%	OldValue: handle of the previously selected object or empty if none was selected
+%	NewValue: handle of the currently selected object
+% handles    structure with handles and user data (see GUIDATA)
+
+testName = handles.testName;
+
+selection = get(eventdata.NewValue,'Tag');
+if ~isempty(strfind(selection,'checkbox_axial'))
+    % Axial plane
+    handles.([testName '_plane']) = 'axial';
+else
+    % Longitudinal plane
+    handles.([testName '_plane']) = 'longitudinal';
+end
+% Update handles
 guidata(hObject,handles);
