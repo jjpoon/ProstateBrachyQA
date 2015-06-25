@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 24-Jun-2015 18:40:56
+% Last Modified by GUIDE v2.5 25-Jun-2015 15:28:51
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -75,6 +75,7 @@ tab8 = uitab(handles.tabgroup,'Title','Volume');
 tab9 = uitab(handles.tabgroup,'Title','Grid Alignment');
 % Set tabs as parents of appropriate test panels
 set(handles.grayscale_panel,'Parent',tab1);
+set(handles.grayscale_panel_result,'Parent',tab1);
 set(handles.depth_panel,'Parent',tab2);
 set(handles.axialResolution_panel,'Parent',tab3);
 set(handles.lateralResolution_panel,'Parent',tab4);
@@ -157,8 +158,9 @@ function button_images_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Get test number
+% Get test number and name
 testNum = handles.testNum;
+testName = handles.testName;
 
 % Open dialog for selecting image(s)
 [filenames,pathname] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
@@ -169,17 +171,14 @@ end
 % If filenames is not 0 (0 if user pressed cancel)
 if ~isnumeric(filenames)
     handles.imageFiles{testNum} = fullfile(pathname,filenames);
-    % Get the panel this button is on
-    panel = get(hObject,'Parent');
     % Get the listbox that is also on this panel
-    listbox = findobj(get(panel,'Children'),'Type','uicontrol','Style','listbox');
+    listbox = handles.([testName '_listbox']);
     % Set listbox 'Value' property
     set(listbox,'Value',numel(filenames));
     % Display filenames in listbox
     set(listbox,'String',filenames);
     % Enable Run Test button
-    runTestButton = findobj(get(panel,'Children'),'Type','uicontrol','Style','pushbutton',...
-        '-regexp','Tag','runTest');
+    runTestButton = handles.([testName '_button_runTest']);
     set(runTestButton,'Enable','on');
 end
 guidata(hObject,handles);
@@ -533,3 +532,65 @@ for str = {'volume','gridAlignment'}
     set(handles.([testName '_button_prev']),'Position',newPrevPos);
     set(handles.([testName '_button_next']),'Position',newNextPos);
 end
+
+
+% --- Executes during object creation, after setting all properties.
+function grayscale_table_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to grayscale_table (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+data = cell(1,2);
+set(hObject,'Data',data);
+set(hObject,'RowName',{'Gradient Length (mm)'});
+set(hObject,'ColumnName',{'Baseline Value','New Value'});
+set(hObject,'ColumnEditable',false(size(data)));
+
+
+% --- Executes on button press in grayscale_button_runTest.
+function grayscale_button_runTest_Callback(hObject, eventdata, handles)
+% hObject    handle to grayscale_button_runTest (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get test number and name (test function called and gui handles depend on this name)
+testNum = handles.testNum;
+axesHandle = handles.grayscale_axes;
+
+if numel(handles.imageFiles) >= testNum
+    if ~isempty(handles.imageFiles{testNum})
+        % Run test, plot on given axes
+        % Check if scale readings were set manually
+        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+            % Scale readings were inputted
+            [result,baselineVal,newVal] = grayscaleTestAuto(handles.imageFiles{testNum}{:},...
+                'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                'AxesHandle',axesHandle);
+        else
+            % Read scale automatically from image
+            [result,baselineVal,newVal] = grayscaleTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+        end
+        
+        % Display values with 2 decimal places
+        baselineValText = sprintf('%.2f',baselineVal);
+        newValText = sprintf('%.2f',newVal);
+        
+        % Modify table data
+        table = handles.grayscale_table;
+        data = get(table,'Data');
+        % Set baseline value table cell
+        data{1,1} = baselineValText;
+        % Set new value label
+        data{1,2} = newValText;
+        % Set table data
+        set(table,'Data',data);
+        
+        % Set test result label
+        if result == 1
+            set(handles.grayscale_text_result,'ForegroundColor',[0 0.75 0],'String','Result: PASS');
+        else
+            set(handles.grayscale_text_result,'ForegroundColor',[1 0 0],'String','Result: FAIL');
+        end
+    end
+end
+guidata(hObject,handles);
