@@ -36,7 +36,7 @@ end
 
 % Get baseline value for this test
 for i = 1:size(baselineFile,1)
-    if strcmp(baselineFile{i,1},'Axial distance')
+    if ~isempty(strfind(baselineFile{i,1},'Axial distance'))
         knownVal = baselineFile{i,2};
     end
 end

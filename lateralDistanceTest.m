@@ -6,16 +6,16 @@ function result = lateralDistanceTest(imageFile)
 % Get baseline values
 if ~exist('Baseline.mat','file')
     % Read xls file if mat file not created yet
-    baselineVals = readBaselineFile('Baseline.xls');
+    baselineFile = readBaselineFile('Baseline.xls');
 else
     % Get baseline value from mat file (faster)
     load('Baseline.mat');
 end
 
 % Get baseline value for this test
-for i = 1:size(baselineVals,1)
-    if strcmp(baselineVals{i,1},'Lateral distance')
-        baselineVal = baselineVals{i,2};
+for i = 1:size(baselineFile,1)
+    if strcmp(baselineFile{i,1},'Lateral distance')
+        knownVal = baselineFile{i,2};
     end
 end
 
@@ -28,23 +28,31 @@ for n = 1:numel(labels)
     % If label contains 'Dist'
     if ~isempty(ind)
         % Find the first decimal number (the measurement) after 'Dist'
-        dist(n) = str2double(regexp(labels{1}(ind:end),'\d*\.\d*','match','once'));
+        dist(n) = str2double(regexp(labels{n}(ind:end),'\d*\.\d*','match','once'));
     end
 end
-newVal = sum(dist)/numel(dist);
+measuredVals = dist;
 
-disp(['Baseline value: ' num2str(baselineVal) ' mm']);
-disp(['New value: ' num2str(newVal) ' mm']);
+disp(['Known value: ' sprintf('%.2f',knownVal) ' mm']);
 
-error = abs(newVal-baselineVal);
-% Check measured lateral distance measurement error
-if (error > 3) || (error > 0.03*baselineVal)
+if numel(measuredVals) > 1
+    disp(' ');
+    disp('Measured values:');
+    disp(['Proximal: ' sprintf('%.2f',measuredVals(1)) ' mm']);
+    disp(['Distal: ' sprintf('%.2f',measuredVals(2)) ' mm']);
+    disp(' ');
+else
+    disp(['Measured value: ' sprintf('%.2f',measuredVals)]);
+end
+
+error = abs(measuredVals-repmat(knownVal,size(measuredVals)));
+% Check measured lateral distance measurement errors
+result = error<=3 | error<=0.03*knownVal;
+if any(result == 0)
     % Fail
-    result = 0;
     disp('Lateral distance measurement accuracy test: failed');
 else
     % Pass
-    result = 1;
     disp('Lateral distance measurement accuracy test: passed');
 end
 

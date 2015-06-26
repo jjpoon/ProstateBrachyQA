@@ -22,7 +22,7 @@ end
 
 % Get baseline value for this test
 for i = 1:size(baselineFile,1)
-    if strcmp(baselineFile{i,1},'Depth of penetration')
+    if ~isempty(strfind(baselineFile{i,1},'Depth of penetration'))
         baselineVals = [baselineFile{i,2:3}];
     end
 end

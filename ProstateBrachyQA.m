@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 26-Jun-2015 16:08:35
+% Last Modified by GUIDE v2.5 26-Jun-2015 16:56:36
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -85,6 +85,7 @@ set(handles.lateralResolution_panel_result,'Parent',tab4);
 set(handles.axialDistance_panel,'Parent',tab5);
 set(handles.axialDistance_panel_result,'Parent',tab5);
 set(handles.lateralDistance_panel,'Parent',tab6);
+set(handles.lateralDistance_panel_result,'Parent',tab6);
 set(handles.area_panel,'Parent',tab7);
 set(handles.volume_panel,'Parent',tab8);
 set(handles.gridAlignment_panel,'Parent',tab9);
@@ -104,6 +105,7 @@ handles.gridAlignment_imageIndex = 1;
 handles.depth_plane = 'axial';
 handles.axialResolution_plane = 'axial';
 handles.lateralResolution_plane = 'axial';
+handles.lateralDistance_plane = 'axial';
 
 % Add listener for selected tab index
 addlistener(handles.tabgroup,'SelectedIndex','PostSet',@(obj,eventdata)onSelectedTabChanged(hObject));
@@ -874,7 +876,7 @@ function axialDistance_table_CreateFcn(hObject, eventdata, handles)
 data = cell(2,5);
 set(hObject,'Data',data);
 set(hObject,'RowName',{'Left','Right'});
-set(hObject,'ColumnName',{'Baseline (mm)','Current (mm)','Diff (abs)','Diff (%)','Result'});
+set(hObject,'ColumnName',{'Known (mm)','Measured (mm)','Diff (abs)','Diff (%)','Result'});
 set(hObject,'ColumnEditable',false(1,size(data,2)));
 
 
@@ -904,6 +906,86 @@ if numel(handles.imageFiles) >= testNum
         
         % Get table data
         table = handles.axialDistance_table;
+        data = get(table,'Data');
+        % Modify table data
+        for n = 1:numel(measuredVals)
+            data{n,1} = sprintf('%.2f',knownVal);
+            data{n,2} = sprintf('%.2f',measuredVals(n));
+            % Absolute difference
+            absDiff = abs(measuredVals(n)-knownVal);
+            data{n,3} = sprintf('%.2f',absDiff);
+            % Percent difference
+            avg = (knownVal+measuredVals(n))/2;
+            percentDiff = absDiff/avg*100;
+            data{n,4} = sprintf('%.2f',percentDiff);
+            % Result
+            if result(n) == 1
+                data{n,5} = '<html><font color="green">PASS';
+            else
+                data{n,5} = '<html><font color="red">FAIL';
+            end
+        end
+        % Set table data
+        set(table,'Data',data);
+    end
+end
+guidata(hObject,handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function lateralDistance_table_axial_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to lateralDistance_table_axial (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+data = cell(2,5);
+set(hObject,'Data',data);
+set(hObject,'RowName',{'Proximal','Distal'});
+set(hObject,'ColumnName',{'Known (mm)','Measured (mm)','Diff (abs)','Diff (%)','Result'});
+set(hObject,'ColumnEditable',false(1,size(data,2)));
+
+
+% --- Executes during object creation, after setting all properties.
+function lateralDistance_table_long_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to lateralDistance_table_long (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+data = cell(1,5);
+set(hObject,'Data',data);
+set(hObject,'RowName',{'Distance'});
+set(hObject,'ColumnName',{'Known (mm)','Measured (mm)','Diff (abs)','Diff (%)','Result'});
+set(hObject,'ColumnEditable',false(1,size(data,2)));
+
+
+% --- Executes on button press in lateralDistance_button_runTest.
+function lateralDistance_button_runTest_Callback(hObject, eventdata, handles)
+% hObject    handle to lateralDistance_button_runTest (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get test number and name (test function called and gui handles depend on this name)
+testNum = handles.testNum;
+axesHandle = handles.lateralDistance_axes;
+
+if numel(handles.imageFiles) >= testNum
+    if ~isempty(handles.imageFiles{testNum})
+        % Run test, plot on given axes
+        % Check if scale readings were set manually
+        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+            % Scale readings were inputted
+            [result,knownVal,measuredVals] = lateralDistanceTestAuto(handles.imageFiles{testNum}{:},...
+                'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                'AxesHandle',axesHandle);
+        else
+            % Read scale automatically from image
+            [result,knownVal,measuredVals] = lateralDistanceTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+        end
+        
+        % Get table data
+        if strcmp(handles.lateralDistance_plane,'axial')
+            table = handles.lateralDistance_table_axial;
+        elseif strcmp(handles.lateralDistance_plane,'longitudinal')
+            table = handles.lateralDistance_table_long;
+        end
         data = get(table,'Data');
         % Modify table data
         for n = 1:numel(measuredVals)

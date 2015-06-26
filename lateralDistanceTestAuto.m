@@ -1,4 +1,4 @@
-function [result,baselineVal,newVal] = lateralDistanceTestAuto(imageFile,varargin)
+function [result,knownVal,measuredVals] = lateralDistanceTestAuto(imageFile,varargin)
 % LATERALDISTANCETEST is for the lateral distance measurement accuracy quality control test.
 % The function compares the lateral distance measurement with the known
 % value and checks if the error is larger than 3 mm (absolute) or 3% (relative).
@@ -28,16 +28,16 @@ end
 % Get baseline values
 if ~exist('Baseline.mat','file')
     % Read xls file if mat file not created yet
-    baselineVals = readBaselineFile('Baseline.xls');
+    baselineFile = readBaselineFile('Baseline.xls');
 else
     % Get baseline value from mat file (faster)
     load('Baseline.mat');
 end
 
 % Get baseline value for this test
-for i = 1:size(baselineVals,1)
-    if strcmp(baselineVals{i,1},'Lateral distance')
-        baselineVal = baselineVals{i,2};
+for i = 1:size(baselineFile,1)
+    if ~isempty(strfind(baselineFile{i,1},'Lateral distance'))
+        knownVal = baselineFile{i,2};
     end
 end
 
@@ -152,7 +152,7 @@ if strcmp(view,'axial')
     distances = sqrt(vectors(:,1).^2 + vectors(:,2).^2);
     [bottomRightDist,bottomRightInd] = min(distances);
     
-    filamentIndices = [topLeftInd,topRightInd,bottomLeftInd,bottomRightInd];
+    filamentIndices = [bottomLeftInd,bottomRightInd,topLeftInd,topRightInd];
     
 elseif strcmp(view,'sagittal')
     
@@ -231,12 +231,12 @@ if strcmp(view,'axial')
     lateralDist2_pixels = norm(markers(4,:)-markers(3,:));
     lateralDist2_mm = lateralDist2_pixels*pixelScale;
     % Average lateral distance
-    newVal = (lateralDist1_mm + lateralDist2_mm)/2;
+    measuredVals = [lateralDist1_mm lateralDist2_mm];
 elseif strcmp(view,'sagittal')
     % Lateral distance
     lateralDist_pixels = norm(markers(2,:)-markers(1,:));
     lateralDist_mm = lateralDist_pixels*pixelScale;
-    newVal = lateralDist_mm;
+    measuredVals = lateralDist_mm;
 end
 
 % Figure title
@@ -256,18 +256,26 @@ set(markerObjs, 'Markersize', 12);
 % Change legend text and background colour
 set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
 
-disp(['Baseline value: ' sprintf('%.2f',baselineVal) ' mm']);
-disp(['New value: ' sprintf('%.2f',newVal) ' mm']);
+disp(['Known value: ' sprintf('%.2f',knownVal) ' mm']);
 
-error = abs(newVal-baselineVal);
-% Check measured lateral distance measurement error
-if (error > 3) || (error > 0.03*baselineVal)
+if numel(measuredVals) > 1
+    disp(' ');
+    disp('Measured values:');
+    disp(['Proximal: ' sprintf('%.2f',measuredVals(1)) ' mm']);
+    disp(['Distal: ' sprintf('%.2f',measuredVals(2)) ' mm']);
+    disp(' ');
+else
+    disp(['Measured value: ' sprintf('%.2f',measuredVals)]);
+end
+
+error = abs(measuredVals-repmat(knownVal,size(measuredVals)));
+% Check measured lateral distance measurement errors
+result = error<=3 | error<=0.03*knownVal;
+if any(result == 0)
     % Fail
-    result = 0;
     disp('Lateral distance measurement accuracy test: failed');
 else
     % Pass
-    result = 1;
     disp('Lateral distance measurement accuracy test: passed');
 end
 
