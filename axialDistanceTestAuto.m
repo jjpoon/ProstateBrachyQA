@@ -1,4 +1,4 @@
-function [result,baselineVal,newVal] = axialDistanceTestAuto(imageFile,varargin)
+function [result,knownVal,measuredVals] = axialDistanceTestAuto(imageFile,varargin)
 % AXIALDISTANCETEST is for the axial distance measurement accuracy quality control test.
 % The function compares the axial distance measurement with the known
 % value and checks if the error is larger than 2 mm (absolute) or 2% (relative). 
@@ -28,16 +28,16 @@ end
 % Get baseline values
 if ~exist('Baseline.mat','file')
     % Read xls file if mat file not created yet
-    baselineVals = readBaselineFile('Baseline.xls');
+    baselineFile = readBaselineFile('Baseline.xls');
 else
     % Get baseline value from mat file (faster)
     load('Baseline.mat');
 end
 
 % Get baseline value for this test
-for i = 1:size(baselineVals,1)
-    if strcmp(baselineVals{i,1},'Axial distance')
-        baselineVal = baselineVals{i,2};
+for i = 1:size(baselineFile,1)
+    if strcmp(baselineFile{i,1},'Axial distance')
+        knownVal = baselineFile{i,2};
     end
 end
 
@@ -167,47 +167,64 @@ set(parent,'NextPlot','add');
 markers = [xOffset+points(:,1),yOffset+points(:,2)];
 % Plot axial distance lines
 line1 = line(markers(1:2,1),markers(1:2,2),'LineStyle',':','Color','w','Parent',parent);
-line2 = line(markers(3:4,1),markers(3:4,2),'LineStyle',':','Color','w','Parent',parent);
-% Plot markers
 m1 = plot(markers(1:2,1),markers(1:2,2),...
     '+','MarkerSize',10,'Linewidth',2,'Color','r','Parent',parent);
-m2 = plot(markers(3:4,1),markers(3:4,2),...
-    '+','MarkerSize',10,'Linewidth',2,'Color','g','Parent',parent);
+if size(markers,1)>2
+    line2 = line(markers(3:4,1),markers(3:4,2),'LineStyle',':','Color','w','Parent',parent);
+    m2 = plot(markers(3:4,1),markers(3:4,2),...
+        '+','MarkerSize',10,'Linewidth',2,'Color','g','Parent',parent);
+end
+
 % -------------------------------------------------------------------------
 
 % Left side axial distance
 axialDist1_pixels = norm(markers(2,:)-markers(1,:));
 axialDist1_mm = axialDist1_pixels*pixelScale;
+measuredVals = axialDist1_mm;
 % Right side axial distance
-axialDist2_pixels = norm(markers(4,:)-markers(3,:));
-axialDist2_mm = axialDist2_pixels*pixelScale;
-
-newVal = (axialDist1_mm + axialDist2_mm)/2;
+if size(markers,1)>2
+    axialDist2_pixels = norm(markers(4,:)-markers(3,:));
+    axialDist2_mm = axialDist2_pixels*pixelScale;
+    measuredVals = [measuredVals axialDist2_mm];
+end
 
 % Figure title
 % title(['Axial distance = ' sprintf('%.2f',newVal) ' mm']);
 % Legend
-l = legend([m1,m2],['Dist: ' sprintf('%.2f',axialDist1_mm) ' mm'],...
-                         ['Dist: ' sprintf('%.2f',axialDist2_mm) ' mm'],...
-                         'Location','southeast','Orientation','horizontal');
+if exist('m2','var')
+    l = legend([m1,m2],['Dist: ' sprintf('%.2f',axialDist1_mm) ' mm'],...
+        ['Dist: ' sprintf('%.2f',axialDist2_mm) ' mm'],...
+        'Location','southeast','Orientation','horizontal');
+else
+    l = legend(m1,['Dist: ' sprintf('%.2f',axialDist1_mm) ' mm'],...
+        'Location','southeast','Orientation','horizontal');
+end
 % Decrease legend marker size
 markerObjs = findobj(get(l,'children'), 'type', 'line');
 set(markerObjs, 'Markersize', 12);
 % Change legend text and background colour
 set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
 
-disp(['Baseline value: ' sprintf('%.2f',baselineVal) ' mm']);
-disp(['New value: ' sprintf('%.2f',newVal) ' mm']);
+disp(['Known value: ' sprintf('%.2f',knownVal) ' mm']);
 
-error = abs(newVal-baselineVal);
-% Check measured axial distance measurement error
-if (error > 2) || (error > 0.02*baselineVal)
+if numel(measuredVals) > 1
+    disp(' ');
+    disp('Measured values:');
+    disp(['Left: ' sprintf('%.2f',measuredVals(1)) ' mm']);
+    disp(['Right: ' sprintf('%.2f',measuredVals(2)) ' mm']);
+    disp(' ');
+else
+    disp(['Measured value: ' sprintf('%.2f',measuredVals)]);
+end
+
+error = abs(measuredVals-repmat(knownVal,size(measuredVals)));
+% Check measured axial distance measurement errors
+result = error<=2 | error<=0.02*knownVal;
+if any(result == 0)
     % Fail
-    result = 0;
     disp('Axial distance measurement accuracy test: failed');
 else
     % Pass
-    result = 1;
     disp('Axial distance measurement accuracy test: passed');
 end
 

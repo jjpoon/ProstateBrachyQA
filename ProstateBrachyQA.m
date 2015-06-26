@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 26-Jun-2015 14:23:37
+% Last Modified by GUIDE v2.5 26-Jun-2015 16:08:35
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -83,6 +83,7 @@ set(handles.axialResolution_panel_result,'Parent',tab3);
 set(handles.lateralResolution_panel,'Parent',tab4);
 set(handles.lateralResolution_panel_result,'Parent',tab4);
 set(handles.axialDistance_panel,'Parent',tab5);
+set(handles.axialDistance_panel_result,'Parent',tab5);
 set(handles.lateralDistance_panel,'Parent',tab6);
 set(handles.area_panel,'Parent',tab7);
 set(handles.volume_panel,'Parent',tab8);
@@ -668,9 +669,9 @@ end
 guidata(hObject,handles);
 
 
-% --- Executes when selected object is changed in depth_buttongroup.
-function axiallateral_buttongroup_SelectionChangeFcn(hObject, eventdata, handles)
-% hObject    handle to the selected object in depth_buttongroup 
+% --- Executes when selected object is changed in depth_buttongroup_result.
+function buttongroup_result_SelectionChangeFcn(hObject, eventdata, handles)
+% hObject    handle to the selected object in depth_buttongroup_result 
 % eventdata  structure with the following fields (see UIBUTTONGROUP)
 %	EventName: string 'SelectionChanged' (read only)
 %	OldValue: handle of the previously selected object or empty if none was selected
@@ -755,7 +756,7 @@ if numel(handles.imageFiles) >= testNum
             data{n,1} = sprintf('%.2f',baselines(n));
             data{n,2} = sprintf('%.2f',newVals(n));
             % Absolute difference
-            absDiff = abs(newVals(1)-baselines(n));
+            absDiff = abs(newVals(n)-baselines(n));
             data{n,3} = sprintf('%.2f',absDiff);
             % Percent difference
             avg = (baselines(n)+newVals(n))/2;
@@ -775,11 +776,11 @@ end
 guidata(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
-function axiallateral_buttongroup_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to axialResolution_buttongroup (see GCBO)
+function buttongroup_result_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to axialResolution_buttongroup_result (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-set(hObject,'SelectionChangeFcn',@(obj,eventdata)axiallateral_buttongroup_SelectionChangeFcn(hObject,eventdata,handles));
+set(hObject,'SelectionChangeFcn',@(obj,eventdata)buttongroup_result_SelectionChangeFcn(hObject,eventdata,handles));
 
 
 % --- Executes during object creation, after setting all properties.
@@ -844,10 +845,75 @@ if numel(handles.imageFiles) >= testNum
             data{n,1} = sprintf('%.2f',baselines(n));
             data{n,2} = sprintf('%.2f',newVals(n));
             % Absolute difference
-            absDiff = abs(newVals(1)-baselines(n));
+            absDiff = abs(newVals(n)-baselines(n));
             data{n,3} = sprintf('%.2f',absDiff);
             % Percent difference
             avg = (baselines(n)+newVals(n))/2;
+            percentDiff = absDiff/avg*100;
+            data{n,4} = sprintf('%.2f',percentDiff);
+            % Result
+            if result(n) == 1
+                data{n,5} = '<html><font color="green">PASS';
+            else
+                data{n,5} = '<html><font color="red">FAIL';
+            end
+        end
+        % Set table data
+        set(table,'Data',data);
+    end
+end
+guidata(hObject,handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function axialDistance_table_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to axialDistance_table (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+data = cell(2,5);
+set(hObject,'Data',data);
+set(hObject,'RowName',{'Left','Right'});
+set(hObject,'ColumnName',{'Baseline (mm)','Current (mm)','Diff (abs)','Diff (%)','Result'});
+set(hObject,'ColumnEditable',false(1,size(data,2)));
+
+
+% --- Executes on button press in axialDistance_button_runTest.
+function axialDistance_button_runTest_Callback(hObject, eventdata, handles)
+% hObject    handle to axialDistance_button_runTest (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get test number and name (test function called and gui handles depend on this name)
+testNum = handles.testNum;
+axesHandle = handles.axialDistance_axes;
+
+if numel(handles.imageFiles) >= testNum
+    if ~isempty(handles.imageFiles{testNum})
+        % Run test, plot on given axes
+        % Check if scale readings were set manually
+        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+            % Scale readings were inputted
+            [result,knownVal,measuredVals] = axialDistanceTestAuto(handles.imageFiles{testNum}{:},...
+                'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                'AxesHandle',axesHandle);
+        else
+            % Read scale automatically from image
+            [result,knownVal,measuredVals] = axialDistanceTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+        end
+        
+        % Get table data
+        table = handles.axialDistance_table;
+        data = get(table,'Data');
+        % Modify table data
+        for n = 1:numel(measuredVals)
+            data{n,1} = sprintf('%.2f',knownVal);
+            data{n,2} = sprintf('%.2f',measuredVals(n));
+            % Absolute difference
+            absDiff = abs(measuredVals(n)-knownVal);
+            data{n,3} = sprintf('%.2f',absDiff);
+            % Percent difference
+            avg = (knownVal+measuredVals(n))/2;
             percentDiff = absDiff/avg*100;
             data{n,4} = sprintf('%.2f',percentDiff);
             % Result
