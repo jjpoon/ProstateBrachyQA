@@ -1,4 +1,4 @@
-function [result,baselineVals,newVals] = depthTestAuto(imageFile,varargin)
+function [result,baselineVal,newVals] = depthTestAuto(imageFile,varargin)
 % DEPTHTEST is for the depth of penetration quality control test.
 % The function checks if the maximum depth of pentration has changed by
 % more than 1 cm from the baseline value.
@@ -9,11 +9,13 @@ addRequired(p,'imageFile',@ischar);
 addParameter(p,'UpperScale',[]);
 addParameter(p,'LowerScale',[]);
 addParameter(p,'AxesHandle',[]);
+addParameter(p,'Plane',@ischar);
 % Parse inputs
 parse(p,imageFile,varargin{:});
 upper = p.Results.UpperScale;
 lower = p.Results.LowerScale;
 axesHandle = p.Results.AxesHandle;
+plane = p.Results.Plane;
 
 % If user has given the scale readings
 if ~isempty(upper) && ~isempty(lower)
@@ -37,8 +39,15 @@ end
 % Get baseline value for this test
 for i = 1:size(baselineFile,1)
     if strcmp(baselineFile{i,1},'Depth of penetration')
-        baselineVals = baselineFile{i,2};
+        baselineVals = [baselineFile{i,2:3}];
     end
+end
+% Check what plane (axial or longitudinal) image was taken in and choose
+% the corresponding baseline value
+if strcmpi(plane,'longitudinal')
+    baselineVal = baselineVals(2);
+else
+    baselineVal = baselineVals(1);
 end
 
 % Measure depth penetration
@@ -112,11 +121,11 @@ set(markerObjs, 'Markersize', 12);
 % Change legend text and background colour
 set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
 
-disp(['Baseline value: ' sprintf('%.2f',baselineVals) ' mm']);
+disp(['Baseline value: ' sprintf('%.2f',baselineVal) ' mm']);
 disp(['New value: ' sprintf('%.2f',newVals) ' mm']);
 
 % Change in max depth (in cm)
-change = abs(newVals - baselineVals)/10;
+change = abs(newVals - baselineVal)/10;
 % Check if max depth has changed by more than 1 cm
 if change > 1
     % Fail

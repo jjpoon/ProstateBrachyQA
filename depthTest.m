@@ -1,7 +1,15 @@
-function result = depthTest(imageFile)
+function result = depthTest(imageFile,varargin)
 % DEPTHTEST is for the depth of penetration quality control test.
 % The function checks if the maximum depth of pentration has changed by
 % more than 1 cm from the baseline value.
+
+% Input parser
+p = inputParser;
+addRequired(p,'imageFile',@ischar);
+addParameter(p,'Plane',@ischar);
+% Parse inputs
+parse(p,imageFile,varargin{:});
+plane = p.Results.Plane;
 
 % Get baseline values
 if ~exist('Baseline.mat','file')
@@ -15,8 +23,15 @@ end
 % Get baseline value for this test
 for i = 1:size(baselineFile,1)
     if strcmp(baselineFile{i,1},'Depth of penetration')
-        baselineVal = baselineFile{i,2};
+        baselineVals = [baselineFile{i,2:3}];
     end
+end
+% Check what plane (axial or longitudinal) image was taken in and choose
+% the corresponding baseline value
+if strcmpi(plane,'longitudinal')
+    baselineVal = baselineVals(2);
+else
+    baselineVal = baselineVals(1);
 end
 
 % Load image and read label
