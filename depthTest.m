@@ -6,16 +6,16 @@ function result = depthTest(imageFile)
 % Get baseline values
 if ~exist('Baseline.mat','file')
     % Read xls file if mat file not created yet
-    baselineVals = readBaselineFile('Baseline.xls');
+    baselineFile = readBaselineFile('Baseline.xls');
 else
     % Get baseline value from mat file (faster)
     load('Baseline.mat');
 end
 
 % Get baseline value for this test
-for i = 1:size(baselineVals,1)
-    if strcmp(baselineVals{i,1},'Depth of penetration')
-        baselineVal = baselineVals{i,2};
+for i = 1:size(baselineFile,1)
+    if strcmp(baselineFile{i,1},'Depth of penetration')
+        baselineVal = baselineFile{i,2};
     end
 end
 

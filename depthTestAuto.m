@@ -1,4 +1,4 @@
-function [result,baselineVal,newVal] = depthTestAuto(imageFile,varargin)
+function [result,baselineVals,newVals] = depthTestAuto(imageFile,varargin)
 % DEPTHTEST is for the depth of penetration quality control test.
 % The function checks if the maximum depth of pentration has changed by
 % more than 1 cm from the baseline value.
@@ -28,16 +28,16 @@ end
 % Get baseline values
 if ~exist('Baseline.mat','file')
     % Read xls file if mat file not created yet
-    baselineVals = readBaselineFile('Baseline.xls');
+    baselineFile = readBaselineFile('Baseline.xls');
 else
     % Get baseline value from mat file (faster)
     load('Baseline.mat');
 end
 
 % Get baseline value for this test
-for i = 1:size(baselineVals,1)
-    if strcmp(baselineVals{i,1},'Depth of penetration')
-        baselineVal = baselineVals{i,2};
+for i = 1:size(baselineFile,1)
+    if strcmp(baselineFile{i,1},'Depth of penetration')
+        baselineVals = baselineFile{i,2};
     end
 end
 
@@ -78,7 +78,7 @@ boundingBox = regions(ind).BoundingBox;
 depth_pixels = boundingBox(4);
 % Depth in mm
 depth_mm = depth_pixels*pixelScale;
-newVal = depth_mm;
+newVals = depth_mm;
 
 % Plot markers to show points that were found
 if ~isempty(axesHandle)
@@ -105,18 +105,18 @@ m1 = plot(xOffset+boundingBox(1)+boundingBox(3)/2,yOffset+boundingBox(2),...
 % Figure title
 % title(['Depth = ' sprintf('%.2f',newVal) ' mm']);
 % Legend
-l = legend(m1,['Depth: ' sprintf('%.2f',newVal) ' mm'],'Location','southeast');
+l = legend(m1,['Depth: ' sprintf('%.2f',newVals) ' mm'],'Location','southeast');
 % Decrease legend marker size
 markerObjs = findobj(get(l,'children'), 'type', 'line');
 set(markerObjs, 'Markersize', 12);
 % Change legend text and background colour
 set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
 
-disp(['Baseline value: ' sprintf('%.2f',baselineVal) ' mm']);
-disp(['New value: ' sprintf('%.2f',newVal) ' mm']);
+disp(['Baseline value: ' sprintf('%.2f',baselineVals) ' mm']);
+disp(['New value: ' sprintf('%.2f',newVals) ' mm']);
 
 % Change in max depth (in cm)
-change = abs(newVal - baselineVal)/10;
+change = abs(newVals - baselineVals)/10;
 % Check if max depth has changed by more than 1 cm
 if change > 1
     % Fail

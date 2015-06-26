@@ -152,7 +152,7 @@ if strcmp(view,'axial')
     distances = sqrt(vectors(:,1).^2 + vectors(:,2).^2);
     [bottomRight,bottomRightInd] = min(distances);
     
-    filamentIndices = [topLeftInd,topRightInd,bottomLeftInd,bottomRightInd];
+    filamentIndices = [bottomLeftInd,bottomRightInd,topLeftInd,topRightInd];
     
 elseif strcmp(view,'sagittal')
     
@@ -227,7 +227,7 @@ if strcmp(view,'axial')
 end
 % -------------------------------------------------------------------------
 
-% Get the axial resolution at 4 corner filaments
+% Get the axial resolution at filaments of interest
 newVals = minorAxisLengths.*pixelScale;
 
 % Figure title
@@ -285,7 +285,7 @@ else
 end
 % Get results (0 or 1 if fail or pass requirement)
 result = change<=1;
-% Check if axial/lateral resolution has changed by more than 1 mm
+% Check if axial resolution has changed by more than 1 mm
 if any(change > 1)
     % Fail
     disp('Axial resolution test: failed');

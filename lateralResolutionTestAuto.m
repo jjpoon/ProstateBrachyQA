@@ -1,4 +1,4 @@
-function [result,baselineVal,newVal] = lateralResolutionTestAuto(imageFile,varargin)
+function [result,baselineVals,newVals] = lateralResolutionTestAuto(imageFile,varargin)
 % LATERALRESOLUTIONTEST is for the lateral resolution quality control test.
 % The function checks if the lateral resolution has changed by
 % more than 1 mm from the baseline value.
@@ -28,16 +28,16 @@ end
 % Get baseline values
 if ~exist('Baseline.mat','file')
     % Read xls file if mat file not created yet
-    baselineVals = readBaselineFile('Baseline.xls');
+    baselineFile = readBaselineFile('Baseline.xls');
 else
     % Get baseline value from mat file (faster)
     load('Baseline.mat');
 end
 
-% Get baseline value for this test
-for i = 1:size(baselineVals,1)
-    if strcmp(baselineVals{i,1},'Lateral resolution')
-        baselineVal = baselineVals{i,2};
+% Get baseline values for this test
+for i = 1:size(baselineFile,1)
+    if ~isempty(strfind(baselineFile{i,1},'Lateral resolution'))
+        baselineVals = [baselineFile{i,2:7}];
     end
 end
 
@@ -152,7 +152,7 @@ if strcmp(view,'axial')
     distances = sqrt(vectors(:,1).^2 + vectors(:,2).^2);
     [bottomRight,bottomRightInd] = min(distances);
     
-    filamentIndices = [topLeftInd,topRightInd,bottomLeftInd,bottomRightInd];
+    filamentIndices = [bottomLeftInd,bottomRightInd,topLeftInd,topRightInd];
     
 elseif strcmp(view,'sagittal')
     
@@ -228,8 +228,8 @@ if strcmp(view,'axial')
 end
 % -------------------------------------------------------------------------
 
-% Get the lateral resolution by averaging the major axis lengths of the 4 corner filaments
-newVal = sum(majorAxisLengths)/numel(majorAxisLengths)*pixelScale;
+% Get the lateral resolution at filaments of interest
+newVals = majorAxisLengths.*pixelScale;
 
 % Figure title
 % title(['Lateral resolution = ' sprintf('%.2f',newVal) ' mm']);
@@ -251,19 +251,46 @@ set(markerObjs, 'Markersize', 12);
 % Change legend text and background colour
 set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
 
-disp(['Baseline value: ' sprintf('%.2f',baselineVal) ' mm']);
-disp(['New value: ' sprintf('%.2f',newVal) ' mm']);
+if strcmp(view,'axial')
+    % Display measurements for axial view
+    disp('Baseline values (axial plane):');
+    disp(['Proximal (left): ' sprintf('%.2f',baselineVals(1)) ' mm']);
+    disp(['Proximal (right): ' sprintf('%.2f',baselineVals(2)) ' mm']);
+    disp(['Distal (left): ' sprintf('%.2f',baselineVals(3)) ' mm']);
+    disp(['Distal (right): ' sprintf('%.2f',baselineVals(4)) ' mm']);
+    disp(' ');
+    disp('New values (axial plane):');
+    disp(['Proximal (left): ' sprintf('%.2f',newVals(1)) ' mm']);
+    disp(['Proximal (right): ' sprintf('%.2f',newVals(2)) ' mm']);
+    disp(['Distal (left): ' sprintf('%.2f',newVals(3)) ' mm']);
+    disp(['Distal (right): ' sprintf('%.2f',newVals(4)) ' mm']);
+    disp(' ');
+else
+    % Display measurements for sagittal view
+    disp('Baseline values (longitudinal plane):');
+    disp(['Proximal: ' sprintf('%.2f',baselineVals(5)) ' mm']);
+    disp(['Distal: ' sprintf('%.2f',baselineVals(6)) ' mm']);
+    disp(' ');
+    disp('New values (longitudinal plane):');
+    disp(['Proximal: ' sprintf('%.2f',newVals(1)) ' mm']);
+    disp(['Distal: ' sprintf('%.2f',newVals(2)) ' mm']);
+    disp(' ');
+end
 
 % Change in lateral resolution (in mm)
-change = abs(newVal - baselineVal);
-% Check if max depth has changed by more than 1 cm
-if change > 1
+if strcmp(view,'axial')
+    change = abs(newVals - baselineVals(1:4));
+else
+    change = abs(newVals - baselineVals(5:6));
+end
+% Get results (0 or 1 if fail or pass requirement)
+result = change<=1;
+% Check if lateral resolution has changed by more than 1 mm
+if any(change > 1)
     % Fail
-    result = 0;
     disp('Lateral resolution test: failed');
 else
     % Pass
-    result = 1;
     disp('Lateral resolution test: passed');
 end
 
