@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 29-Jun-2015 11:53:37
+% Last Modified by GUIDE v2.5 29-Jun-2015 16:01:35
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -612,6 +612,9 @@ if numel(handles.imageFiles) >= testNum
         % Set table data
         set(table,'Data',data);
     end
+    
+    % Enable Set Baseline button
+    set(handles.grayscale_button_setBaseline,'Enable','on');
 end
 guidata(hObject,handles);
 
@@ -677,6 +680,9 @@ if numel(handles.imageFiles) >= testNum
         % Set table data
         set(table,'Data',data);
     end
+    
+    % Enable Set Baseline button
+    set(handles.depth_button_setBaseline,'Enable','on');
 end
 guidata(hObject,handles);
 
@@ -1128,29 +1134,34 @@ if ~isempty(answer)
             baselineFile{i,2} = knownVal;
         end
     end
-    xlswrite('Baseline.xls',baselineFile);
-    save('Baseline.mat','baselineFile');
-    % Input in table
-    if strcmp(testName,'lateralDistance')
-        % If test is lateral distance, get axial or longitudinal table
-        if strcmp(handles.([testName '_plane']),'axial')
-            table = handles.([testName '_table_axial']);
+    try
+        xlswrite('Baseline.xls',baselineFile);
+        save('Baseline.mat','baselineFile');
+        % Input in table
+        if strcmp(testName,'lateralDistance')
+            % If test is lateral distance, get axial or longitudinal table
+            if strcmp(handles.([testName '_plane']),'axial')
+                table = handles.([testName '_table_axial']);
+            else
+                table = handles.([testName '_table_long']);
+            end
         else
-            table = handles.([testName '_table_long']);
+            table = handles.([testName '_table']);
         end
-    else
-        table = handles.([testName '_table']);
+        data = get(table,'Data');
+        % If new known value is different, clear table
+        if oldVal ~= knownVal
+            data = cell(size(data));
+        end
+        % Display new known value in first column
+        data(:,1) = {sprintf('%.2f',knownVal)};
+        set(table,'Data',data);
+        % Update handles. property
+        handles.([testName '_knownVal']) = knownVal;
+    catch
+        warndlg('Unable to write to the baseline file. The file may be open in another application.',...
+            'Warning');
     end
-    data = get(table,'Data');
-    % If new known value is different, clear table
-    if oldVal ~= knownVal
-        data = cell(size(data));
-    end
-    % Display new known value in first column
-    data(:,1) = {sprintf('%.2f',knownVal)};
-    set(table,'Data',data);
-    % Update handles. property
-    handles.([testName '_knownVal']) = knownVal;
 end
 guidata(hObject,handles);
 
@@ -1348,3 +1359,104 @@ if numel(handles.imageFiles) >= testNum
     end
 end
 guidata(hObject,handles);
+
+
+% --- Executes on button press in depth_button_setBaseline.
+function button_setBaseline_Callback(hObject, eventdata, handles)
+% hObject    handle to depth_button_setBaseline (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+testName = handles.testName;
+msg = '';
+
+switch testName
+    case 'grayscale'
+        str = 'grayscale';
+        baselineText = 'Grayscale';
+    case 'depth'
+        str = 'depth';
+        baselineText = 'Depth';
+    case 'axialResolution'
+        str = 'axial resolution';
+        baselineText = 'Axial resolution';
+    case 'lateralResolution'
+        str = 'lateral resolution';
+        baselineText = 'Lateral resolution';
+end
+
+if ~strcmp(testName,'grayscale')
+    % Get axial data
+    table_axial = handles.([testName '_table_axial']);
+    data_axial = get(table_axial,'Data');
+    strVals_axial = data_axial(:,2);
+    if ~isempty(strVals_axial)
+        currVals_axial = cell(numel(strVals_axial));
+        for n = 1:numel(strVals_axial)
+            if ~isempty(strVals_axial{n})
+                rowName = get(table_axial,'RowName');
+                msg = sprintf([msg '\n' rowName{n} ' (axial): ' strVals_axial{n}]);
+                % Convert values to double format before writing to file
+                currVals_axial{n} = str2num(strVals_axial{n});
+            end
+        end
+    end
+    % Get longitudinal data
+    table_long = handles.([testName '_table_long']);
+    data_long = get(table_long,'Data');
+    strVals_long = data_long(:,2);
+    if ~isempty(strVals_long)
+        currVals_long = cell(numel(strVals_long));
+        for n = 1:numel(strVals_long)
+            if ~isempty(strVals_long{n})
+                rowName = get(table_long,'RowName');
+                msg = sprintf([msg '\n' rowName{n} ' (longitudinal): ' strVals_long{n}]);
+                % Convert values to double format before writing to file
+                currVals_long{n} = str2num(strVals_long{n});
+            end
+        end
+    end
+    % Combine data
+    currVals = [currVals_axial,currVals_long];
+else
+    % Grayscale test doesnt have separate axial and longitudinal tables
+    table = handles.([testName '_table']);
+    data = get(table,'Data');
+    strVals = data(:,2);
+    if ~isempty(strVals)
+        currVals = cell(numel(strVals));
+        for n = 1:numel(strVals)
+            if ~isempty(strVals{n})
+                rowName = get(table,'RowName');
+                msg = sprintf([msg '\n' rowName{n} ': ' strVals{n}]);
+                % Convert values to double format before writing to file
+                currVals{n} = str2num(strVals{n});
+            end
+        end
+    end
+end
+
+% Confirm overwrite of baseline value
+choice = questdlg(sprintf(['Overwrite baseline values with the current measurements? '...
+    '\n' 'The following values will be written to the baseline file.'...
+    '\n' msg]), ...
+    'Confirm Baseline Overwrite', ...
+    'Yes','No','Yes');
+
+if strcmp(choice,'Yes')
+    % Save to baseline file
+    [num,txt,baselineFile] = xlsread('Baseline.xls');
+    for i = 1:size(baselineFile,1)
+        if ~isempty(strfind(baselineFile{i,1},baselineText))
+            baselineFile(i,2:numel(currVals)+1) = currVals;
+        end
+    end
+    try
+        xlswrite('Baseline.xls',baselineFile);
+        save('Baseline.mat','baselineFile');
+    catch
+        warndlg('Unable to write to the baseline file. The file may be open in another application.',...
+            'Warning');
+    end
+end
+
+    
