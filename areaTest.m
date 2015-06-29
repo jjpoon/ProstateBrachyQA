@@ -34,7 +34,10 @@ disp(['New value: ' num2str(newVal)]);
 
 error = abs(newVal-knownVal);
 % Compare measured area and known area
-if error > 0.05*knownVal
+if isempty(error)
+    result = [];
+    disp('Missing information - could not complete test');
+elseif error > 0.05*knownVal
     % Fail
     result = 0;
     disp('Area measurement accuracy test: failed');

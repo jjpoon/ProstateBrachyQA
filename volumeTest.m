@@ -34,7 +34,10 @@ disp(['New value: ' num2str(newVal) ' cm^3']);
 
 error = abs(newVal-baselineVal);
 % Compare measured volume and known volume
-if error > 0.05*baselineVal
+if isempty(error)
+    result = [];
+    disp('Missing information - could not complete test');
+elseif error > 0.05*knownVal
     % Fail
     result = 0;
     disp('Volume measurement accuracy test: failed');

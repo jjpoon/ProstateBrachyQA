@@ -930,10 +930,12 @@ if numel(handles.imageFiles) >= testNum
             percentDiff = absDiff/avg*100;
             data{n,4} = sprintf('%.2f',percentDiff);
             % Result
-            if result(n) == 1
-                data{n,5} = '<html><font color="green">PASS';
-            else
-                data{n,5} = '<html><font color="red">FAIL';
+            if ~isempty(result)
+                if result(n) == 1
+                    data{n,5} = '<html><font color="green">PASS';
+                else
+                    data{n,5} = '<html><font color="red">FAIL';
+                end
             end
         end
         % Set table data
@@ -1010,10 +1012,12 @@ if numel(handles.imageFiles) >= testNum
             percentDiff = absDiff/avg*100;
             data{n,4} = sprintf('%.2f',percentDiff);
             % Result
-            if result(n) == 1
-                data{n,5} = '<html><font color="green">PASS';
-            else
-                data{n,5} = '<html><font color="red">FAIL';
+            if ~isempty(result)
+                if result(n) == 1
+                    data{n,5} = '<html><font color="green">PASS';
+                else
+                    data{n,5} = '<html><font color="red">FAIL';
+                end
             end
         end
         % Set table data
@@ -1074,7 +1078,7 @@ if numel(handles.imageFiles) >= testNum
         % Result
         if result == 1
             data{1,5} = '<html><font color="green">PASS';
-        else
+        elseif result == 0
             data{1,5} = '<html><font color="red">FAIL';
         end
         % Set table data
@@ -1218,7 +1222,7 @@ if numel(handles.imageFiles) >= testNum
         % Result
         if result == 1
             data{1,5} = '<html><font color="green">PASS';
-        else
+        elseif result == 0
             data{1,5} = '<html><font color="red">FAIL';
         end
         % Set table data

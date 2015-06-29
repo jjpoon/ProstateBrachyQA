@@ -43,10 +43,16 @@ else
     disp(['Measured value: ' sprintf('%.2f',measuredVals)]);
 end
 
-error = abs(measuredVals-repmat(knownVal,size(measuredVals)));
+if ~isempty(knownVal)
+    error = abs(measuredVals-repmat(knownVal,size(measuredVals)));
+else
+    error = [];
+end
 % Check measured axial distance measurement errors
 result = error<=2 | error<=0.02*knownVal;
-if any(result == 0)
+if isempty(result)
+    disp('Missing information - could not complete test');
+elseif any(result == 0)
     % Fail
     disp('Axial distance measurement accuracy test: failed');
 else

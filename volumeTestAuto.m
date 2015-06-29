@@ -176,7 +176,10 @@ disp(['New value: ' sprintf('%.2f',measuredVal) ' cm^3']);
 
 error = abs(measuredVal-knownVal);
 % Compare measured volume and known volume
-if error > 0.05*knownVal
+if isempty(error)
+    result = [];
+    disp('Missing information - could not complete test');
+elseif error > 0.05*knownVal
     % Fail
     result = 0;
     disp('Volume measurement accuracy test: failed');
