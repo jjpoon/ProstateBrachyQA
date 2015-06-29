@@ -1,4 +1,4 @@
-function [result,baselineVal,newVal] = volumeTestAuto(imageFile1,varargin)
+function [result,knownVal,measuredVal] = volumeTestAuto(imageFile1,varargin)
 % VOLUMETEST is for the volume measurement accuracy quality control test.
 % The function checks if the calculated volume is within 5% of the actual
 % volume.
@@ -36,16 +36,16 @@ axesHandles = p.Results.AxesHandle;
 % Get baseline values
 if ~exist('Baseline.mat','file')
     % Read xls file if mat file not created yet
-    baselineVals = readBaselineFile('Baseline.xls');
+    baselineFile = readBaselineFile('Baseline.xls');
 else
     % Get baseline value from mat file (faster)
     load('Baseline.mat');
 end
 
 % Get baseline value for this test
-for i = 1:size(baselineVals,1)
-    if strcmp(baselineVals{i,1},'Volume')
-        baselineVal = baselineVals{i,2};
+for i = 1:size(baselineFile,1)
+    if ~isempty(strfind(baselineFile{i,1},'Volume'))
+        knownVal = baselineFile{i,2};
     end
 end
 
@@ -167,16 +167,16 @@ end
 
 % Calculate volume
 vol = sum(areas)*stepSize;
-newVal = vol;
+measuredVal = vol;
 
 disp(['Areas (cm^2): ' sprintf('%.2f  ',areas)]);
 disp(['Step size: ' sprintf('%.2f mm',stepSize*10)]);
-disp(['Baseline value: ' sprintf('%.2f',baselineVal) ' cm^3']);
-disp(['New value: ' sprintf('%.2f',newVal) ' cm^3']);
+disp(['Baseline value: ' sprintf('%.2f',knownVal) ' cm^3']);
+disp(['New value: ' sprintf('%.2f',measuredVal) ' cm^3']);
 
-error = abs(newVal-baselineVal);
+error = abs(measuredVal-knownVal);
 % Compare measured volume and known volume
-if error > 0.05*baselineVal
+if error > 0.05*knownVal
     % Fail
     result = 0;
     disp('Volume measurement accuracy test: failed');

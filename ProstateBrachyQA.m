@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 26-Jun-2015 17:49:28
+% Last Modified by GUIDE v2.5 29-Jun-2015 11:04:18
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -89,6 +89,7 @@ set(handles.lateralDistance_panel_result,'Parent',tab6);
 set(handles.area_panel,'Parent',tab7);
 set(handles.area_panel_result,'Parent',tab7);
 set(handles.volume_panel,'Parent',tab8);
+set(handles.volume_panel_result,'Parent',tab8);
 set(handles.gridAlignment_panel,'Parent',tab9);
 
 % Initiate imageFiles
@@ -1089,8 +1090,10 @@ testName = handles.testName;
 switch testName
     case 'area'
         str = 'area';
+        baselineText = 'Area';
     case 'volume'
         str = 'volume';
+        baselineText = 'Volume';
 end
 
 % Manually input known value
@@ -1105,7 +1108,7 @@ if ~isempty(knownVal)
     % Save to baseline file
     [num,txt,baselineFile] = xlsread('Baseline.xls');
     for i = 1:size(baselineFile,1)
-        if ~isempty(strfind(baselineFile{i,1},'Area'))
+        if ~isempty(strfind(baselineFile{i,1},baselineText))
             oldVal = baselineFile{i,2};
             baselineFile{i,2} = knownVal;
         end
@@ -1124,6 +1127,108 @@ if ~isempty(knownVal)
     set(table,'Data',data);
     % Update handles. property
     handles.([testName '_knownVal']) = knownVal;
+end
+guidata(hObject,handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function volume_table_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to volume_table (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+data = cell(1,5);
+set(hObject,'Data',data);
+set(hObject,'RowName',{'Volume'});
+set(hObject,'ColumnName',{'<html>Known (cm<sup>3</sup>)</html>','<html>Measured (cm<sup>3</sup>)</html>',...
+    'Diff (abs)','Diff (%)','Result'});
+set(hObject,'ColumnEditable',false(1,size(data,2)));
+
+
+% --- Executes on button press in volume_button_runTest.
+function volume_button_runTest_Callback(hObject, eventdata, handles)
+% hObject    handle to volume_button_runTest (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% Get test number and name (test function called and gui handles depend on this name)
+testNum = handles.testNum;
+panelHandle = handles.volume_panel_figure;
+axesHandle = handles.volume_axes;
+
+if numel(handles.imageFiles) >= testNum
+    if ~isempty(handles.imageFiles{testNum})
+        
+        % Create separate axes for each image
+        axesHandles = zeros(numel(handles.imageFiles{testNum}),1);
+        axesHandles(1) = handles.volume_axes;
+        for n = 2:numel(handles.imageFiles{testNum})
+            ax = handles.volume_axes;
+            % Create copies of existing testName_axes
+            axesHandles(n) = copyobj(ax,handles.volume_panel);
+        end
+        % Store axes handles list
+        handles.volume_axes_list = axesHandles;
+        % Bring panel_figure back on top
+        uistack(handles.volume_panel_figure,'top');
+        
+        % Run test, plot on given axes
+        % Check if scale readings were set manually
+        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+            % Scale readings were inputted
+            [result,knownVal,measuredVal] = volumeTestAuto(handles.imageFiles{testNum}{:},...
+                'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                'PanelHandle',panelHandle,'AxesHandle',axesHandles);
+        else
+            % Read scale automatically from image
+            [result,knownVal,measuredVal] = volumeTestAuto(handles.imageFiles{testNum}{:},...
+                'PanelHandle',panelHandle,'AxesHandle',axesHandles);
+        end
+        
+        % Get table data
+        table = handles.volume_table;
+        data = get(table,'Data');
+        % Modify table data
+        data{1,1} = sprintf('%.2f',knownVal);
+        data{1,2} = sprintf('%.2f',measuredVal);
+        % Absolute difference
+        absDiff = abs(measuredVal-knownVal);
+        data{1,3} = sprintf('%.2f',absDiff);
+        % Percent difference
+        avg = (knownVal+measuredVal)/2;
+        percentDiff = absDiff/avg*100;
+        data{1,4} = sprintf('%.2f',percentDiff);
+        % Result
+        if result == 1
+            data{1,5} = '<html><font color="green">PASS';
+        else
+            data{1,5} = '<html><font color="red">FAIL';
+        end
+        % Set table data
+        set(table,'Data',data);
+        
+        % If in single view mode, hide the grid panel and show current axes
+        if get(handles.volume_button_singleView,'Value') == 1
+            % Hide grid panel
+            set(handles.volume_panel_figure,'Visible','off');
+            % Show current image axes plots
+            imageIndex = handles.volume_imageIndex;
+            currImageAxes = handles.volume_axes_list(imageIndex);
+            plots = get(currImageAxes,'Children');
+            set(plots,'Visible','on');
+            % Show legend associated with current image
+            testPanelChildren = get(handles.volume_panel,'Children');
+            legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+            for n = 1:numel(legends)
+                leg = legends(n);
+                userData = get(leg,'UserData');
+                if userData.ImageIndex == imageIndex
+                    set(leg,'Visible','on');
+                end
+            end
+            % Show previous and next image buttons
+            set(handles.volume_button_prev,'Visible','on');
+            set(handles.volume_button_next,'Visible','on');
+        end
+    end
 end
 guidata(hObject,handles);
 
