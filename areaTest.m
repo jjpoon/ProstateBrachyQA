@@ -6,16 +6,16 @@ function result = areaTest(imageFile)
 % Get baseline values
 if ~exist('Baseline.mat','file')
     % Read xls file if mat file not created yet
-    baselineVals = readBaselineFile('Baseline.xls');
+    baselineFile = readBaselineFile('Baseline.xls');
 else
     % Get baseline value from mat file (faster)
     load('Baseline.mat');
 end
 
 % Get baseline value for this test
-for i = 1:size(baselineVals,1)
-    if strcmp(baselineVals{i,1},'Area')
-        baselineVal = baselineVals{i,2};
+for i = 1:size(baselineFile,1)
+    if ~isempty(strfind(baselineFile{i,1},'Area'))
+        knownVal = baselineFile{i,2};
     end
 end
 
@@ -29,12 +29,12 @@ if ~isempty(ind)
     newVal = str2double(regexp(labels{1}(ind:end),'\d*\.\d*','match','once'));
 end
 
-disp(['Baseline value: ' num2str(baselineVal)]);
+disp(['Baseline value: ' num2str(knownVal)]);
 disp(['New value: ' num2str(newVal)]);
 
-error = abs(newVal-baselineVal);
+error = abs(newVal-knownVal);
 % Compare measured area and known area
-if error > 0.05*baselineVal
+if error > 0.05*knownVal
     % Fail
     result = 0;
     disp('Area measurement accuracy test: failed');

@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 26-Jun-2015 16:56:36
+% Last Modified by GUIDE v2.5 26-Jun-2015 17:49:28
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -87,6 +87,7 @@ set(handles.axialDistance_panel_result,'Parent',tab5);
 set(handles.lateralDistance_panel,'Parent',tab6);
 set(handles.lateralDistance_panel_result,'Parent',tab6);
 set(handles.area_panel,'Parent',tab7);
+set(handles.area_panel_result,'Parent',tab7);
 set(handles.volume_panel,'Parent',tab8);
 set(handles.gridAlignment_panel,'Parent',tab9);
 
@@ -106,6 +107,11 @@ handles.depth_plane = 'axial';
 handles.axialResolution_plane = 'axial';
 handles.lateralResolution_plane = 'axial';
 handles.lateralDistance_plane = 'axial';
+
+% Initiate known values (if given, will use instead of value in baseline
+% file)
+handles.area_knownVal = {};
+handles.volume_knownVal = {};
 
 % Add listener for selected tab index
 addlistener(handles.tabgroup,'SelectedIndex','PostSet',@(obj,eventdata)onSelectedTabChanged(hObject));
@@ -1010,3 +1016,115 @@ if numel(handles.imageFiles) >= testNum
     end
 end
 guidata(hObject,handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function area_table_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to area_table (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+data = cell(1,5);
+set(hObject,'Data',data);
+set(hObject,'RowName',{'Area'});
+set(hObject,'ColumnName',{'<html>Known (cm<sup>2</sup>)</html>','<html>Measured (cm<sup>2</sup>)</html>',...
+    'Diff (abs)','Diff (%)','Result'});
+set(hObject,'ColumnEditable',false(1,size(data,2)));
+
+% --- Executes on button press in area_button_runTest.
+function area_button_runTest_Callback(hObject, eventdata, handles)
+% hObject    handle to area_button_runTest (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% Get test number and name (test function called and gui handles depend on this name)
+testNum = handles.testNum;
+axesHandle = handles.area_axes;
+
+if numel(handles.imageFiles) >= testNum
+    if ~isempty(handles.imageFiles{testNum})
+        % Run test, plot on given axes
+        % Check if scale readings were set manually
+        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+            % Scale readings were inputted
+            [result,knownVal,measuredVal] = areaTestAuto(handles.imageFiles{testNum}{:},...
+                'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                'AxesHandle',axesHandle);
+        else
+            % Read scale automatically from image
+            [result,knownVal,measuredVal] = areaTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+        end
+        
+        % Get table data
+        table = handles.area_table;
+        data = get(table,'Data');
+        % Modify table data
+        data{1,1} = sprintf('%.2f',knownVal);
+        data{1,2} = sprintf('%.2f',measuredVal);
+        % Absolute difference
+        absDiff = abs(measuredVal-knownVal);
+        data{1,3} = sprintf('%.2f',absDiff);
+        % Percent difference
+        avg = (knownVal+measuredVal)/2;
+        percentDiff = absDiff/avg*100;
+        data{1,4} = sprintf('%.2f',percentDiff);
+        % Result
+        if result == 1
+            data{1,5} = '<html><font color="green">PASS';
+        else
+            data{1,5} = '<html><font color="red">FAIL';
+        end
+        % Set table data
+        set(table,'Data',data);
+    end
+end
+guidata(hObject,handles);
+
+
+% --- Executes on button press in area_button_setKnownVal.
+function button_setKnownVal_Callback(hObject, eventdata, handles)
+% hObject    handle to area_button_setKnownVal (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% Get test name
+testName = handles.testName;
+switch testName
+    case 'area'
+        str = 'area';
+    case 'volume'
+        str = 'volume';
+end
+
+% Manually input known value
+prompt = ['Enter the known ' str ':'];
+title = ['Manually input the known ' str];
+numlines = [1, length(title)+20];
+default = {num2str(handles.([testName '_knownVal']))};
+answer=inputdlg(prompt,title,numlines,default);
+knownVal = str2num(answer{1});
+% If user inputted number
+if ~isempty(knownVal)
+    % Save to baseline file
+    [num,txt,baselineFile] = xlsread('Baseline.xls');
+    for i = 1:size(baselineFile,1)
+        if ~isempty(strfind(baselineFile{i,1},'Area'))
+            oldVal = baselineFile{i,2};
+            baselineFile{i,2} = knownVal;
+        end
+    end
+    xlswrite('Baseline.xls',baselineFile);
+    save('Baseline.mat','baselineFile');
+    % Input in table
+    table = handles.([testName '_table']);
+    data = get(table,'Data');
+    % If new known value is different, clear table
+    if oldVal ~= knownVal
+        data = cell(size(data));
+    end
+    % Display new known value in first column
+    data{:,1} = sprintf('%.2f',knownVal);
+    set(table,'Data',data);
+    % Update handles. property
+    handles.([testName '_knownVal']) = knownVal;
+end
+guidata(hObject,handles);
+
+

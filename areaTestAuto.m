@@ -1,4 +1,4 @@
-function [result,baselineVal,newVal] = areaTestAuto(imageFile,varargin)
+function [result,knownVal,measuredVal] = areaTestAuto(imageFile,varargin)
 % AREATEST is for the area measurement accuracy quality control test.
 % The function checks if the calculated area is within 5% of the actual
 % area value.
@@ -28,16 +28,16 @@ end
 % Get baseline values
 if ~exist('Baseline.mat','file')
     % Read xls file if mat file not created yet
-    baselineVals = readBaselineFile('Baseline.xls');
+    baselineFile = readBaselineFile('Baseline.xls');
 else
     % Get baseline value from mat file (faster)
     load('Baseline.mat');
 end
 
 % Get baseline value for this test
-for i = 1:size(baselineVals,1)
-    if strcmp(baselineVals{i,1},'Area')
-        baselineVal = baselineVals{i,2};
+for i = 1:size(baselineFile,1)
+    if ~isempty(strfind(baselineFile{i,1},'Area'))
+        knownVal = baselineFile{i,2};
     end
 end
 
@@ -66,7 +66,7 @@ c1 = viscircles(parent,center,radius);
 
 if isempty(radius)
     % If no circle was found, set area to 0
-    newVal = 0;
+    measuredVal = 0;
 else
     % Convert radius to mm
     radius_mm = radius*pixelScale;
@@ -74,14 +74,14 @@ else
     radius_cm = radius_mm/10;
     % Calculate area in cm
     area = pi*radius_cm^2;
-    newVal = area;
+    measuredVal = area;
 end
 
 % Figure title
 % title(['Area = ' sprintf('%.2f',newVal) texlabel(' cm^2')]);
 % Legend
 if ~isempty(c1)
-    l = legend(c1,['Area: ' sprintf('%.2f',newVal) ' cm^2'],...
+    l = legend(c1,['Area: ' sprintf('%.2f',measuredVal) ' cm^2'],...
         'Location','southeast','Orientation','horizontal');
     % Decrease legend marker size
     markerObjs = findobj(get(l,'children'), 'type', 'line');
@@ -90,12 +90,12 @@ if ~isempty(c1)
     set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
 end
 
-disp(['Baseline value: ' sprintf('%.2f',baselineVal) ' cm^2']);
-disp(['New value: ' sprintf('%.2f',newVal) ' cm^2']);
+disp(['Known value: ' sprintf('%.2f',knownVal) ' cm^2']);
+disp(['Measured value: ' sprintf('%.2f',measuredVal) ' cm^2']);
 
-error = abs(newVal-baselineVal);
+error = abs(measuredVal-knownVal);
 % Compare measured area and known area
-if error > 0.05*baselineVal
+if error > 0.05*knownVal
     % Fail
     result = 0;
     disp('Area measurement accuracy test: failed');
