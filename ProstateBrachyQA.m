@@ -112,6 +112,8 @@ handles.lateralDistance_plane = 'axial';
 
 % Initiate known values (if given, will use instead of value in baseline
 % file)
+handles.axialDistance_knownVal = {};
+handles.lateralDistance_knownVal = {};
 handles.area_knownVal = {};
 handles.volume_knownVal = {};
 
@@ -679,6 +681,14 @@ end
 guidata(hObject,handles);
 
 
+% --- Executes during object creation, after setting all properties.
+function buttongroup_result_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to axialResolution_buttongroup_result (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+set(hObject,'SelectionChangeFcn',@(obj,eventdata)buttongroup_result_SelectionChangeFcn(hObject,eventdata,handles));
+
+
 % --- Executes when selected object is changed in depth_buttongroup_result.
 function buttongroup_result_SelectionChangeFcn(hObject, eventdata, handles)
 % hObject    handle to the selected object in depth_buttongroup_result 
@@ -784,13 +794,6 @@ if numel(handles.imageFiles) >= testNum
     end
 end
 guidata(hObject,handles);
-
-% --- Executes during object creation, after setting all properties.
-function buttongroup_result_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to axialResolution_buttongroup_result (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-set(hObject,'SelectionChangeFcn',@(obj,eventdata)buttongroup_result_SelectionChangeFcn(hObject,eventdata,handles));
 
 
 % --- Executes during object creation, after setting all properties.
@@ -1089,6 +1092,12 @@ function button_setKnownVal_Callback(hObject, eventdata, handles)
 % Get test name
 testName = handles.testName;
 switch testName
+    case 'axialDistance'
+        str = 'axial distance';
+        baselineText = 'Axial distance';
+    case 'lateralDistance'
+        str = 'lateral distance';
+        baselineText = 'Lateral distance';
     case 'area'
         str = 'area';
         baselineText = 'Area';
@@ -1103,9 +1112,10 @@ title = ['Manually input the known ' str];
 numlines = [1, length(title)+20];
 default = {num2str(handles.([testName '_knownVal']))};
 answer=inputdlg(prompt,title,numlines,default);
-knownVal = str2num(answer{1});
+
 % If user inputted number
-if ~isempty(knownVal)
+if ~isempty(answer)
+    knownVal = str2num(answer{1});
     % Save to baseline file
     [num,txt,baselineFile] = xlsread('Baseline.xls');
     for i = 1:size(baselineFile,1)
@@ -1117,14 +1127,23 @@ if ~isempty(knownVal)
     xlswrite('Baseline.xls',baselineFile);
     save('Baseline.mat','baselineFile');
     % Input in table
-    table = handles.([testName '_table']);
+    if strcmp(testName,'lateralDistance')
+        % If test is lateral distance, get axial or longitudinal table
+        if strcmp(handles.([testName '_plane']),'axial')
+            table = handles.([testName '_table_axial']);
+        else
+            table = handles.([testName '_table_long']);
+        end
+    else
+        table = handles.([testName '_table']);
+    end
     data = get(table,'Data');
     % If new known value is different, clear table
     if oldVal ~= knownVal
         data = cell(size(data));
     end
     % Display new known value in first column
-    data{:,1} = sprintf('%.2f',knownVal);
+    data(:,1) = {sprintf('%.2f',knownVal)};
     set(table,'Data',data);
     % Update handles. property
     handles.([testName '_knownVal']) = knownVal;
