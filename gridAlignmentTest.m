@@ -21,7 +21,7 @@ for i = 1:numel(varargin)
     end
 end
 
-disp(['Errors: ' num2str(errors)]);
+disp(['Errors (mm): ' num2str(errors)]);
 
 % Compare errors between needle template and electronic grid
 % Check if any errors (corners and center) are greater than 3 mm.

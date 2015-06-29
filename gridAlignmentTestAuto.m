@@ -1,4 +1,4 @@
-function [result,baselineVal,newVal] = gridAlignmentTestAuto(imageFile1,varargin)
+function [result,errors] = gridAlignmentTestAuto(imageFile1,varargin)
 % GRIDALIGNMENTEST is for the needle template alignment quality control test.
 % The function checks the difference between the actual needle location 
 % (using the needle template) and the corresponding point on the electronic
@@ -279,7 +279,15 @@ for i = 1:numel(imageInputs)
     end
     % ---------------------------------------------------------------------
     
+    % Error between grid point and needle point
     errors(i) = dist_mm;
+    
+    % Result
+    if dist_mm > 3
+        result(i) = 0;
+    else
+        result(i) = 1;
+    end
     
 end
 
@@ -288,20 +296,15 @@ if exist('fig','var')
     set(fig,'Units','normalized','Position',[0.05 0.05 0.9 0.85]);
 end
 
-baselineVal = [];
-newVal = [];
-
 disp(['Errors (mm): ' sprintf('%.2f  ',errors)]);
 
 % Compare errors between needle template and electronic grid
 % Check if any errors (corners and center) are greater than 3 mm.
 if any(errors>3)
     % Fail
-    result = 0;
     disp('Needle template alignment test: failed');
 else
     % Pass
-    result = 1;
     disp('Needle template alignment test: passed');
 end
 
