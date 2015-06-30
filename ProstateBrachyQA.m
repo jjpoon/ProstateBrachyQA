@@ -574,56 +574,69 @@ function grayscale_button_runTest_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Get test number and name (test function called and gui handles depend on this name)
-testNum = handles.testNum;
-axesHandle = handles.grayscale_axes;
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
 
-if numel(handles.imageFiles) >= testNum
-    if ~isempty(handles.imageFiles{testNum})
-        
-        % Clear axes
-        cla(axesHandle);
-        % Remove old legends
-        parentPanel = get(axesHandle,'Parent');
-        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
-        delete(legends);
-        
-        % Run test, plot on given axes
-        % Check if scale readings were set manually
-        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
-            % Scale readings were inputted
-            [result,baselineVal,newVal] = grayscaleTestAuto(handles.imageFiles{testNum}{:},...
-                'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                'AxesHandle',axesHandle);
-        else
-            % Read scale automatically from image
-            [result,baselineVal,newVal] = grayscaleTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
-        end
-        
-        % Display values with 2 decimal places
-        baselineValText = sprintf('%.2f',baselineVal);
-        newValText = sprintf('%.2f',newVal);
-        
-        % Modify table data
-        table = handles.grayscale_table;
-        data = get(table,'Data');
-        % Set baseline value table cell
-        data{1,1} = baselineValText;
-        % Set new value table cell
-        data{1,2} = newValText;
-        % Set test result table cell
-        if result == 1
-            data{1,3} = '<html><font color="green">PASS';
-        else
-            data{1,3} = '<html><font color="red">FAIL';
-        end
-        % Set table data
-        set(table,'Data',data);
-    end
+try
+    % Get test number and name (test function called and gui handles depend on this name)
+    testNum = handles.testNum;
+    axesHandle = handles.grayscale_axes;
     
-    % Enable Set Baseline button
-    set(handles.grayscale_button_setBaseline,'Enable','on');
+    if numel(handles.imageFiles) >= testNum
+        if ~isempty(handles.imageFiles{testNum})
+            
+            % Clear axes
+            cla(axesHandle);
+            % Remove old legends
+            parentPanel = get(axesHandle,'Parent');
+            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            delete(legends);
+            
+            % Run test, plot on given axes
+            % Check if scale readings were set manually
+            if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+                % Scale readings were inputted
+                [result,baselineVal,newVal] = grayscaleTestAuto(handles.imageFiles{testNum}{:},...
+                    'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                    'AxesHandle',axesHandle);
+            else
+                % Read scale automatically from image
+                [result,baselineVal,newVal] = grayscaleTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+            end
+            
+            % Display values with 2 decimal places
+            baselineValText = sprintf('%.2f',baselineVal);
+            newValText = sprintf('%.2f',newVal);
+            
+            % Modify table data
+            table = handles.grayscale_table;
+            data = get(table,'Data');
+            % Set baseline value table cell
+            data{1,1} = baselineValText;
+            % Set new value table cell
+            data{1,2} = newValText;
+            % Set test result table cell
+            if result == 1
+                data{1,3} = '<html><font color="green">PASS';
+            else
+                data{1,3} = '<html><font color="red">FAIL';
+            end
+            % Set table data
+            set(table,'Data',data);
+        end
+        
+        % Enable Set Baseline button
+        set(handles.grayscale_button_setBaseline,'Enable','on');
+    end
+catch exception
+    disp(getReport(exception));
 end
+
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 guidata(hObject,handles);
 
 
@@ -646,60 +659,73 @@ function depth_button_runTest_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Get test number and name (test function called and gui handles depend on this name)
-testNum = handles.testNum;
-axesHandle = handles.depth_axes;
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
 
-if numel(handles.imageFiles) >= testNum
-    if ~isempty(handles.imageFiles{testNum})
-        
-        % Clear axes
-        cla(axesHandle);
-        % Remove old legends
-        parentPanel = get(axesHandle,'Parent');
-        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
-        delete(legends);
-        
-        % Run test, plot on given axes
-        % Check if scale readings were set manually
-        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
-            % Scale readings were inputted
-            [result,baselineVal,newVal] = depthTestAuto(handles.imageFiles{testNum}{:},...
-                'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                'AxesHandle',axesHandle);
-        else
-            % Read scale automatically from image
-            [result,baselineVal,newVal] = depthTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
-        end
-        
-        % Display values with 2 decimal places
-        baselineValText = sprintf('%.2f',baselineVal);
-        newValText = sprintf('%.2f',newVal);
-        
-        % Modify table data
-        if strcmp(handles.depth_plane,'axial')
-            table = handles.depth_table_axial;
-        elseif strcmp(handles.depth_plane,'longitudinal')
-            table = handles.depth_table_long;
-        end
-        data = get(table,'Data');
-        % Set baseline value table cell
-        data{1,1} = baselineValText;
-        % Set new value table cell
-        data{1,2} = newValText;
-        % Set test result table cell
-        if result == 1
-            data{1,3} = '<html><font color="green">PASS';
-        else
-            data{1,3} = '<html><font color="red">FAIL';
-        end
-        % Set table data
-        set(table,'Data',data);
-    end
+try
+    % Get test number and name (test function called and gui handles depend on this name)
+    testNum = handles.testNum;
+    axesHandle = handles.depth_axes;
     
-    % Enable Set Baseline button
-    set(handles.depth_button_setBaseline,'Enable','on');
+    if numel(handles.imageFiles) >= testNum
+        if ~isempty(handles.imageFiles{testNum})
+            
+            % Clear axes
+            cla(axesHandle);
+            % Remove old legends
+            parentPanel = get(axesHandle,'Parent');
+            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            delete(legends);
+            
+            % Run test, plot on given axes
+            % Check if scale readings were set manually
+            if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+                % Scale readings were inputted
+                [result,baselineVal,newVal] = depthTestAuto(handles.imageFiles{testNum}{:},...
+                    'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                    'AxesHandle',axesHandle);
+            else
+                % Read scale automatically from image
+                [result,baselineVal,newVal] = depthTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+            end
+            
+            % Display values with 2 decimal places
+            baselineValText = sprintf('%.2f',baselineVal);
+            newValText = sprintf('%.2f',newVal);
+            
+            % Modify table data
+            if strcmp(handles.depth_plane,'axial')
+                table = handles.depth_table_axial;
+            elseif strcmp(handles.depth_plane,'longitudinal')
+                table = handles.depth_table_long;
+            end
+            data = get(table,'Data');
+            % Set baseline value table cell
+            data{1,1} = baselineValText;
+            % Set new value table cell
+            data{1,2} = newValText;
+            % Set test result table cell
+            if result == 1
+                data{1,3} = '<html><font color="green">PASS';
+            else
+                data{1,3} = '<html><font color="red">FAIL';
+            end
+            % Set table data
+            set(table,'Data',data);
+        end
+        
+        % Enable Set Baseline button
+        set(handles.depth_button_setBaseline,'Enable','on');
+    end
+catch exception
+    disp(getReport(exception));
 end
+
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 guidata(hObject,handles);
 
 
@@ -766,66 +792,79 @@ function axialResolution_button_runTest_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Get test number and name (test function called and gui handles depend on this name)
-testNum = handles.testNum;
-axesHandle = handles.axialResolution_axes;
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
 
-if numel(handles.imageFiles) >= testNum
-    if ~isempty(handles.imageFiles{testNum})
-        
-        % Clear axes
-        cla(axesHandle);
-        % Remove old legends
-        parentPanel = get(axesHandle,'Parent');
-        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
-        delete(legends);
-        
-        % Run test, plot on given axes
-        % Check if scale readings were set manually
-        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
-            % Scale readings were inputted
-            [result,baselineVals,newVals] = axialResolutionTestAuto(handles.imageFiles{testNum}{:},...
-                'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                'AxesHandle',axesHandle);
-        else
-            % Read scale automatically from image
-            [result,baselineVals,newVals] = axialResolutionTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
-        end
-        
-        % Get table data
-        if strcmp(handles.axialResolution_plane,'axial')
-            baselines = baselineVals(1:4);
-            table = handles.axialResolution_table_axial;
-        elseif strcmp(handles.axialResolution_plane,'longitudinal')
-            baselines = baselineVals(5:6);
-            table = handles.axialResolution_table_long;
-        end
-        data = get(table,'Data');
-        % Modify table data
-        for n = 1:numel(newVals)
-            data{n,1} = sprintf('%.2f',baselines(n));
-            data{n,2} = sprintf('%.2f',newVals(n));
-            % Absolute difference
-            absDiff = abs(newVals(n)-baselines(n));
-            data{n,3} = sprintf('%.2f',absDiff);
-            % Percent difference
-            avg = (baselines(n)+newVals(n))/2;
-            percentDiff = absDiff/avg*100;
-            data{n,4} = sprintf('%.2f',percentDiff);
-            % Result
-            if result(n) == 1
-                data{n,5} = '<html><font color="green">PASS';
+try
+    % Get test number and name (test function called and gui handles depend on this name)
+    testNum = handles.testNum;
+    axesHandle = handles.axialResolution_axes;
+    
+    if numel(handles.imageFiles) >= testNum
+        if ~isempty(handles.imageFiles{testNum})
+            
+            % Clear axes
+            cla(axesHandle);
+            % Remove old legends
+            parentPanel = get(axesHandle,'Parent');
+            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            delete(legends);
+            
+            % Run test, plot on given axes
+            % Check if scale readings were set manually
+            if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+                % Scale readings were inputted
+                [result,baselineVals,newVals] = axialResolutionTestAuto(handles.imageFiles{testNum}{:},...
+                    'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                    'AxesHandle',axesHandle);
             else
-                data{n,5} = '<html><font color="red">FAIL';
+                % Read scale automatically from image
+                [result,baselineVals,newVals] = axialResolutionTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
             end
+            
+            % Get table data
+            if strcmp(handles.axialResolution_plane,'axial')
+                baselines = baselineVals(1:4);
+                table = handles.axialResolution_table_axial;
+            elseif strcmp(handles.axialResolution_plane,'longitudinal')
+                baselines = baselineVals(5:6);
+                table = handles.axialResolution_table_long;
+            end
+            data = get(table,'Data');
+            % Modify table data
+            for n = 1:numel(newVals)
+                data{n,1} = sprintf('%.2f',baselines(n));
+                data{n,2} = sprintf('%.2f',newVals(n));
+                % Absolute difference
+                absDiff = abs(newVals(n)-baselines(n));
+                data{n,3} = sprintf('%.2f',absDiff);
+                % Percent difference
+                avg = (baselines(n)+newVals(n))/2;
+                percentDiff = absDiff/avg*100;
+                data{n,4} = sprintf('%.2f',percentDiff);
+                % Result
+                if result(n) == 1
+                    data{n,5} = '<html><font color="green">PASS';
+                else
+                    data{n,5} = '<html><font color="red">FAIL';
+                end
+            end
+            % Set table data
+            set(table,'Data',data);
+            
+            % Enable Set Baseline button
+            set(handles.axialResolution_button_setBaseline,'Enable','on')
         end
-        % Set table data
-        set(table,'Data',data);
-        
-        % Enable Set Baseline button
-        set(handles.axialResolution_button_setBaseline,'Enable','on')
     end
+catch exception
+    disp(getReport(exception));
 end
+
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 guidata(hObject,handles);
 
 
@@ -859,66 +898,79 @@ function lateralResolution_button_runTest_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Get test number and name (test function called and gui handles depend on this name)
-testNum = handles.testNum;
-axesHandle = handles.lateralResolution_axes;
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
 
-if numel(handles.imageFiles) >= testNum
-    if ~isempty(handles.imageFiles{testNum})
-        
-        % Clear axes
-        cla(axesHandle);
-        % Remove old legends
-        parentPanel = get(axesHandle,'Parent');
-        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
-        delete(legends);
-        
-        % Run test, plot on given axes
-        % Check if scale readings were set manually
-        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
-            % Scale readings were inputted
-            [result,baselineVals,newVals] = lateralResolutionTestAuto(handles.imageFiles{testNum}{:},...
-                'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                'AxesHandle',axesHandle);
-        else
-            % Read scale automatically from image
-            [result,baselineVals,newVals] = lateralResolutionTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
-        end
-        
-        % Get table data
-        if strcmp(handles.lateralResolution_plane,'axial')
-            baselines = baselineVals(1:4);
-            table = handles.lateralResolution_table_axial;
-        elseif strcmp(handles.lateralResolution_plane,'longitudinal')
-            baselines = baselineVals(5:6);
-            table = handles.lateralResolution_table_long;
-        end
-        data = get(table,'Data');
-        % Modify table data
-        for n = 1:numel(newVals)
-            data{n,1} = sprintf('%.2f',baselines(n));
-            data{n,2} = sprintf('%.2f',newVals(n));
-            % Absolute difference
-            absDiff = abs(newVals(n)-baselines(n));
-            data{n,3} = sprintf('%.2f',absDiff);
-            % Percent difference
-            avg = (baselines(n)+newVals(n))/2;
-            percentDiff = absDiff/avg*100;
-            data{n,4} = sprintf('%.2f',percentDiff);
-            % Result
-            if result(n) == 1
-                data{n,5} = '<html><font color="green">PASS';
+try
+    % Get test number and name (test function called and gui handles depend on this name)
+    testNum = handles.testNum;
+    axesHandle = handles.lateralResolution_axes;
+    
+    if numel(handles.imageFiles) >= testNum
+        if ~isempty(handles.imageFiles{testNum})
+            
+            % Clear axes
+            cla(axesHandle);
+            % Remove old legends
+            parentPanel = get(axesHandle,'Parent');
+            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            delete(legends);
+            
+            % Run test, plot on given axes
+            % Check if scale readings were set manually
+            if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+                % Scale readings were inputted
+                [result,baselineVals,newVals] = lateralResolutionTestAuto(handles.imageFiles{testNum}{:},...
+                    'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                    'AxesHandle',axesHandle);
             else
-                data{n,5} = '<html><font color="red">FAIL';
+                % Read scale automatically from image
+                [result,baselineVals,newVals] = lateralResolutionTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
             end
+            
+            % Get table data
+            if strcmp(handles.lateralResolution_plane,'axial')
+                baselines = baselineVals(1:4);
+                table = handles.lateralResolution_table_axial;
+            elseif strcmp(handles.lateralResolution_plane,'longitudinal')
+                baselines = baselineVals(5:6);
+                table = handles.lateralResolution_table_long;
+            end
+            data = get(table,'Data');
+            % Modify table data
+            for n = 1:numel(newVals)
+                data{n,1} = sprintf('%.2f',baselines(n));
+                data{n,2} = sprintf('%.2f',newVals(n));
+                % Absolute difference
+                absDiff = abs(newVals(n)-baselines(n));
+                data{n,3} = sprintf('%.2f',absDiff);
+                % Percent difference
+                avg = (baselines(n)+newVals(n))/2;
+                percentDiff = absDiff/avg*100;
+                data{n,4} = sprintf('%.2f',percentDiff);
+                % Result
+                if result(n) == 1
+                    data{n,5} = '<html><font color="green">PASS';
+                else
+                    data{n,5} = '<html><font color="red">FAIL';
+                end
+            end
+            % Set table data
+            set(table,'Data',data);
+            
+            % Enable Set Baseline button
+            set(handles.lateralResolution_button_setBaseline,'Enable','on')
         end
-        % Set table data
-        set(table,'Data',data);
-        
-        % Enable Set Baseline button
-        set(handles.lateralResolution_button_setBaseline,'Enable','on')
     end
+catch exception
+    disp(getReport(exception));
 end
+
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 guidata(hObject,handles);
 
 
@@ -941,59 +993,72 @@ function axialDistance_button_runTest_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Get test number and name (test function called and gui handles depend on this name)
-testNum = handles.testNum;
-axesHandle = handles.axialDistance_axes;
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
 
-if numel(handles.imageFiles) >= testNum
-    if ~isempty(handles.imageFiles{testNum})
-        
-        % Clear axes
-        cla(axesHandle);
-        % Remove old legends
-        parentPanel = get(axesHandle,'Parent');
-        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
-        delete(legends);
-        
-        % Run test, plot on given axes
-        % Check if scale readings were set manually
-        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
-            % Scale readings were inputted
-            [result,knownVal,measuredVals] = axialDistanceTestAuto(handles.imageFiles{testNum}{:},...
-                'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                'AxesHandle',axesHandle);
-        else
-            % Read scale automatically from image
-            [result,knownVal,measuredVals] = axialDistanceTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
-        end
-        
-        % Get table data
-        table = handles.axialDistance_table;
-        data = get(table,'Data');
-        % Modify table data
-        for n = 1:numel(measuredVals)
-            data{n,1} = sprintf('%.2f',knownVal);
-            data{n,2} = sprintf('%.2f',measuredVals(n));
-            % Absolute difference
-            absDiff = abs(measuredVals(n)-knownVal);
-            data{n,3} = sprintf('%.2f',absDiff);
-            % Percent difference
-            avg = (knownVal+measuredVals(n))/2;
-            percentDiff = absDiff/avg*100;
-            data{n,4} = sprintf('%.2f',percentDiff);
-            % Result
-            if ~isempty(result)
-                if result(n) == 1
-                    data{n,5} = '<html><font color="green">PASS';
-                else
-                    data{n,5} = '<html><font color="red">FAIL';
+try
+    % Get test number and name (test function called and gui handles depend on this name)
+    testNum = handles.testNum;
+    axesHandle = handles.axialDistance_axes;
+    
+    if numel(handles.imageFiles) >= testNum
+        if ~isempty(handles.imageFiles{testNum})
+            
+            % Clear axes
+            cla(axesHandle);
+            % Remove old legends
+            parentPanel = get(axesHandle,'Parent');
+            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            delete(legends);
+            
+            % Run test, plot on given axes
+            % Check if scale readings were set manually
+            if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+                % Scale readings were inputted
+                [result,knownVal,measuredVals] = axialDistanceTestAuto(handles.imageFiles{testNum}{:},...
+                    'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                    'AxesHandle',axesHandle);
+            else
+                % Read scale automatically from image
+                [result,knownVal,measuredVals] = axialDistanceTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+            end
+            
+            % Get table data
+            table = handles.axialDistance_table;
+            data = get(table,'Data');
+            % Modify table data
+            for n = 1:numel(measuredVals)
+                data{n,1} = sprintf('%.2f',knownVal);
+                data{n,2} = sprintf('%.2f',measuredVals(n));
+                % Absolute difference
+                absDiff = abs(measuredVals(n)-knownVal);
+                data{n,3} = sprintf('%.2f',absDiff);
+                % Percent difference
+                avg = (knownVal+measuredVals(n))/2;
+                percentDiff = absDiff/avg*100;
+                data{n,4} = sprintf('%.2f',percentDiff);
+                % Result
+                if ~isempty(result)
+                    if result(n) == 1
+                        data{n,5} = '<html><font color="green">PASS';
+                    else
+                        data{n,5} = '<html><font color="red">FAIL';
+                    end
                 end
             end
+            % Set table data
+            set(table,'Data',data);
         end
-        % Set table data
-        set(table,'Data',data);
     end
+catch exception
+    disp(getReport(exception));
 end
+
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 guidata(hObject,handles);
 
 
@@ -1027,63 +1092,76 @@ function lateralDistance_button_runTest_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Get test number and name (test function called and gui handles depend on this name)
-testNum = handles.testNum;
-axesHandle = handles.lateralDistance_axes;
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
 
-if numel(handles.imageFiles) >= testNum
-    if ~isempty(handles.imageFiles{testNum})
-        
-        % Clear axes
-        cla(axesHandle);
-        % Remove old legends
-        parentPanel = get(axesHandle,'Parent');
-        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
-        delete(legends);
-        
-        % Run test, plot on given axes
-        % Check if scale readings were set manually
-        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
-            % Scale readings were inputted
-            [result,knownVal,measuredVals] = lateralDistanceTestAuto(handles.imageFiles{testNum}{:},...
-                'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                'AxesHandle',axesHandle);
-        else
-            % Read scale automatically from image
-            [result,knownVal,measuredVals] = lateralDistanceTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
-        end
-        
-        % Get table data
-        if strcmp(handles.lateralDistance_plane,'axial')
-            table = handles.lateralDistance_table_axial;
-        elseif strcmp(handles.lateralDistance_plane,'longitudinal')
-            table = handles.lateralDistance_table_long;
-        end
-        data = get(table,'Data');
-        % Modify table data
-        for n = 1:numel(measuredVals)
-            data{n,1} = sprintf('%.2f',knownVal);
-            data{n,2} = sprintf('%.2f',measuredVals(n));
-            % Absolute difference
-            absDiff = abs(measuredVals(n)-knownVal);
-            data{n,3} = sprintf('%.2f',absDiff);
-            % Percent difference
-            avg = (knownVal+measuredVals(n))/2;
-            percentDiff = absDiff/avg*100;
-            data{n,4} = sprintf('%.2f',percentDiff);
-            % Result
-            if ~isempty(result)
-                if result(n) == 1
-                    data{n,5} = '<html><font color="green">PASS';
-                else
-                    data{n,5} = '<html><font color="red">FAIL';
+try
+    % Get test number and name (test function called and gui handles depend on this name)
+    testNum = handles.testNum;
+    axesHandle = handles.lateralDistance_axes;
+    
+    if numel(handles.imageFiles) >= testNum
+        if ~isempty(handles.imageFiles{testNum})
+            
+            % Clear axes
+            cla(axesHandle);
+            % Remove old legends
+            parentPanel = get(axesHandle,'Parent');
+            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            delete(legends);
+            
+            % Run test, plot on given axes
+            % Check if scale readings were set manually
+            if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+                % Scale readings were inputted
+                [result,knownVal,measuredVals] = lateralDistanceTestAuto(handles.imageFiles{testNum}{:},...
+                    'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                    'AxesHandle',axesHandle);
+            else
+                % Read scale automatically from image
+                [result,knownVal,measuredVals] = lateralDistanceTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+            end
+            
+            % Get table data
+            if strcmp(handles.lateralDistance_plane,'axial')
+                table = handles.lateralDistance_table_axial;
+            elseif strcmp(handles.lateralDistance_plane,'longitudinal')
+                table = handles.lateralDistance_table_long;
+            end
+            data = get(table,'Data');
+            % Modify table data
+            for n = 1:numel(measuredVals)
+                data{n,1} = sprintf('%.2f',knownVal);
+                data{n,2} = sprintf('%.2f',measuredVals(n));
+                % Absolute difference
+                absDiff = abs(measuredVals(n)-knownVal);
+                data{n,3} = sprintf('%.2f',absDiff);
+                % Percent difference
+                avg = (knownVal+measuredVals(n))/2;
+                percentDiff = absDiff/avg*100;
+                data{n,4} = sprintf('%.2f',percentDiff);
+                % Result
+                if ~isempty(result)
+                    if result(n) == 1
+                        data{n,5} = '<html><font color="green">PASS';
+                    else
+                        data{n,5} = '<html><font color="red">FAIL';
+                    end
                 end
             end
+            % Set table data
+            set(table,'Data',data);
         end
-        % Set table data
-        set(table,'Data',data);
     end
+catch exception
+    disp(getReport(exception));
 end
+
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 guidata(hObject,handles);
 
 
@@ -1105,54 +1183,68 @@ function area_button_runTest_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % Get test number and name (test function called and gui handles depend on this name)
-testNum = handles.testNum;
-axesHandle = handles.area_axes;
 
-if numel(handles.imageFiles) >= testNum
-    if ~isempty(handles.imageFiles{testNum})
-        
-        % Clear axes
-        cla(axesHandle);
-        % Remove old legends
-        parentPanel = get(axesHandle,'Parent');
-        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
-        delete(legends);
-        
-        % Run test, plot on given axes
-        % Check if scale readings were set manually
-        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
-            % Scale readings were inputted
-            [result,knownVal,measuredVal] = areaTestAuto(handles.imageFiles{testNum}{:},...
-                'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                'AxesHandle',axesHandle);
-        else
-            % Read scale automatically from image
-            [result,knownVal,measuredVal] = areaTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
+
+try
+    testNum = handles.testNum;
+    axesHandle = handles.area_axes;
+    
+    if numel(handles.imageFiles) >= testNum
+        if ~isempty(handles.imageFiles{testNum})
+            
+            % Clear axes
+            cla(axesHandle);
+            % Remove old legends
+            parentPanel = get(axesHandle,'Parent');
+            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            delete(legends);
+            
+            % Run test, plot on given axes
+            % Check if scale readings were set manually
+            if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+                % Scale readings were inputted
+                [result,knownVal,measuredVal] = areaTestAuto(handles.imageFiles{testNum}{:},...
+                    'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                    'AxesHandle',axesHandle);
+            else
+                % Read scale automatically from image
+                [result,knownVal,measuredVal] = areaTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+            end
+            
+            % Get table data
+            table = handles.area_table;
+            data = get(table,'Data');
+            % Modify table data
+            data{1,1} = sprintf('%.2f',knownVal);
+            data{1,2} = sprintf('%.2f',measuredVal);
+            % Absolute difference
+            absDiff = abs(measuredVal-knownVal);
+            data{1,3} = sprintf('%.2f',absDiff);
+            % Percent difference
+            avg = (knownVal+measuredVal)/2;
+            percentDiff = absDiff/avg*100;
+            data{1,4} = sprintf('%.2f',percentDiff);
+            % Result
+            if result == 1
+                data{1,5} = '<html><font color="green">PASS';
+            elseif result == 0
+                data{1,5} = '<html><font color="red">FAIL';
+            end
+            % Set table data
+            set(table,'Data',data);
         end
-        
-        % Get table data
-        table = handles.area_table;
-        data = get(table,'Data');
-        % Modify table data
-        data{1,1} = sprintf('%.2f',knownVal);
-        data{1,2} = sprintf('%.2f',measuredVal);
-        % Absolute difference
-        absDiff = abs(measuredVal-knownVal);
-        data{1,3} = sprintf('%.2f',absDiff);
-        % Percent difference
-        avg = (knownVal+measuredVal)/2;
-        percentDiff = absDiff/avg*100;
-        data{1,4} = sprintf('%.2f',percentDiff);
-        % Result
-        if result == 1
-            data{1,5} = '<html><font color="green">PASS';
-        elseif result == 0
-            data{1,5} = '<html><font color="red">FAIL';
-        end
-        % Set table data
-        set(table,'Data',data);
     end
+catch exception
+    disp(getReport(exception));
 end
+
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 guidata(hObject,handles);
 
 
@@ -1247,98 +1339,112 @@ function volume_button_runTest_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % Get test number and name (test function called and gui handles depend on this name)
-testNum = handles.testNum;
-panelHandle = handles.volume_panel_figure;
-axesHandle = handles.volume_axes;
 
-if numel(handles.imageFiles) >= testNum
-    if ~isempty(handles.imageFiles{testNum})
-        
-        % Clear existing grid view
-        delete(get(panelHandle,'Children'));
-        % Clear axes
-        cla(axesHandle);
-        % Delete any existing old axes (except original)
-        if isfield(handles,'volume_axes_list')
-            delete(handles.volume_axes_list(2:end));
-        end
-        % Remove old legends
-        parentPanel = get(axesHandle,'Parent');
-        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
-        delete(legends);
-        
-        % Create separate axes for each image
-        axesHandles = zeros(numel(handles.imageFiles{testNum}),1);
-        axesHandles(1) = axesHandle;
-        for n = 2:numel(handles.imageFiles{testNum})
-            % Create copies of existing testName_axes
-            axesHandles(n) = copyobj(axesHandle,handles.volume_panel);
-        end
-        % Store axes handles list
-        handles.volume_axes_list = axesHandles;
-        % Bring panel_figure back on top
-        uistack(panelHandle,'top');
-        
-        % Run test, plot on given axes
-        % Check if scale readings were set manually
-        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
-            % Scale readings were inputted
-            [result,knownVal,measuredVal] = volumeTestAuto(handles.imageFiles{testNum}{:},...
-                'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                'PanelHandle',panelHandle,'AxesHandle',axesHandles);
-        else
-            % Read scale automatically from image
-            [result,knownVal,measuredVal] = volumeTestAuto(handles.imageFiles{testNum}{:},...
-                'PanelHandle',panelHandle,'AxesHandle',axesHandles);
-        end
-        
-        % Get table data
-        table = handles.volume_table;
-        data = get(table,'Data');
-        % Modify table data
-        data{1,1} = sprintf('%.2f',knownVal);
-        data{1,2} = sprintf('%.2f',measuredVal);
-        % Absolute difference
-        absDiff = abs(measuredVal-knownVal);
-        data{1,3} = sprintf('%.2f',absDiff);
-        % Percent difference
-        avg = (knownVal+measuredVal)/2;
-        percentDiff = absDiff/avg*100;
-        data{1,4} = sprintf('%.2f',percentDiff);
-        % Result
-        if result == 1
-            data{1,5} = '<html><font color="green">PASS';
-        elseif result == 0
-            data{1,5} = '<html><font color="red">FAIL';
-        end
-        % Set table data
-        set(table,'Data',data);
-        
-        % If in single view mode, hide the grid panel and show current axes
-        if get(handles.volume_button_singleView,'Value') == 1
-            % Hide grid panel
-            set(handles.volume_panel_figure,'Visible','off');
-            % Show current image axes plots
-            imageIndex = handles.volume_imageIndex;
-            currImageAxes = handles.volume_axes_list(imageIndex);
-            plots = get(currImageAxes,'Children');
-            set(plots,'Visible','on');
-            % Show legend associated with current image
-            testPanelChildren = get(handles.volume_panel,'Children');
-            legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
-            for n = 1:numel(legends)
-                leg = legends(n);
-                userData = get(leg,'UserData');
-                if userData.ImageIndex == imageIndex
-                    set(leg,'Visible','on');
-                end
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
+
+try
+    testNum = handles.testNum;
+    panelHandle = handles.volume_panel_figure;
+    axesHandle = handles.volume_axes;
+    
+    if numel(handles.imageFiles) >= testNum
+        if ~isempty(handles.imageFiles{testNum})
+            
+            % Clear existing grid view
+            delete(get(panelHandle,'Children'));
+            % Clear axes
+            cla(axesHandle);
+            % Delete any existing old axes (except original)
+            if isfield(handles,'volume_axes_list')
+                delete(handles.volume_axes_list(2:end));
             end
-            % Show previous and next image buttons
-            set(handles.volume_button_prev,'Visible','on');
-            set(handles.volume_button_next,'Visible','on');
+            % Remove old legends
+            parentPanel = get(axesHandle,'Parent');
+            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            delete(legends);
+            
+            % Create separate axes for each image
+            axesHandles = zeros(numel(handles.imageFiles{testNum}),1);
+            axesHandles(1) = axesHandle;
+            for n = 2:numel(handles.imageFiles{testNum})
+                % Create copies of existing testName_axes
+                axesHandles(n) = copyobj(axesHandle,handles.volume_panel);
+            end
+            % Store axes handles list
+            handles.volume_axes_list = axesHandles;
+            % Bring panel_figure back on top
+            uistack(panelHandle,'top');
+            
+            % Run test, plot on given axes
+            % Check if scale readings were set manually
+            if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+                % Scale readings were inputted
+                [result,knownVal,measuredVal] = volumeTestAuto(handles.imageFiles{testNum}{:},...
+                    'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                    'PanelHandle',panelHandle,'AxesHandle',axesHandles);
+            else
+                % Read scale automatically from image
+                [result,knownVal,measuredVal] = volumeTestAuto(handles.imageFiles{testNum}{:},...
+                    'PanelHandle',panelHandle,'AxesHandle',axesHandles);
+            end
+            
+            % Get table data
+            table = handles.volume_table;
+            data = get(table,'Data');
+            % Modify table data
+            data{1,1} = sprintf('%.2f',knownVal);
+            data{1,2} = sprintf('%.2f',measuredVal);
+            % Absolute difference
+            absDiff = abs(measuredVal-knownVal);
+            data{1,3} = sprintf('%.2f',absDiff);
+            % Percent difference
+            avg = (knownVal+measuredVal)/2;
+            percentDiff = absDiff/avg*100;
+            data{1,4} = sprintf('%.2f',percentDiff);
+            % Result
+            if result == 1
+                data{1,5} = '<html><font color="green">PASS';
+            elseif result == 0
+                data{1,5} = '<html><font color="red">FAIL';
+            end
+            % Set table data
+            set(table,'Data',data);
+            
+            % If in single view mode, hide the grid panel and show current axes
+            if get(handles.volume_button_singleView,'Value') == 1
+                % Hide grid panel
+                set(handles.volume_panel_figure,'Visible','off');
+                % Show current image axes plots
+                imageIndex = handles.volume_imageIndex;
+                currImageAxes = handles.volume_axes_list(imageIndex);
+                plots = get(currImageAxes,'Children');
+                set(plots,'Visible','on');
+                % Show legend associated with current image
+                testPanelChildren = get(handles.volume_panel,'Children');
+                legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+                for n = 1:numel(legends)
+                    leg = legends(n);
+                    userData = get(leg,'UserData');
+                    if userData.ImageIndex == imageIndex
+                        set(leg,'Visible','on');
+                    end
+                end
+                % Show previous and next image buttons
+                set(handles.volume_button_prev,'Visible','on');
+                set(handles.volume_button_next,'Visible','on');
+            end
         end
     end
+catch exception
+    disp(getReport(exception));
 end
+
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer)
+
 guidata(hObject,handles);
 
 
@@ -1360,92 +1466,106 @@ function gridAlignment_button_runTest_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % Get test number and name (test function called and gui handles depend on this name)
-testNum = handles.testNum;
-panelHandle = handles.gridAlignment_panel_figure;
-axesHandle = handles.gridAlignment_axes;
 
-if numel(handles.imageFiles) >= testNum
-    if ~isempty(handles.imageFiles{testNum})
-        
-        % Clear existing grid view
-        delete(get(panelHandle,'Children'));
-        % Clear axes
-        cla(axesHandle);
-        % Delete any existing old axes (except original)
-        if isfield(handles,'gridAlignment_axes_list')
-            delete(handles.gridAlignment_axes_list(2:end));
-        end
-        % Remove old legends
-        parentPanel = get(axesHandle,'Parent');
-        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
-        delete(legends);
-        
-        % Create separate axes for each image
-        axesHandles = zeros(numel(handles.imageFiles{testNum}),1);
-        axesHandles(1) = axesHandle;
-        for n = 2:numel(handles.imageFiles{testNum})
-            % Create copies of existing testName_axes
-            axesHandles(n) = copyobj(axesHandle,handles.gridAlignment_panel);
-        end
-        % Store axes handles list
-        handles.gridAlignment_axes_list = axesHandles;
-        % Bring panel_figure back on top
-        uistack(panelHandle,'top');
-        
-        % Run test, plot on given axes
-        % Check if scale readings were set manually
-        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
-            % Scale readings were inputted
-            [result,errors] = gridAlignmentTestAuto(handles.imageFiles{testNum}{:},...
-                'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                'PanelHandle',panelHandle,'AxesHandle',axesHandles);
-        else
-            % Read scale automatically from image
-            [result,errors] = gridAlignmentTestAuto(handles.imageFiles{testNum}{:},...
-                'PanelHandle',panelHandle,'AxesHandle',axesHandles);
-        end
-        
-        % Get table data
-        table = handles.gridAlignment_table;
-        data = get(table,'Data');
-        for n = 1:numel(errors)
-            % Modify table data
-            data{n,1} = sprintf('%.2f',errors(n));
-            % Result
-            if result(n) == 1
-                data{n,2} = '<html><font color="green">PASS';
-            else
-                data{n,2} = '<html><font color="red">FAIL';
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
+
+try
+    testNum = handles.testNum;
+    panelHandle = handles.gridAlignment_panel_figure;
+    axesHandle = handles.gridAlignment_axes;
+    
+    if numel(handles.imageFiles) >= testNum
+        if ~isempty(handles.imageFiles{testNum})
+            
+            % Clear existing grid view
+            delete(get(panelHandle,'Children'));
+            % Clear axes
+            cla(axesHandle);
+            % Delete any existing old axes (except original)
+            if isfield(handles,'gridAlignment_axes_list')
+                delete(handles.gridAlignment_axes_list(2:end));
             end
-        end
-        % Set table data
-        set(table,'Data',data);
-        
-        % If in single view mode, hide the grid panel and show current axes
-        if get(handles.gridAlignment_button_singleView,'Value') == 1
-            % Hide grid panel
-            set(handles.gridAlignment_panel_figure,'Visible','off');
-            % Show current image axes plots
-            imageIndex = handles.gridAlignment_imageIndex;
-            currImageAxes = handles.gridAlignment_axes_list(imageIndex);
-            plots = get(currImageAxes,'Children');
-            set(plots,'Visible','on');
-            % Show legend associated with current image
-            testPanelChildren = get(handles.gridAlignment_panel,'Children');
-            legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
-            for n = 1:numel(legends)
-                leg = legends(n);
-                userData = get(leg,'UserData');
-                if userData.ImageIndex == imageIndex
-                    set(leg,'Visible','on');
+            % Remove old legends
+            parentPanel = get(axesHandle,'Parent');
+            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            delete(legends);
+            
+            % Create separate axes for each image
+            axesHandles = zeros(numel(handles.imageFiles{testNum}),1);
+            axesHandles(1) = axesHandle;
+            for n = 2:numel(handles.imageFiles{testNum})
+                % Create copies of existing testName_axes
+                axesHandles(n) = copyobj(axesHandle,handles.gridAlignment_panel);
+            end
+            % Store axes handles list
+            handles.gridAlignment_axes_list = axesHandles;
+            % Bring panel_figure back on top
+            uistack(panelHandle,'top');
+            
+            % Run test, plot on given axes
+            % Check if scale readings were set manually
+            if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+                % Scale readings were inputted
+                [result,errors] = gridAlignmentTestAuto(handles.imageFiles{testNum}{:},...
+                    'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                    'PanelHandle',panelHandle,'AxesHandle',axesHandles);
+            else
+                % Read scale automatically from image
+                [result,errors] = gridAlignmentTestAuto(handles.imageFiles{testNum}{:},...
+                    'PanelHandle',panelHandle,'AxesHandle',axesHandles);
+            end
+            
+            % Get table data
+            table = handles.gridAlignment_table;
+            data = get(table,'Data');
+            for n = 1:numel(errors)
+                % Modify table data
+                data{n,1} = sprintf('%.2f',errors(n));
+                % Result
+                if result(n) == 1
+                    data{n,2} = '<html><font color="green">PASS';
+                else
+                    data{n,2} = '<html><font color="red">FAIL';
                 end
             end
-            % Show previous and next image buttons
-            set(handles.gridAlignment_button_prev,'Visible','on');
-            set(handles.gridAlignment_button_next,'Visible','on');
+            % Set table data
+            set(table,'Data',data);
+            
+            % If in single view mode, hide the grid panel and show current axes
+            if get(handles.gridAlignment_button_singleView,'Value') == 1
+                % Hide grid panel
+                set(handles.gridAlignment_panel_figure,'Visible','off');
+                % Show current image axes plots
+                imageIndex = handles.gridAlignment_imageIndex;
+                currImageAxes = handles.gridAlignment_axes_list(imageIndex);
+                plots = get(currImageAxes,'Children');
+                set(plots,'Visible','on');
+                % Show legend associated with current image
+                testPanelChildren = get(handles.gridAlignment_panel,'Children');
+                legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+                for n = 1:numel(legends)
+                    leg = legends(n);
+                    userData = get(leg,'UserData');
+                    if userData.ImageIndex == imageIndex
+                        set(leg,'Visible','on');
+                    end
+                end
+                % Show previous and next image buttons
+                set(handles.gridAlignment_button_prev,'Visible','on');
+                set(handles.gridAlignment_button_next,'Visible','on');
+            end
         end
     end
+catch exception
+    disp(getReport(exception));
 end
+
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 guidata(hObject,handles);
 
 
