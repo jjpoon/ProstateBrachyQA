@@ -580,6 +580,14 @@ axesHandle = handles.grayscale_axes;
 
 if numel(handles.imageFiles) >= testNum
     if ~isempty(handles.imageFiles{testNum})
+        
+        % Clear axes
+        cla(axesHandle);
+        % Remove old legends
+        parentPanel = get(axesHandle,'Parent');
+        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        delete(legends);
+        
         % Run test, plot on given axes
         % Check if scale readings were set manually
         if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
@@ -644,6 +652,14 @@ axesHandle = handles.depth_axes;
 
 if numel(handles.imageFiles) >= testNum
     if ~isempty(handles.imageFiles{testNum})
+        
+        % Clear axes
+        cla(axesHandle);
+        % Remove old legends
+        parentPanel = get(axesHandle,'Parent');
+        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        delete(legends);
+        
         % Run test, plot on given axes
         % Check if scale readings were set manually
         if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
@@ -756,6 +772,14 @@ axesHandle = handles.axialResolution_axes;
 
 if numel(handles.imageFiles) >= testNum
     if ~isempty(handles.imageFiles{testNum})
+        
+        % Clear axes
+        cla(axesHandle);
+        % Remove old legends
+        parentPanel = get(axesHandle,'Parent');
+        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        delete(legends);
+        
         % Run test, plot on given axes
         % Check if scale readings were set manually
         if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
@@ -841,6 +865,14 @@ axesHandle = handles.lateralResolution_axes;
 
 if numel(handles.imageFiles) >= testNum
     if ~isempty(handles.imageFiles{testNum})
+        
+        % Clear axes
+        cla(axesHandle);
+        % Remove old legends
+        parentPanel = get(axesHandle,'Parent');
+        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        delete(legends);
+        
         % Run test, plot on given axes
         % Check if scale readings were set manually
         if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
@@ -915,6 +947,14 @@ axesHandle = handles.axialDistance_axes;
 
 if numel(handles.imageFiles) >= testNum
     if ~isempty(handles.imageFiles{testNum})
+        
+        % Clear axes
+        cla(axesHandle);
+        % Remove old legends
+        parentPanel = get(axesHandle,'Parent');
+        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        delete(legends);
+        
         % Run test, plot on given axes
         % Check if scale readings were set manually
         if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
@@ -993,6 +1033,14 @@ axesHandle = handles.lateralDistance_axes;
 
 if numel(handles.imageFiles) >= testNum
     if ~isempty(handles.imageFiles{testNum})
+        
+        % Clear axes
+        cla(axesHandle);
+        % Remove old legends
+        parentPanel = get(axesHandle,'Parent');
+        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        delete(legends);
+        
         % Run test, plot on given axes
         % Check if scale readings were set manually
         if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
@@ -1062,6 +1110,14 @@ axesHandle = handles.area_axes;
 
 if numel(handles.imageFiles) >= testNum
     if ~isempty(handles.imageFiles{testNum})
+        
+        % Clear axes
+        cla(axesHandle);
+        % Remove old legends
+        parentPanel = get(axesHandle,'Parent');
+        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        delete(legends);
+        
         % Run test, plot on given axes
         % Check if scale readings were set manually
         if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
@@ -1198,6 +1254,19 @@ axesHandle = handles.volume_axes;
 if numel(handles.imageFiles) >= testNum
     if ~isempty(handles.imageFiles{testNum})
         
+        % Clear existing grid view
+        delete(get(panelHandle,'Children'));
+        % Clear axes
+        cla(axesHandle);
+        % Delete any existing old axes (except original)
+        if isfield(handles,'volume_axes_list')
+            delete(handles.volume_axes_list(2:end));
+        end
+        % Remove old legends
+        parentPanel = get(axesHandle,'Parent');
+        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        delete(legends);
+        
         % Create separate axes for each image
         axesHandles = zeros(numel(handles.imageFiles{testNum}),1);
         axesHandles(1) = axesHandle;
@@ -1297,6 +1366,19 @@ axesHandle = handles.gridAlignment_axes;
 
 if numel(handles.imageFiles) >= testNum
     if ~isempty(handles.imageFiles{testNum})
+        
+        % Clear existing grid view
+        delete(get(panelHandle,'Children'));
+        % Clear axes
+        cla(axesHandle);
+        % Delete any existing old axes (except original)
+        if isfield(handles,'gridAlignment_axes_list')
+            delete(handles.gridAlignment_axes_list(2:end));
+        end
+        % Remove old legends
+        parentPanel = get(axesHandle,'Parent');
+        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        delete(legends);
         
         % Create separate axes for each image
         axesHandles = zeros(numel(handles.imageFiles{testNum}),1);

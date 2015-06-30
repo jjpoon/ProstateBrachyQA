@@ -56,8 +56,6 @@ else
     parent = gca;
 end
 
-% Clear axes first
-cla(parent);
 % Plot image on axes
 im = imshow(im_orig,'Parent',parent);
 % Hold on
