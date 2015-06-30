@@ -138,6 +138,7 @@ for i = 1:numel(imageInputs)
         end
         
         % Legend
+        l = [];
         if ~isempty(c1)
             l = legend(c1,['Area: ' sprintf('%.2f',areas(i)) ' cm^2'],...
                 'Location','southeast','Orientation','horizontal');
@@ -152,6 +153,9 @@ for i = 1:numel(imageInputs)
             userData.ImageIndex = i;
             set(l,'UserData',userData);
         end
+        
+        % Callback when double clicking on image
+        set(im,'ButtonDownFcn',@(obj,eventdata)showInFigure(parent,l));
         
         if ii == 2
             % Hide axes plots, GUI function will show the current axes only

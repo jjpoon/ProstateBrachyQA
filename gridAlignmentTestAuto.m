@@ -256,6 +256,7 @@ for i = 1:numel(imageInputs)
         % Figure title
         %     title(['Error = ' sprintf('%.2f',dist_mm) ' mm']);
         % Legend
+        l = [];
         if ~isempty(needleMarker)
             l = legend(needleMarker,['Dist: ' sprintf('%.2f',dist_mm) ' mm'],...
                 'Location','southeast','Orientation','horizontal');
@@ -270,6 +271,9 @@ for i = 1:numel(imageInputs)
             userData.ImageIndex = i;
             set(l,'UserData',userData);
         end
+        
+        % Callback when double clicking on image
+        set(im,'ButtonDownFcn',@(obj,eventdata)showInFigure(parent,l));
         
         if ii == 2
             % Hide axes plots, GUI function will show the current axes only

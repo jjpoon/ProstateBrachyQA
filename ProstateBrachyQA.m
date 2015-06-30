@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 30-Jun-2015 09:35:22
+% Last Modified by GUIDE v2.5 30-Jun-2015 10:52:01
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1472,8 +1472,13 @@ if strcmp(choice,'Yes')
 end
 
 
-% --- Executes on button press in lateralResolution_button_setBaseline.
-function lateralResolution_button_setBaseline_Callback(hObject, eventdata, handles)
-% hObject    handle to lateralResolution_button_setBaseline (see GCBO)
+% --- Executes on mouse press over axes background.
+function grayscale_axes_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to grayscale_axes (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+switch get(hObject,'SelectionType')
+    case 'normal'
+    case 'open'
+        disp('double click')
+end

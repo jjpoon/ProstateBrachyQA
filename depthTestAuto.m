@@ -101,7 +101,7 @@ end
 % Clear axes first
 cla(parent);
 % Plot image on axes
-imshow(im_orig,'Parent',parent);
+im = imshow(im_orig,'Parent',parent);
 % Hold on
 set(parent,'NextPlot','add');
 % Plot bounding box
@@ -120,6 +120,9 @@ markerObjs = findobj(get(l,'children'), 'type', 'line');
 set(markerObjs, 'Markersize', 12);
 % Change legend text and background colour
 set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
+
+% Callback when double clicking on image
+set(im,'ButtonDownFcn',@(obj,eventdata)showInFigure(parent,l));
 
 disp(['Baseline value: ' sprintf('%.2f',baselineVal) ' mm']);
 disp(['New value: ' sprintf('%.2f',newVals) ' mm']);
