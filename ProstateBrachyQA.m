@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 29-Jun-2015 16:01:35
+% Last Modified by GUIDE v2.5 30-Jun-2015 09:35:22
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -797,6 +797,9 @@ if numel(handles.imageFiles) >= testNum
         end
         % Set table data
         set(table,'Data',data);
+        
+        % Enable Set Baseline button
+        set(handles.axialResolution_button_setBaseline,'Enable','on')
     end
 end
 guidata(hObject,handles);
@@ -879,6 +882,9 @@ if numel(handles.imageFiles) >= testNum
         end
         % Set table data
         set(table,'Data',data);
+        
+        % Enable Set Baseline button
+        set(handles.lateralResolution_button_setBaseline,'Enable','on')
     end
 end
 guidata(hObject,handles);
@@ -1390,11 +1396,11 @@ if ~strcmp(testName,'grayscale')
     data_axial = get(table_axial,'Data');
     strVals_axial = data_axial(:,2);
     if ~isempty(strVals_axial)
-        currVals_axial = cell(numel(strVals_axial));
+        currVals_axial = cell(size(strVals_axial));
         for n = 1:numel(strVals_axial)
             if ~isempty(strVals_axial{n})
                 rowName = get(table_axial,'RowName');
-                msg = sprintf([msg '\n' rowName{n} ' (axial): ' strVals_axial{n}]);
+                msg = sprintf([msg '\n' rowName{n} ' (axial plane): ' strVals_axial{n}]);
                 % Convert values to double format before writing to file
                 currVals_axial{n} = str2num(strVals_axial{n});
             end
@@ -1405,25 +1411,25 @@ if ~strcmp(testName,'grayscale')
     data_long = get(table_long,'Data');
     strVals_long = data_long(:,2);
     if ~isempty(strVals_long)
-        currVals_long = cell(numel(strVals_long));
+        currVals_long = cell(size(strVals_long));
         for n = 1:numel(strVals_long)
             if ~isempty(strVals_long{n})
                 rowName = get(table_long,'RowName');
-                msg = sprintf([msg '\n' rowName{n} ' (longitudinal): ' strVals_long{n}]);
+                msg = sprintf([msg '\n' rowName{n} ' (longitudinal plane): ' strVals_long{n}]);
                 % Convert values to double format before writing to file
                 currVals_long{n} = str2num(strVals_long{n});
             end
         end
     end
     % Combine data
-    currVals = [currVals_axial,currVals_long];
+    currVals = [currVals_axial;currVals_long]';
 else
     % Grayscale test doesnt have separate axial and longitudinal tables
     table = handles.([testName '_table']);
     data = get(table,'Data');
     strVals = data(:,2);
     if ~isempty(strVals)
-        currVals = cell(numel(strVals));
+        currVals = cell(size(strVals));
         for n = 1:numel(strVals)
             if ~isempty(strVals{n})
                 rowName = get(table,'RowName');
@@ -1437,7 +1443,7 @@ end
 
 % Confirm overwrite of baseline value
 choice = questdlg(sprintf(['Overwrite baseline values with the current measurements? '...
-    '\n' 'The following values will be written to the baseline file.'...
+    '\n' 'The following values will be written to the baseline file:'...
     '\n' msg]), ...
     'Confirm Baseline Overwrite', ...
     'Yes','No','Yes');
@@ -1447,7 +1453,13 @@ if strcmp(choice,'Yes')
     [num,txt,baselineFile] = xlsread('Baseline.xls');
     for i = 1:size(baselineFile,1)
         if ~isempty(strfind(baselineFile{i,1},baselineText))
-            baselineFile(i,2:numel(currVals)+1) = currVals;
+            for n = 1:numel(currVals)
+                % Only write new value if not empty
+                if ~isempty(currVals{n})
+                    baselineFile{i,1+n} = currVals{n};
+                end
+            end
+            %             baselineFile(i,2:numel(currVals)+1) = currVals;
         end
     end
     try
@@ -1459,4 +1471,9 @@ if strcmp(choice,'Yes')
     end
 end
 
-    
+
+% --- Executes on button press in lateralResolution_button_setBaseline.
+function lateralResolution_button_setBaseline_Callback(hObject, eventdata, handles)
+% hObject    handle to lateralResolution_button_setBaseline (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
