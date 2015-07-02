@@ -72,19 +72,35 @@ im_tight = im_cropped(min(row):max(row),min(col):max(col));
 xOffset = cropX + min(col) - 2;
 yOffset = cropY + min(row) - 2;
 
+% Horizontal edge-emphasizing filter
+filt = imfilter(im_tight,fspecial('Prewitt'));
+% 2D median filtering
+med = medfilt2(filt);
 % Convert to black and white
-im = im2bw(im_tight,0.2);
-% Get region in image
-regions = regionprops(im);
+bw = im2bw(med,0.1);
+% Remove large regions
+bw = bw - bwareaopen(bw,30);
+% Dilate image to make large region
+bw = imdilate(bw,strel('disk',10));
+bw = im2bw(bw);
+% Get largest region in image
+regions = regionprops(bw);
 % Get areas and find the index of the largest region
 areas = [regions.Area];
 [maxArea,ind] = max(areas);
 % Get boundingBox showing depth of penetration
 boundingBox = regions(ind).BoundingBox;
+% Set coordinates of top point for showing depth of penetration
+topPoint = [round(size(bw,2)/2),boundingBox(2)];
 
-% Depth of penetration is equal to the height of the bounding box
+% Get bottom point to measure depth distance from (top of semi-circle)
+im_bw = im2bw(im_tight,0.01);
+im_bw = bwareaopen(im_bw,10000);
+y = find(im_bw(:,round(size(im_bw,2)/2)),1,'last');
+bottomPoint = [size(im_bw,2)/2,y];
+
 % Depth in pixels
-depth_pixels = boundingBox(4);
+depth_pixels = bottomPoint(2) - topPoint(2);
 % Depth in mm
 depth_mm = depth_pixels*pixelScale;
 newVals = depth_mm;
@@ -105,12 +121,15 @@ im = imshow(im_orig,'Parent',parent);
 % Hold on
 set(parent,'NextPlot','add');
 % Plot bounding box
-r1 = rectangle('Position',[xOffset+boundingBox(1),yOffset+boundingBox(2),boundingBox(3:4)],...
-    'Linewidth', 1, 'EdgeColor', 'r', 'LineStyle', '--','Parent',parent);
+% r1 = rectangle('Position',[xOffset+boundingBox(1),yOffset+boundingBox(2),boundingBox(3:4)],...
+%     'Linewidth', 1, 'EdgeColor', 'r', 'LineStyle', '--','Parent',parent);
 % Plot marker
 m1 = plot(xOffset+boundingBox(1)+boundingBox(3)/2,yOffset+boundingBox(2),...
     '+','MarkerSize',15,'Linewidth',2,'Color','c','Parent',parent);
-
+% m1 = plot(xOffset+topPoint(1),yOffset+topPoint(2),...
+%     '+','MarkerSize',15,'Linewidth',2,'Color','c','Parent',parent);
+% m2 = plot(xOffset+bottomPoint(1),yOffset+bottomPoint(2),...
+%     '+','MarkerSize',15,'Linewidth',2,'Color','r','Parent',parent);
 % Figure title
 % title(['Depth = ' sprintf('%.2f',newVal) ' mm']);
 % Legend

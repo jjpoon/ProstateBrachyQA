@@ -685,10 +685,11 @@ try
                 % Scale readings were inputted
                 [result,baselineVal,newVal] = depthTestAuto(handles.imageFiles{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                    'AxesHandle',axesHandle);
+                    'AxesHandle',axesHandle,'Plane',handles.depth_plane);
             else
                 % Read scale automatically from image
-                [result,baselineVal,newVal] = depthTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+                [result,baselineVal,newVal] = depthTestAuto(handles.imageFiles{testNum}{:},...
+                    'AxesHandle',axesHandle,'Plane',handles.depth_plane);
             end
             
             % Display values with 2 decimal places
