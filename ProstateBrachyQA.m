@@ -771,7 +771,7 @@ function axialResolution_table_axial_CreateFcn(hObject, eventdata, handles)
 
 data = cell(4,5);
 set(hObject,'Data',data);
-set(hObject,'RowName',{'Proximal (left)','Proximal (right)','Distal (left)','Distal (right)'});
+set(hObject,'RowName',{'Proximal (B1)','Proximal (F1)','Distal (B5)','Distal (F5)'});
 set(hObject,'ColumnName',{'Baseline (mm)','Current (mm)','Diff (abs)','Diff (%)','Result'});
 set(hObject,'ColumnEditable',false(1,size(data,2)));
 
@@ -783,7 +783,7 @@ function axialResolution_table_long_CreateFcn(hObject, eventdata, handles)
 
 data = cell(2,5);
 set(hObject,'Data',data);
-set(hObject,'RowName',{'Proximal','Distal'});
+set(hObject,'RowName',{'Filament 1','Filament 6'});
 set(hObject,'ColumnName',{'Baseline (mm)','Current (mm)','Diff (abs)','Diff (%)','Result'});
 set(hObject,'ColumnEditable',false(1,size(data,2)));
 
@@ -877,7 +877,7 @@ function lateralResolution_table_axial_CreateFcn(hObject, eventdata, handles)
 
 data = cell(4,5);
 set(hObject,'Data',data);
-set(hObject,'RowName',{'Proximal (left)','Proximal (right)','Distal (left)','Distal (right)'});
+set(hObject,'RowName',{'Proximal (B1)','Proximal (F1)','Distal (B5)','Distal (F5)'});
 set(hObject,'ColumnName',{'Baseline (mm)','Current (mm)','Diff (abs)','Diff (%)','Result'});
 set(hObject,'ColumnEditable',false(1,size(data,2)));
 
@@ -889,7 +889,7 @@ function lateralResolution_table_long_CreateFcn(hObject, eventdata, handles)
 
 data = cell(2,5);
 set(hObject,'Data',data);
-set(hObject,'RowName',{'Proximal','Distal'});
+set(hObject,'RowName',{'Filament 1','Filament 6'});
 set(hObject,'ColumnName',{'Baseline (mm)','Current (mm)','Diff (abs)','Diff (%)','Result'});
 set(hObject,'ColumnEditable',false(1,size(data,2)));
 
@@ -983,7 +983,7 @@ function axialDistance_table_CreateFcn(hObject, eventdata, handles)
 
 data = cell(2,5);
 set(hObject,'Data',data);
-set(hObject,'RowName',{'Left','Right'});
+set(hObject,'RowName',{'B1 - B5','F1 - F5'});
 set(hObject,'ColumnName',{'Known (mm)','Measured (mm)','Diff (abs)','Diff (%)','Result'});
 set(hObject,'ColumnEditable',false(1,size(data,2)));
 
