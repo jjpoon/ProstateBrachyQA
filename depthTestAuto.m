@@ -82,6 +82,9 @@ bw = im2bw(med,0.1);
 bw = bw - bwareaopen(bw,30);
 % Dilate image to make large region
 bw = imdilate(bw,strel('disk',10));
+% Fill holes, then shrink back to normal size
+bw = imfill(bw,'holes');
+% bw = imerode(bw,strel('disk',10));
 bw = im2bw(bw);
 % Get largest region in image
 regions = regionprops(bw);
