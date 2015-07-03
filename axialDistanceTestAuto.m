@@ -117,11 +117,22 @@ bottomRightCorner = [size(bw,2) size(bw,1)];
 vectors = centroids - repmat(bottomRightCorner,size(centroids,1),1);
 distances = sqrt(vectors(:,1).^2 + vectors(:,2).^2);
 [bottomRightDist,bottomRightInd] = min(distances);
+
+% Check orientation by using position of 6th filament (left of center)
+dist_topLeft = norm(regions(topLeftInd).Centroid - regions(6).Centroid);
+dist_bottomLeft = norm(regions(bottomLeftInd).Centroid - regions(6).Centroid);
+if dist_bottomLeft < dist_topLeft
+    % bottomleft = B1, bottomright = F1, topleft = B5, topright = F5
+    filamentIndices = [topLeftInd,bottomLeftInd,topRightInd,bottomRightInd];
+else
+    % bottomleft = F1, bottomright = B1, topleft = F5, topright = B5
+    filamentIndices = [topRightInd,bottomRightInd,topLeftInd,bottomLeftInd];
+end
 % -------------------------------------------------------------------------
 
 % Loop through corner filaments
 points = [];
-for f = [topLeftInd,bottomLeftInd,topRightInd,bottomRightInd]
+for f = filamentIndices
     % Centroid of filament
     centroid = regions(f).Centroid;
     % Angle between x-axis and major axis of region (neg. because MATLAB y

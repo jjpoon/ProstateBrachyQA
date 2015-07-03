@@ -89,25 +89,21 @@ for n = 1:numel(regions)
 end
 
 yCoords = centroids(:,2);
-areas = [regions.Area]';
+lengths = [regions.MajorAxisLength]';
 
 % Assume image was taken in axial view at first
 view = 'axial';
 
 % Find indices of regions with similar y coordinate and similar area
 for i = 1:numel(regions)
-    % y coordinate of current region
-    yCoord = yCoords(i);
-    % area of current region
-    area = areas(i);
     % Get indices of regions with similar y coord
-    similarY = find(yCoords>yCoord-10 & yCoords<yCoord+10);
-    % Get indices of regions with similar area
-    similarArea = find(areas>area-20 & areas<area+20);
-    % Get indices of regions with both similar y coord and area
-    rowFilaments = intersect(similarY,similarArea);
-    % Check if number of similar regions found is between 5 and 6
-    if numel(rowFilaments) >= 5 && numel(rowFilaments) <= 6
+    similarY = find(yCoords>yCoords(i)-10 & yCoords<yCoords(i)+10);
+    % Get indices of regions with similar length
+    similarLength = find(lengths>lengths(i)-4 & lengths<lengths(i)+4);
+    % Get indices of regions with similar y and length
+    rowFilaments = intersect(similarY,similarLength);
+    % Check if found 6 similar regions
+    if numel(rowFilaments) == 6
         % Found filaments in row, image was taken in sagittal view
         view = 'sagittal';
         % Restrict regions to row filaments
@@ -152,7 +148,16 @@ if strcmp(view,'axial')
     distances = sqrt(vectors(:,1).^2 + vectors(:,2).^2);
     [bottomRight,bottomRightInd] = min(distances);
     
-    filamentIndices = [bottomLeftInd,bottomRightInd,topLeftInd,topRightInd];
+    % Check orientation by using position of 6th filament (left of center)
+    dist_topLeft = norm(regions(topLeftInd).Centroid - regions(6).Centroid);
+    dist_bottomLeft = norm(regions(bottomLeftInd).Centroid - regions(6).Centroid);
+    if dist_bottomLeft < dist_topLeft
+        % bottomleft = B1, bottomright = F1, topleft = B5, topright = F5
+        filamentIndices = [bottomLeftInd,bottomRightInd,topLeftInd,topRightInd];
+    else
+        % bottomleft = F1, bottomright = B1, topleft = F5, topright = B5
+        filamentIndices = [bottomRightInd,bottomLeftInd,topRightInd,topLeftInd];
+    end
     
 elseif strcmp(view,'sagittal')
     
@@ -161,7 +166,17 @@ elseif strcmp(view,'sagittal')
     % Get rightmost filament
     [right,rightInd] = max(centroids(:,1));
     
-    filamentIndices = [leftInd,rightInd];
+    % Check orientation by comparing distance between left 2 filaments and
+    % distance between right 2 filaments
+    dist_left2 = norm(regions(1).Centroid - regions(2).Centroid);
+    dist_right2 = norm(regions(end-1).Centroid - regions(end).Centroid);
+    if dist_left2 < dist_right2
+        % left = 1, right = 6
+        filamentIndices = [leftInd,rightInd];
+    else
+        % left = 6, right = 1
+        filamentIndices = [rightInd,leftInd];
+    end
     
 end
 % -------------------------------------------------------------------------
