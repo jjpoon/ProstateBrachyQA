@@ -81,7 +81,7 @@ bw = bw - bwareaopen(bw,100);
 bw = bwareaopen(bw,5);
 
 % Get the filament region properties
-regions = regionprops(bw,'Centroid','MinorAxisLength','Area','Orientation');
+regions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
 
 % Get centroids of filament regions
 for n = 1:numel(regions)
@@ -89,25 +89,21 @@ for n = 1:numel(regions)
 end
 
 yCoords = centroids(:,2);
-areas = [regions.Area]';
+lengths = [regions.MajorAxisLength]';
 
 % Assume image was taken in axial view at first
 view = 'axial';
 
 % Find indices of regions with similar y coordinate and similar area
 for i = 1:numel(regions)
-    % y coordinate of current region
-    yCoord = yCoords(i);
-    % area of current region
-    area = areas(i);
     % Get indices of regions with similar y coord
-    similarY = find(yCoords>yCoord-10 & yCoords<yCoord+10);
-    % Get indices of regions with similar area
-    similarArea = find(areas>area-20 & areas<area+20);
-    % Get indices of regions with both similar y coord and area
-    rowFilaments = intersect(similarY,similarArea);
-    % Check if number of similar regions found is between 5 and 6
-    if numel(rowFilaments) >= 5 && numel(rowFilaments) <= 6
+    similarY = find(yCoords>yCoords(i)-10 & yCoords<yCoords(i)+10);
+    % Get indices of regions with similar length
+    similarLength = find(lengths>lengths(i)-4 & lengths<lengths(i)+4);
+    % Get indices of regions with similar y and length
+    rowFilaments = intersect(similarY,similarLength);
+    % Check if found 6 similar regions
+    if numel(rowFilaments) == 6
         % Found filaments in row, image was taken in sagittal view
         view = 'sagittal';
         % Restrict regions to row filaments
