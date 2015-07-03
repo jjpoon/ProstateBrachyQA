@@ -1669,8 +1669,8 @@ if strcmp(choice,'Yes')
         xlswrite('Baseline.xls',baselineFile);
         save('Baseline.mat','baselineFile');
     catch
-        warndlg('Unable to write to the baseline file. The file may be open in another application.',...
-            'Warning');
+        errordlg('Unable to write to the baseline file. The file may be open in another application.',...
+            'Error');
     end
 end
 
