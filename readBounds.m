@@ -59,6 +59,13 @@ end
 if isnan(upper) || isnan(lower)
     upper = 6.4;
     lower = 0;
+    
+    % Set flag in handles for gui to show warning about assumed scale
+    fig = findobj(get(0,'Children'),'Name','ProstateBrachyQA');
+    handles = guidata(fig);
+    
+    handles.AssumedScale = 1;
+    guidata(fig,handles);
 end
 
 end

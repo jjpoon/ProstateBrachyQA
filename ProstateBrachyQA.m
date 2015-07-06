@@ -117,6 +117,10 @@ handles.lateralDistance_knownVal = {};
 handles.area_knownVal = {};
 handles.volume_knownVal = {};
 
+% Initiate flags for scale warning
+handles.AssumedScale = 0;
+handles.ShowScaleWarning = 1;
+
 % Add listener for selected tab index
 addlistener(handles.tabgroup,'SelectedIndex','PostSet',@(obj,eventdata)onSelectedTabChanged(hObject));
 
@@ -606,6 +610,9 @@ try
                 [result,baselineVal,newVal] = grayscaleTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
             end
             
+            % Get updated handles
+            handles = guidata(hObject);
+            
             % Display values with 2 decimal places
             baselineValText = sprintf('%.2f',baselineVal);
             newValText = sprintf('%.2f',newVal);
@@ -629,6 +636,11 @@ try
         
         % Enable Set Baseline button
         set(handles.grayscale_button_setBaseline,'Enable','on');
+        
+        % Show scale warning if needed
+        showScaleWarning(hObject,handles);
+        % Get updated handles
+        handles = guidata(hObject);
     end
 catch exception
     disp(getReport(exception));
@@ -692,6 +704,9 @@ try
                     'AxesHandle',axesHandle,'Plane',handles.depth_plane);
             end
             
+            % Get updated handles
+            handles = guidata(hObject);
+            
             % Display values with 2 decimal places
             baselineValText = sprintf('%.2f',baselineVal);
             newValText = sprintf('%.2f',newVal);
@@ -719,6 +734,11 @@ try
         
         % Enable Set Baseline button
         set(handles.depth_button_setBaseline,'Enable','on');
+        
+        % Show scale warning if needed
+        showScaleWarning(hObject,handles);
+        % Get updated handles
+        handles = guidata(hObject);
     end
 catch exception
     disp(getReport(exception));
@@ -825,6 +845,9 @@ try
                 [result,baselineVals,newVals] = axialResolutionTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
             end
             
+            % Get updated handles
+            handles = guidata(hObject);
+            
             % Get table data
             if strcmp(handles.axialResolution_plane,'axial')
                 baselines = baselineVals(1:4);
@@ -857,6 +880,11 @@ try
             
             % Enable Set Baseline button
             set(handles.axialResolution_button_setBaseline,'Enable','on')
+            
+            % Show scale warning if needed
+            showScaleWarning(hObject,handles);
+            % Get updated handles
+            handles = guidata(hObject);
         end
     end
 catch exception
@@ -931,6 +959,9 @@ try
                 [result,baselineVals,newVals] = lateralResolutionTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
             end
             
+            % Get updated handles
+            handles = guidata(hObject);
+            
             % Get table data
             if strcmp(handles.lateralResolution_plane,'axial')
                 baselines = baselineVals(1:4);
@@ -963,6 +994,11 @@ try
             
             % Enable Set Baseline button
             set(handles.lateralResolution_button_setBaseline,'Enable','on')
+            
+            % Show scale warning if needed
+            showScaleWarning(hObject,handles);
+            % Get updated handles
+            handles = guidata(hObject);
         end
     end
 catch exception
@@ -1026,6 +1062,9 @@ try
                 [result,knownVal,measuredVals] = axialDistanceTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
             end
             
+            % Get updated handles
+            handles = guidata(hObject);
+            
             % Get table data
             table = handles.axialDistance_table;
             data = get(table,'Data');
@@ -1051,6 +1090,11 @@ try
             end
             % Set table data
             set(table,'Data',data);
+            
+            % Show scale warning if needed
+            showScaleWarning(hObject,handles);
+            % Get updated handles
+            handles = guidata(hObject);
         end
     end
 catch exception
@@ -1125,6 +1169,9 @@ try
                 [result,knownVal,measuredVals] = lateralDistanceTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
             end
             
+            % Get updated handles
+            handles = guidata(hObject);
+            
             % Get table data
             if strcmp(handles.lateralDistance_plane,'axial')
                 table = handles.lateralDistance_table_axial;
@@ -1154,6 +1201,11 @@ try
             end
             % Set table data
             set(table,'Data',data);
+            
+            % Show scale warning if needed
+            showScaleWarning(hObject,handles);
+            % Get updated handles
+            handles = guidata(hObject);
         end
     end
 catch exception
@@ -1216,6 +1268,9 @@ try
                 [result,knownVal,measuredVal] = areaTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
             end
             
+            % Get updated handles
+            handles = guidata(hObject);
+            
             % Get table data
             table = handles.area_table;
             data = get(table,'Data');
@@ -1237,6 +1292,11 @@ try
             end
             % Set table data
             set(table,'Data',data);
+            
+            % Show scale warning if needed
+            showScaleWarning(hObject,handles);
+            % Get updated handles
+            handles = guidata(hObject);
         end
     end
 catch exception
@@ -1378,6 +1438,8 @@ try
             handles.volume_axes_list = axesHandles;
             % Bring panel_figure back on top
             uistack(panelHandle,'top');
+            % Update handles
+            guidata(hObject,handles);
             
             % Run test, plot on given axes
             % Check if scale readings were set manually
@@ -1391,6 +1453,9 @@ try
                 [result,knownVal,measuredVal] = volumeTestAuto(handles.imageFiles{testNum}{:},...
                     'PanelHandle',panelHandle,'AxesHandle',axesHandles);
             end
+            
+            % Get updated handles
+            handles = guidata(hObject);
             
             % Get table data
             table = handles.volume_table;
@@ -1437,6 +1502,11 @@ try
                 set(handles.volume_button_prev,'Visible','on');
                 set(handles.volume_button_next,'Visible','on');
             end
+            
+            % Show scale warning if needed
+            showScaleWarning(hObject,handles);
+            % Get updated handles
+            handles = guidata(hObject);
         end
     end
 catch exception
@@ -1505,6 +1575,8 @@ try
             handles.gridAlignment_axes_list = axesHandles;
             % Bring panel_figure back on top
             uistack(panelHandle,'top');
+            % Update handles
+            guidata(hObject,handles);
             
             % Run test, plot on given axes
             % Check if scale readings were set manually
@@ -1518,6 +1590,9 @@ try
                 [result,errors] = gridAlignmentTestAuto(handles.imageFiles{testNum}{:},...
                     'PanelHandle',panelHandle,'AxesHandle',axesHandles);
             end
+            
+            % Get updated handles
+            handles = guidata(hObject);
             
             % Get table data
             table = handles.gridAlignment_table;
@@ -1558,6 +1633,11 @@ try
                 set(handles.gridAlignment_button_prev,'Visible','on');
                 set(handles.gridAlignment_button_next,'Visible','on');
             end
+            
+            % Show scale warning if needed
+            showScaleWarning(hObject,handles);
+            % Get updated handles
+            handles = guidata(hObject);
         end
     end
 catch exception
@@ -1684,4 +1764,36 @@ switch get(hObject,'SelectionType')
     case 'normal'
     case 'open'
         disp('double click')
+end
+
+% --- Shows warning dialog about assumed pixel scale
+function showScaleWarning(hObject, handles)
+if handles.AssumedScale == 1 && handles.ShowScaleWarning == 1
+    msg = sprintf(['Unable to read scale from image. The following values have been assumed:'...
+        '\n\n' 'Upper bound: 6.4 cm'...
+        '\n' 'Lower bound: 0 cm'...
+        '\n\n' 'If these are not the correct values, please input the scale readings manually.'],...
+        'Warning');
+    
+    h = msgbox({msg,' ',' ',' '}, 'Warning','Warn','modal');
+    checkbox = uicontrol('Style','checkbox','String','Don''t show this message again',...
+        'Parent',h,'Units','normalized','Position',[0.3 0.25 0.8 0.1]);
+
+    % Wait for user to press OK button, see if checkbox was checked
+    while ishandle(h)
+        if get(checkbox,'Value') == 1
+            % Set flag so that this warning message doesn't appear anymore
+            handles.ShowScaleWarning = 0;
+        else
+            % Checkbox wasn't clicked, continue to show warning if needed
+            handles.ShowScaleWarning = 1;
+        end
+        pause(0.1);
+    end
+    
+    % Reset AssumedScale flag to 0
+    handles.AssumedScale = 0;
+    % Update handles
+    guidata(hObject,handles);
+    
 end
