@@ -216,7 +216,7 @@ for i = 1:numel(imageInputs)
         
         if ii == 1
             % Set size of image grid based on number of inputted images
-            gridSize = [floor(sqrt(numImages)),ceil(sqrt(numImages))];
+            gridSize = [round(sqrt(numImages)),ceil(sqrt(numImages))];
             n = gridSize(1);
             m = gridSize(2);
             [c,r] = ind2sub([gridSize(2) gridSize(1)], i);
