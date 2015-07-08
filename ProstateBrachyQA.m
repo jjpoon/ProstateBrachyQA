@@ -1438,6 +1438,10 @@ try
             handles.volume_axes_list = axesHandles;
             % Bring panel_figure back on top
             uistack(panelHandle,'top');
+            
+            % Reset image index
+            handles.volume_imageIndex = 1;
+            
             % Update handles
             guidata(hObject,handles);
             
@@ -1575,6 +1579,10 @@ try
             handles.gridAlignment_axes_list = axesHandles;
             % Bring panel_figure back on top
             uistack(panelHandle,'top');
+            
+            % Reset image index
+            handles.gridAlignment_imageIndex = 1;
+            
             % Update handles
             guidata(hObject,handles);
             
