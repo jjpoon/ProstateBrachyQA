@@ -25,54 +25,63 @@ xOffset = cropX + min(col) - 2;
 yOffset = cropY + min(row) - 2;
 
 % Use adaptive thresholding to create binary image showing the circle
-circle = adaptivethreshold(im_tight,100,0.001);
-% Morphological operations to improve visibility of circle
-circle = imopen(circle,strel('disk',2));
-circle = imclose(circle,strel('disk',2));
-circle = bwareaopen(circle,1000);
-
-% Fill holes
-circle = imfill(circle,'holes');
-% Remove regions connected to border
-circle = imclearborder(circle);
-% Erode twice to smooth object
-% seD = strel('disk',1);
-% circle = imerode(circle,seD);
-% circle = imerode(circle,seD);
-circle = imerode(circle,strel('disk',6));
-% Remove regions with area < 1000
-circle = bwareaopen(circle,1000);
-circle = imdilate(circle,strel('disk',9));
-
-% Get regions from black and white image
-regions = regionprops(circle,'MajorAxisLength','MinorAxisLength','EquivDiameter',...
-    'Centroid','BoundingBox','Area','Perimeter','Solidity');
-
-% Keep only regions with > 0.9 solidity (circle will have high solidity)
-circleLabel = bwlabel(circle);
-% Find region with highest solidity
-[~,circleInd] = max([regions.Solidity]);
-% Keep region only if solidity is 0.9 or greater
-if ~isempty(circleInd)
-    if regions(circleInd).Solidity < 0.9
-        circleInd = [];
+% If no circle found using 100 window size for adaptive thresholding, try
+% again using 70 window size
+for ws = [100,130,70]
+    circle = adaptivethreshold(im_tight,ws,0.001);
+    % Morphological operations to improve visibility of circle
+    circle = imopen(circle,strel('diamond',5));
+    circle = imclose(circle,strel('diamond',5));
+    circle = bwareaopen(circle,1000);
+    
+    % Fill holes
+    circle = imfill(circle,'holes');
+    % Remove regions connected to border
+    circle = imclearborder(circle);
+    % Erode twice to smooth object
+    % seD = strel('disk',1);
+    % circle = imerode(circle,seD);
+    % circle = imerode(circle,seD);
+    circle = imerode(circle,strel('disk',6));
+    % Remove regions with area < 1000
+    circle = bwareaopen(circle,1000);
+    circle = imdilate(circle,strel('disk',6));
+    
+    % Get regions from black and white image
+    regions = regionprops(circle,'MajorAxisLength','MinorAxisLength','EquivDiameter',...
+        'Centroid','BoundingBox','Area','Perimeter','Solidity');
+    
+    % Keep only regions with > 0.9 solidity (circle will have high solidity)
+    circleLabel = bwlabel(circle);
+    % Find region with highest solidity
+    [~,circleInd] = max([regions.Solidity]);
+    % Keep region only if solidity is 0.9 or greater
+    if ~isempty(circleInd)
+        if regions(circleInd).Solidity < 0.9
+            circleInd = [];
+        end
     end
-end
-circleFinal = ismember(circleLabel,circleInd);
-
-% Find circles using binary image
-circleRegion = regionprops(circleFinal,'MajorAxisLength');
-if isempty(circleRegion)
-    center = [];
-    radius = [];
-else
-    radius = circleRegion.MajorAxisLength/2;
-    radiusRange = [round(0.75*radius) round(1.25*radius)];
-    [center,radii] = imfindcircles(circleFinal,radiusRange,'Sensitivity',0.99,...
-        'EdgeThreshold',0.04,'ObjectPolarity','bright');
-    % Take the strongest circle as the correct segmentation
-    center = center(1,:);
-    radius = radii(1);
+    circleFinal = ismember(circleLabel,circleInd);
+    
+    % Find circles using binary image
+    circleRegion = regionprops(circleFinal,'MajorAxisLength');
+    if isempty(circleRegion)
+        center = [];
+        radius = [];
+    else
+        radius = circleRegion.MajorAxisLength/2;
+        radiusRange = [round(0.75*radius) round(1.25*radius)];
+        [center,radii] = imfindcircles(circleFinal,radiusRange,'Sensitivity',0.99,...
+            'EdgeThreshold',0.04,'ObjectPolarity','bright');
+        % Take the strongest circle as the correct segmentation
+        center = center(1,:);
+        radius = radii(1);
+    end
+    
+    % If center was found, continue
+    if ~isempty(center)
+        break
+    end
 end
 
 % % Code for plotting the segmented circle on cropped image
