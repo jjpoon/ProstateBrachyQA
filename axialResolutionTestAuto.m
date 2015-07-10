@@ -5,7 +5,7 @@ function [result,baselineVals,newVals] = axialResolutionTestAuto(imageFile,varar
 
 % Input parser
 p = inputParser;
-addRequired(p,'imageFile',@ischar);
+addRequired(p,'imageFile',@isnumeric);
 addParameter(p,'UpperScale',[]);
 addParameter(p,'LowerScale',[]);
 addParameter(p,'AxesHandle',[]);
@@ -42,7 +42,7 @@ for i = 1:size(baselineFile,1)
 end
 
 % Crop to ultrasound image
-im_orig = imread(imageFile);
+im_orig = imageFile;
 width = size(im_orig,2);
 height = size(im_orig,1);
 % Crop dimensions

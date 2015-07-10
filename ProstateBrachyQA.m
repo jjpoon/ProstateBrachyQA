@@ -93,8 +93,8 @@ set(handles.volume_panel_result,'Parent',tab8);
 set(handles.gridAlignment_panel,'Parent',tab9);
 set(handles.gridAlignment_panel_result,'Parent',tab9);
 
-% Initiate imageFiles
-handles.imageFiles = cell(9,1);
+% Initiate images
+handles.images = cell(9,1);
 
 % Initiate testNum and testName
 handles.testNum = 1;
@@ -195,7 +195,9 @@ if ischar(filenames)
 end
 % If filenames is not 0 (0 if user pressed cancel)
 if ~isnumeric(filenames)
-    handles.imageFiles{testNum} = fullfile(pathname,filenames);
+    for i = 1:numel(filenames)
+        handles.images{testNum}{i} = imread(fullfile(pathname,filenames{i}));
+    end
     % Get the listbox that is also on this panel
     listbox = handles.([testName '_listbox']);
     % Set listbox 'Value' property
@@ -205,6 +207,89 @@ if ~isnumeric(filenames)
     % Enable Run Test button
     runTestButton = handles.([testName '_button_runTest']);
     set(runTestButton,'Enable','on');
+    
+    % Show image preview
+    if ~any(strcmp(testName,{'volume','gridAlignment'}))
+        % For all tests except volume and grid alignment
+        % Clear axes
+        axesHandle = handles.([testName '_axes']);
+        cla(axesHandle);
+        % Remove old legends
+        parentPanel = get(axesHandle,'Parent');
+        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        delete(legends);
+        
+        im = imread(fullfile(pathname,filenames{1}));
+        imPlot = imshow(im,'Parent',axesHandle);
+        % Callback when double clicking on image
+        set(imPlot,'ButtonDownFcn',@(obj,eventdata)showInFigure(axesHandle,[]));
+    else
+        % For volume and grid alignment tests, has grid and single views
+        % Clear existing grid view
+        panelHandle = handles.([testName '_panel_figure']);
+        delete(get(panelHandle,'Children'));
+        % Clear axes
+        axesHandle = handles.([testName '_axes']);
+        cla(axesHandle);
+        % Delete any existing old axes (except original)
+        if isfield(handles,[testName '_axes_list'])
+            delete(handles.([testName '_axes_list'])(2:end));
+        end
+        % Remove old legends
+        parentPanel = get(axesHandle,'Parent');
+        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        delete(legends);
+        
+        % Create separate axes for each image
+        axesHandles = zeros(numel(handles.images{testNum}),1);
+        axesHandles(1) = axesHandle;
+        for n = 2:numel(handles.images{testNum})
+            % Create copies of existing testName_axes
+            axesHandles(n) = copyobj(axesHandle,handles.([testName '_panel']));
+        end
+        % Store axes handles list
+        handles.([testName '_axes_list']) = axesHandles;
+        % Bring panel_figure back on top
+        uistack(panelHandle,'top');
+        
+        % Reset image index
+        handles.([testName '_imageIndex']) = 1;
+        
+        % Set size of image grid based on number of inputted images
+        numImages = numel(filenames);
+        gridSize = [round(sqrt(numImages)),ceil(sqrt(numImages))];
+        n = gridSize(1);
+        m = gridSize(2);
+        
+        % Plot images
+        for i = 1:numImages
+            im = imread(fullfile(pathname,filenames{i}));
+            % Create subplots
+            [c,r] = ind2sub([gridSize(2) gridSize(1)], i);
+            parent = subplot('Position', [(c-1)/m, 1-(r)/n, 1/m, 1/n],'Parent',panelHandle);
+            % Plot grid view image
+            imPlot_grid = imshow(im,'Parent',parent);
+            % Callback when double clicking on image
+            set(imPlot_grid,'ButtonDownFcn',@(obj,eventdata)showInFigure(parent,[]));
+            
+            % Plot single view image
+            imPlot_single = imshow(im,'Parent',axesHandles(i));
+            % Only show first image, hide others
+            if i>1
+                set(imPlot_single,'Visible','off');
+            end
+            % Callback when double clicking on image
+            set(imPlot_single,'ButtonDownFcn',@(obj,eventdata)showInFigure(axesHandles(i),[]));
+        end
+        
+        % If in single view mode, show prev and next buttons
+        if get(handles.volume_button_singleView,'Value') == 1
+            set(handles.volume_button_prev,'Visible','on');
+            set(handles.volume_button_next,'Visible','on');
+        end
+        
+    end
+    
 end
 guidata(hObject,handles);
 
@@ -220,123 +305,6 @@ function grayscale_listbox_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
-
-% --- Executes on button press in grayscale_button_runTest.
-function button_runTest_Callback(hObject, eventdata, handles)
-% hObject    handle to grayscale_button_runTest (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Get test number and name (test function called and gui handles depend on this name)
-testNum = handles.testNum;
-testName = handles.testName;
-% Get function handle for correct test
-testFunction = eval(['@' testName 'TestAuto']);
-% Get handle of axes/panel to plot on
-if any(strcmp(testName,{'volume','gridAlignment'}))
-    panelHandle = handles.([testName,'_panel_figure']);
-end
-axesHandle = handles.([testName,'_axes']);
-
-if numel(handles.imageFiles) >= testNum
-    if ~isempty(handles.imageFiles{testNum})
-        
-        if any(strcmp(testName,{'volume','gridAlignment'}))
-            % Create separate axes for each image
-            axesHandles = zeros(numel(handles.imageFiles{testNum}),1);
-            axesHandles(1) = handles.([testName,'_axes']);
-            for n = 2:numel(handles.imageFiles{testNum})
-                ax = handles.([testName,'_axes']);
-                % Create copies of existing testName_axes
-                axesHandles(n) = copyobj(ax,handles.([testName,'_panel']));
-            end
-            % Store axes handles list
-            handles.([testName '_axes_list']) = axesHandles;
-            % Bring panel_figure back on top
-            uistack(handles.([testName '_panel_figure']),'top');
-        end
-        
-        % Run test, plot on given axes
-        % Check if scale readings were set manually
-        if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
-            % Scale readings were inputted
-            if any(strcmp(testName,{'volume','gridAlignment'}))
-                [result,baselineVal,newVal] = testFunction(handles.imageFiles{testNum}{:},...
-                    'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                    'PanelHandle',panelHandle,'AxesHandle',axesHandles);
-            else
-                [result,baselineVal,newVal] = testFunction(handles.imageFiles{testNum}{:},...
-                    'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                    'AxesHandle',axesHandle);
-            end
-        else
-            % Read scale automatically from image
-            if any(strcmp(testName,{'volume','gridAlignment'}))
-                [result,baselineVal,newVal] = testFunction(handles.imageFiles{testNum}{:},'PanelHandle',panelHandle,'AxesHandle',axesHandles);
-            else
-                [result,baselineVal,newVal] = testFunction(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
-            end
-        end
-        % Units for labels depends on test type
-        if strcmp(testName,'area')
-            units = 'cm^2';
-        elseif strcmp(testName,'volume')
-            units = 'cm^3';
-        else
-            units = 'mm';
-        end
-        
-        if isempty(baselineVal) && isempty(newVal)
-            % If baselineVal and newVal returned empty, show 'N/A'
-            baselineValText = 'N/A';
-            newValText = 'N/A';
-        else
-            % Otherwise, display values with 2 decimal places
-            baselineValText = sprintf('%.2f %s',baselineVal,units);
-            newValText = sprintf('%.2f %s',newVal,units);
-        end
-        
-        % Set baseline value label
-        set(handles.([testName,'_text_baselineVal']),'String',baselineValText);
-        % Set new value label
-        set(handles.([testName,'_text_newVal']),'String',newValText);
-        % Set test result label
-        if result == 1
-            set(handles.([testName,'_text_result']),'ForegroundColor',[0 0.75 0],'String','PASS');
-        else
-            set(handles.([testName,'_text_result']),'ForegroundColor',[1 0 0],'String','FAIL');
-        end
-        
-        if any(strcmp(testName,{'volume','gridAlignment'}))
-            % If in single view mode, hide the grid panel and show current axes
-            if get(handles.([testName '_button_singleView']),'Value') == 1
-                % Hide grid panel
-                set(handles.([testName '_panel_figure']),'Visible','off');
-                % Show current image axes plots
-                imageIndex = handles.([testName '_imageIndex']);
-                currImageAxes = handles.([testName '_axes_list'])(imageIndex);
-                plots = get(currImageAxes,'Children');
-                set(plots,'Visible','on');
-                % Show legend associated with current image
-                testPanelChildren = get(handles.([testName '_panel']),'Children');
-                legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
-                for n = 1:numel(legends)
-                    leg = legends(n);
-                    userData = get(leg,'UserData');
-                    if userData.ImageIndex == imageIndex
-                        set(leg,'Visible','on');
-                    end
-                end
-                % Show previous and next image buttons
-                set(handles.([testName '_button_prev']),'Visible','on');
-                set(handles.([testName '_button_next']),'Visible','on');
-            end
-        end
-        
-    end
-end
-guidata(hObject,handles);
 
 
 % --- Executes on button press in grayscale_button_setScale.
@@ -461,7 +429,7 @@ if imageIndex > 1
     imageIndex = imageIndex - 1;
 else
     % If on first image, switch index to last image
-    imageIndex = numel(handles.imageFiles{testNum});
+    imageIndex = numel(handles.images{testNum});
 end
 handles.([testName '_imageIndex']) = imageIndex;
 
@@ -502,7 +470,7 @@ function button_next_Callback(hObject, eventdata, handles)
 testNum = handles.testNum;
 testName = handles.testName;
 imageIndex = handles.([testName '_imageIndex']);
-if imageIndex < numel(handles.imageFiles{testNum})
+if imageIndex < numel(handles.images{testNum})
     % Increase image index by 1
     imageIndex = imageIndex + 1;
 else
@@ -588,8 +556,8 @@ try
     testNum = handles.testNum;
     axesHandle = handles.grayscale_axes;
     
-    if numel(handles.imageFiles) >= testNum
-        if ~isempty(handles.imageFiles{testNum})
+    if numel(handles.images) >= testNum
+        if ~isempty(handles.images{testNum})
             
             % Clear axes
             cla(axesHandle);
@@ -602,12 +570,12 @@ try
             % Check if scale readings were set manually
             if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
                 % Scale readings were inputted
-                [result,baselineVal,newVal] = grayscaleTestAuto(handles.imageFiles{testNum}{:},...
+                [result,baselineVal,newVal] = grayscaleTestAuto(handles.images{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
                     'AxesHandle',axesHandle);
             else
                 % Read scale automatically from image
-                [result,baselineVal,newVal] = grayscaleTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+                [result,baselineVal,newVal] = grayscaleTestAuto(handles.images{testNum}{:},'AxesHandle',axesHandle);
             end
             
             % Get updated handles
@@ -681,8 +649,8 @@ try
     testNum = handles.testNum;
     axesHandle = handles.depth_axes;
     
-    if numel(handles.imageFiles) >= testNum
-        if ~isempty(handles.imageFiles{testNum})
+    if numel(handles.images) >= testNum
+        if ~isempty(handles.images{testNum})
             
             % Clear axes
             cla(axesHandle);
@@ -695,12 +663,12 @@ try
             % Check if scale readings were set manually
             if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
                 % Scale readings were inputted
-                [result,baselineVal,newVal] = depthTestAuto(handles.imageFiles{testNum}{:},...
+                [result,baselineVal,newVal] = depthTestAuto(handles.images{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
                     'AxesHandle',axesHandle,'Plane',handles.depth_plane);
             else
                 % Read scale automatically from image
-                [result,baselineVal,newVal] = depthTestAuto(handles.imageFiles{testNum}{:},...
+                [result,baselineVal,newVal] = depthTestAuto(handles.images{testNum}{:},...
                     'AxesHandle',axesHandle,'Plane',handles.depth_plane);
             end
             
@@ -823,8 +791,8 @@ try
     testNum = handles.testNum;
     axesHandle = handles.axialResolution_axes;
     
-    if numel(handles.imageFiles) >= testNum
-        if ~isempty(handles.imageFiles{testNum})
+    if numel(handles.images) >= testNum
+        if ~isempty(handles.images{testNum})
             
             % Clear axes
             cla(axesHandle);
@@ -837,12 +805,12 @@ try
             % Check if scale readings were set manually
             if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
                 % Scale readings were inputted
-                [result,baselineVals,newVals] = axialResolutionTestAuto(handles.imageFiles{testNum}{:},...
+                [result,baselineVals,newVals] = axialResolutionTestAuto(handles.images{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
                     'AxesHandle',axesHandle);
             else
                 % Read scale automatically from image
-                [result,baselineVals,newVals] = axialResolutionTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+                [result,baselineVals,newVals] = axialResolutionTestAuto(handles.images{testNum}{:},'AxesHandle',axesHandle);
             end
             
             % Get updated handles
@@ -937,8 +905,8 @@ try
     testNum = handles.testNum;
     axesHandle = handles.lateralResolution_axes;
     
-    if numel(handles.imageFiles) >= testNum
-        if ~isempty(handles.imageFiles{testNum})
+    if numel(handles.images) >= testNum
+        if ~isempty(handles.images{testNum})
             
             % Clear axes
             cla(axesHandle);
@@ -951,12 +919,12 @@ try
             % Check if scale readings were set manually
             if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
                 % Scale readings were inputted
-                [result,baselineVals,newVals] = lateralResolutionTestAuto(handles.imageFiles{testNum}{:},...
+                [result,baselineVals,newVals] = lateralResolutionTestAuto(handles.images{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
                     'AxesHandle',axesHandle);
             else
                 % Read scale automatically from image
-                [result,baselineVals,newVals] = lateralResolutionTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+                [result,baselineVals,newVals] = lateralResolutionTestAuto(handles.images{testNum}{:},'AxesHandle',axesHandle);
             end
             
             % Get updated handles
@@ -1040,8 +1008,8 @@ try
     testNum = handles.testNum;
     axesHandle = handles.axialDistance_axes;
     
-    if numel(handles.imageFiles) >= testNum
-        if ~isempty(handles.imageFiles{testNum})
+    if numel(handles.images) >= testNum
+        if ~isempty(handles.images{testNum})
             
             % Clear axes
             cla(axesHandle);
@@ -1054,12 +1022,12 @@ try
             % Check if scale readings were set manually
             if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
                 % Scale readings were inputted
-                [result,knownVal,measuredVals] = axialDistanceTestAuto(handles.imageFiles{testNum}{:},...
+                [result,knownVal,measuredVals] = axialDistanceTestAuto(handles.images{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
                     'AxesHandle',axesHandle);
             else
                 % Read scale automatically from image
-                [result,knownVal,measuredVals] = axialDistanceTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+                [result,knownVal,measuredVals] = axialDistanceTestAuto(handles.images{testNum}{:},'AxesHandle',axesHandle);
             end
             
             % Get updated handles
@@ -1147,8 +1115,8 @@ try
     testNum = handles.testNum;
     axesHandle = handles.lateralDistance_axes;
     
-    if numel(handles.imageFiles) >= testNum
-        if ~isempty(handles.imageFiles{testNum})
+    if numel(handles.images) >= testNum
+        if ~isempty(handles.images{testNum})
             
             % Clear axes
             cla(axesHandle);
@@ -1161,12 +1129,12 @@ try
             % Check if scale readings were set manually
             if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
                 % Scale readings were inputted
-                [result,knownVal,measuredVals] = lateralDistanceTestAuto(handles.imageFiles{testNum}{:},...
+                [result,knownVal,measuredVals] = lateralDistanceTestAuto(handles.images{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
                     'AxesHandle',axesHandle);
             else
                 % Read scale automatically from image
-                [result,knownVal,measuredVals] = lateralDistanceTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+                [result,knownVal,measuredVals] = lateralDistanceTestAuto(handles.images{testNum}{:},'AxesHandle',axesHandle);
             end
             
             % Get updated handles
@@ -1246,8 +1214,8 @@ try
     testNum = handles.testNum;
     axesHandle = handles.area_axes;
     
-    if numel(handles.imageFiles) >= testNum
-        if ~isempty(handles.imageFiles{testNum})
+    if numel(handles.images) >= testNum
+        if ~isempty(handles.images{testNum})
             
             % Clear axes
             cla(axesHandle);
@@ -1260,12 +1228,12 @@ try
             % Check if scale readings were set manually
             if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
                 % Scale readings were inputted
-                [result,knownVal,measuredVal] = areaTestAuto(handles.imageFiles{testNum}{:},...
+                [result,knownVal,measuredVal] = areaTestAuto(handles.images{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
                     'AxesHandle',axesHandle);
             else
                 % Read scale automatically from image
-                [result,knownVal,measuredVal] = areaTestAuto(handles.imageFiles{testNum}{:},'AxesHandle',axesHandle);
+                [result,knownVal,measuredVal] = areaTestAuto(handles.images{testNum}{:},'AxesHandle',axesHandle);
             end
             
             % Get updated handles
@@ -1409,52 +1377,34 @@ drawnow;
 try
     testNum = handles.testNum;
     panelHandle = handles.volume_panel_figure;
-    axesHandle = handles.volume_axes;
+    axesHandles = handles.volume_axes_list;
     
-    if numel(handles.imageFiles) >= testNum
-        if ~isempty(handles.imageFiles{testNum})
+    if numel(handles.images) >= testNum
+        if ~isempty(handles.images{testNum})
             
             % Clear existing grid view
             delete(get(panelHandle,'Children'));
-            % Clear axes
-            cla(axesHandle);
-            % Delete any existing old axes (except original)
-            if isfield(handles,'volume_axes_list')
-                delete(handles.volume_axes_list(2:end));
+            % Clear existing axes
+            for a = 1:numel(axesHandles)
+                cla(axesHandles(a));
             end
             % Remove old legends
-            parentPanel = get(axesHandle,'Parent');
+            parentPanel = get(axesHandles(1),'Parent');
             legends = findobj(get(parentPanel,'Children'),'Tag','legend');
             delete(legends);
-            
-            % Create separate axes for each image
-            axesHandles = zeros(numel(handles.imageFiles{testNum}),1);
-            axesHandles(1) = axesHandle;
-            for n = 2:numel(handles.imageFiles{testNum})
-                % Create copies of existing testName_axes
-                axesHandles(n) = copyobj(axesHandle,handles.volume_panel);
-            end
-            % Store axes handles list
-            handles.volume_axes_list = axesHandles;
             % Bring panel_figure back on top
             uistack(panelHandle,'top');
-            
-            % Reset image index
-            handles.volume_imageIndex = 1;
-            
-            % Update handles
-            guidata(hObject,handles);
             
             % Run test, plot on given axes
             % Check if scale readings were set manually
             if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
                 % Scale readings were inputted
-                [result,knownVal,measuredVal] = volumeTestAuto(handles.imageFiles{testNum}{:},...
+                [result,knownVal,measuredVal] = volumeTestAuto(handles.images{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
                     'PanelHandle',panelHandle,'AxesHandle',axesHandles);
             else
                 % Read scale automatically from image
-                [result,knownVal,measuredVal] = volumeTestAuto(handles.imageFiles{testNum}{:},...
+                [result,knownVal,measuredVal] = volumeTestAuto(handles.images{testNum}{:},...
                     'PanelHandle',panelHandle,'AxesHandle',axesHandles);
             end
             
@@ -1550,52 +1500,34 @@ drawnow;
 try
     testNum = handles.testNum;
     panelHandle = handles.gridAlignment_panel_figure;
-    axesHandle = handles.gridAlignment_axes;
+    axesHandles = handles.gridAlignment_axes_list;
     
-    if numel(handles.imageFiles) >= testNum
-        if ~isempty(handles.imageFiles{testNum})
+    if numel(handles.images) >= testNum
+        if ~isempty(handles.images{testNum})
             
             % Clear existing grid view
             delete(get(panelHandle,'Children'));
-            % Clear axes
-            cla(axesHandle);
-            % Delete any existing old axes (except original)
-            if isfield(handles,'gridAlignment_axes_list')
-                delete(handles.gridAlignment_axes_list(2:end));
+            % Clear existing axes
+            for a = 1:numel(axesHandles)
+                cla(axesHandles(a));
             end
             % Remove old legends
-            parentPanel = get(axesHandle,'Parent');
+            parentPanel = get(axesHandles(1),'Parent');
             legends = findobj(get(parentPanel,'Children'),'Tag','legend');
             delete(legends);
-            
-            % Create separate axes for each image
-            axesHandles = zeros(numel(handles.imageFiles{testNum}),1);
-            axesHandles(1) = axesHandle;
-            for n = 2:numel(handles.imageFiles{testNum})
-                % Create copies of existing testName_axes
-                axesHandles(n) = copyobj(axesHandle,handles.gridAlignment_panel);
-            end
-            % Store axes handles list
-            handles.gridAlignment_axes_list = axesHandles;
             % Bring panel_figure back on top
             uistack(panelHandle,'top');
-            
-            % Reset image index
-            handles.gridAlignment_imageIndex = 1;
-            
-            % Update handles
-            guidata(hObject,handles);
             
             % Run test, plot on given axes
             % Check if scale readings were set manually
             if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
                 % Scale readings were inputted
-                [result,errors] = gridAlignmentTestAuto(handles.imageFiles{testNum}{:},...
+                [result,errors] = gridAlignmentTestAuto(handles.images{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
                     'PanelHandle',panelHandle,'AxesHandle',axesHandles);
             else
                 % Read scale automatically from image
-                [result,errors] = gridAlignmentTestAuto(handles.imageFiles{testNum}{:},...
+                [result,errors] = gridAlignmentTestAuto(handles.images{testNum}{:},...
                     'PanelHandle',panelHandle,'AxesHandle',axesHandles);
             end
             

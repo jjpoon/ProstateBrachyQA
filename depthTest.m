@@ -5,7 +5,7 @@ function result = depthTest(imageFile,varargin)
 
 % Input parser
 p = inputParser;
-addRequired(p,'imageFile',@ischar);
+addRequired(p,'imageFile',@isnumeric);
 addParameter(p,'Plane',@ischar);
 % Parse inputs
 parse(p,imageFile,varargin{:});

@@ -5,7 +5,7 @@ function [result,baselineVal,newVals] = depthTestAuto(imageFile,varargin)
 
 % Input parser
 p = inputParser;
-addRequired(p,'imageFile',@ischar);
+addRequired(p,'imageFile',@isnumeric);
 addParameter(p,'UpperScale',[]);
 addParameter(p,'LowerScale',[]);
 addParameter(p,'AxesHandle',[]);
@@ -52,7 +52,7 @@ end
 
 % Measure depth penetration
 % Crop to ultrasound image
-im_orig = imread(imageFile);
+im_orig = imageFile;
 width = size(im_orig,2);
 height = size(im_orig,1);
 % Crop dimensions

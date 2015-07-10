@@ -2,7 +2,7 @@ function labels = readLabels(imageFile)
 % READLABELS uses optical character recognition to detect the measurement
 % labels on an ultrasound image.
 
-im=imread(imageFile);
+im=imageFile;
 imagen=imcrop(im,[0 0.85*size(im,1) 0.5*size(im,2) 0.5*size(im,1)]);
 
 % Convert to gray scale

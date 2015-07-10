@@ -16,7 +16,7 @@ disp(['Upper bound: ' num2str(upper) ' cm']);
 disp(['Lower bound: ' num2str(lower) ' cm']);
 
 % Read image
-im = imread(imageFile);
+im = imageFile;
 width = size(im,2);
 height = size(im,1);
 % Crop to ultrasound image

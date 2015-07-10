@@ -2,7 +2,7 @@ function [upper,lower] = readBounds(imageFile)
 % READBOUNDS uses optical character recognition to detect the measurement
 % labels on an ultrasound image.
 
-im=imread(imageFile);
+im=imageFile;
 
 % Convert to gray scale
 if size(im,3)==3 %RGB image

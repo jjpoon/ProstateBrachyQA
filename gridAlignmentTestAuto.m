@@ -8,18 +8,21 @@ function [result,errors] = gridAlignmentTestAuto(imageFile1,varargin)
 % Input parser
 p = inputParser;
 % Require at least one image
-addRequired(p,'imageFile1',@ischar);
-% Variables for storing additional images
-stringInputs = varargin(cellfun(@ischar,varargin));
-% Get inputs ending with these image file extensions
-fileExts = '^.+((\.bmp)|(\.jpg)|(\.tif)|(\.gif)|(\.dcm))$';
-imageInputs = regexp(stringInputs,fileExts,'match');
-imageInputs = [imageInputs{:}]';
+addRequired(p,'imageFile1',@isnumeric);
+% Get additional image inputs
+imageInputs = {};
+for i = 1:numel(varargin)
+    if isnumeric(varargin{i})
+        if all(size(varargin{i}) > 1)
+            imageInputs{end+1} = varargin{i};
+        end
+    end
+end
 % Add the first required image filename to list of images
-imageInputs = [{imageFile1};imageInputs];
+imageInputs = [{imageFile1},imageInputs];
 % Add enough optional inputs for the number of images given
 for n = 2:numel(imageInputs)
-    addOptional(p,['imageFile' num2str(n)],[],@ischar);
+    addOptional(p,['imageFile' num2str(n)],[],@isnumeric);
 end
 addParameter(p,'UpperScale',[]);
 addParameter(p,'LowerScale',[]);
@@ -54,7 +57,7 @@ for i = 1:numel(imageInputs)
     end
         
     % Read image
-    im_orig = imread(imageFile);
+    im_orig = imageFile;
     width = size(im_orig,2);
     height = size(im_orig,1);
     % Crop dimensions

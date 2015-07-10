@@ -5,7 +5,7 @@ function [result,knownVal,measuredVal] = areaTestAuto(imageFile,varargin)
 
 % Input parser
 p = inputParser;
-addRequired(p,'imageFile',@ischar);
+addRequired(p,'imageFile',@isnumeric);
 addParameter(p,'UpperScale',[]);
 addParameter(p,'LowerScale',[]);
 addParameter(p,'AxesHandle',[]);
@@ -45,7 +45,7 @@ end
 [center,radius] = segmentCircle(imageFile);
 
 % Code for plotting the segmented circle on original image
-im_orig = imread(imageFile);
+im_orig = imageFile;
 
 if ~isempty(axesHandle)
     % Plot on specified axes if given as input
