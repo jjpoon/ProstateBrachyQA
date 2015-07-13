@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 30-Jun-2015 10:52:01
+% Last Modified by GUIDE v2.5 13-Jul-2015 15:31:19
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -207,6 +207,9 @@ if ~isnumeric(filenames)
     % Enable Run Test button
     runTestButton = handles.([testName '_button_runTest']);
     set(runTestButton,'Enable','on');
+    % Enable Flip Horizontal and Flip Vertical buttons
+    set(handles.([testName '_button_flipHor']),'Enable','on');
+    set(handles.([testName '_button_flipVert']),'Enable','on');
     
     % Show image preview
     if ~any(strcmp(testName,{'volume','gridAlignment'}))
@@ -269,6 +272,8 @@ if ~isnumeric(filenames)
             parent = subplot('Position', [(c-1)/m, 1-(r)/n, 1/m, 1/n],'Parent',panelHandle);
             % Plot grid view image
             imPlot_grid = imshow(im,'Parent',parent);
+            % Store image index
+            set(imPlot_grid,'UserData',i);
             % Callback when double clicking on image
             set(imPlot_grid,'ButtonDownFcn',@(obj,eventdata)showInFigure(parent,[]));
             
@@ -278,6 +283,8 @@ if ~isnumeric(filenames)
             if i>1
                 set(imPlot_single,'Visible','off');
             end
+            % Store image index
+            set(imPlot_single,'UserData',i);
             % Callback when double clicking on image
             set(imPlot_single,'ButtonDownFcn',@(obj,eventdata)showInFigure(axesHandles(i),[]));
         end
@@ -1736,4 +1743,178 @@ if handles.AssumedScale == 1 && handles.ShowScaleWarning == 1
     % Update handles
     guidata(hObject,handles);
     
+end
+
+
+% --- Executes on button press in button_flipHor.
+function button_flipHor_Callback(hObject, eventdata, handles)
+% hObject    handle to gridAlignment_button_flipHor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+testNum = handles.testNum;
+testName = handles.testName;
+
+% If images have been selected
+if ~isempty(handles.images{testNum})
+    if ~any(strcmp(testName,{'volume','gridAlignment'}))
+        % For any test other than volume or grid alignment
+        % Flip image horizontally
+        flippedIm = fliplr(handles.images{testNum}{1});
+        handles.images{testNum}{1} = flippedIm;
+        
+        % Delete axes plots other than image
+        axesHandle = handles.([testName '_axes']);
+        otherPlots = findobj(get(axesHandle,'Children'),'-not','Type','image');
+        delete(otherPlots);
+        % Remove old legends
+        parentPanel = get(axesHandle,'Parent');
+        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        delete(legends);
+        
+        % Update image 
+        imPlot = findobj(get(axesHandle,'Children'),'Type','image');
+        set(imPlot,'CData',flippedIm);
+    else
+        % For volume and grid alignment tests
+        % Delete plots and legends other than axes and images on grid view
+        gridPanel = handles.([testName '_panel_figure']);
+        otherGrid = findobj(get(gridPanel,'Children'),'-not','Type','axes',...
+            '-not','Type','image','-or','Tag','legend');
+        delete(otherGrid);
+        % Delete other plots on single view axes
+        for n = 1:numel(handles.([testName '_axes_list']))
+            axesHandle = handles.([testName '_axes_list'])(n);
+            otherSingle = findobj(get(axesHandle,'Children'),'-not','Type','image');
+            delete(otherSingle);
+        end
+        % Delete single view legends
+        ax = handles.([testName '_axes_list'])(1);
+        parent = get(ax,'Parent');
+        legends = findobj(get(parent,'Children'),'Tag','legend');
+        delete(legends);
+        
+        if get(handles.([testName '_button_gridView']),'Value') == 1
+            % Grid view - flip all images
+            imPlots = findobj(get(gridPanel,'Children'),'Type','image');
+            for i = 1:numel(imPlots)
+                imageIndex = get(imPlots(i),'UserData');
+                % Flip image
+                flippedIm = fliplr(get(imPlots(i),'CData'));
+                % Update plotted grid view image
+                set(imPlots(i),'CData',flippedIm);
+                
+                % Update stored image in handles
+                handles.images{testNum}{imageIndex} = flippedIm;
+                % Update corresponding single view image
+                axesHandle = handles.([testName '_axes_list'])(imageIndex);
+                imSingle = findobj(get(axesHandle,'Children'),'Type','image');
+                set(imSingle,'CData',flippedIm);
+            end
+        else
+            % Single view - flip current image
+            imageIndex = handles.([testName '_imageIndex']);
+            axesHandle = handles.([testName '_axes_list'])(imageIndex);
+            imSingle = findobj(get(axesHandle,'Children'),'Type','image');
+            % Flip image
+            flippedIm = fliplr(get(imSingle,'CData'));
+            % Update stored image in handles
+            handles.images{testNum}{imageIndex} = flippedIm;
+            % Update plotted single view image
+            set(imSingle,'CData',flippedIm);
+            
+            % Update corresponding grid view image
+            gridImage = findobj(get(gridPanel,'Children'),'Type','image',...
+                'UserData',imageIndex);
+            set(gridImage,'CData',flippedIm);
+        end
+    end
+    % Update handles
+    guidata(hObject,handles);
+end
+    
+
+% --- Executes on button press in button_flipVert.
+function button_flipVert_Callback(hObject, eventdata, handles)
+% hObject    handle to gridAlignment_button_flipVert (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+testNum = handles.testNum;
+testName = handles.testName;
+
+% If images have been selected
+if ~isempty(handles.images{testNum})
+    if ~any(strcmp(testName,{'volume','gridAlignment'}))
+        % For any test other than volume or grid alignment
+        % Flip image vertically
+        flippedIm = flipud(handles.images{testNum}{1});
+        handles.images{testNum}{1} = flippedIm;
+        
+        % Delete axes plots other than image
+        axesHandle = handles.([testName '_axes']);
+        otherPlots = findobj(get(axesHandle,'Children'),'-not','Type','image');
+        delete(otherPlots);
+        % Remove old legends
+        parentPanel = get(axesHandle,'Parent');
+        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        delete(legends);
+        
+        % Update image 
+        imPlot = findobj(get(axesHandle,'Children'),'Type','image');
+        set(imPlot,'CData',flippedIm);
+    else
+        % For volume and grid alignment tests
+        % Delete plots and legends other than axes and images on grid view
+        gridPanel = handles.([testName '_panel_figure']);
+        otherGrid = findobj(get(gridPanel,'Children'),'-not','Type','axes',...
+            '-not','Type','image','-or','Tag','legend');
+        delete(otherGrid);
+        % Delete other plots on single view axes
+        for n = 1:numel(handles.([testName '_axes_list']))
+            axesHandle = handles.([testName '_axes_list'])(n);
+            otherSingle = findobj(get(axesHandle,'Children'),'-not','Type','image');
+            delete(otherSingle);
+        end
+        % Delete single view legends
+        ax = handles.([testName '_axes_list'])(1);
+        parent = get(ax,'Parent');
+        legends = findobj(get(parent,'Children'),'Tag','legend');
+        delete(legends);
+        
+        if get(handles.([testName '_button_gridView']),'Value') == 1
+            % Grid view - flip all images
+            imPlots = findobj(get(gridPanel,'Children'),'Type','image');
+            for i = 1:numel(imPlots)
+                imageIndex = get(imPlots(i),'UserData');
+                % Flip image
+                flippedIm = flipud(get(imPlots(i),'CData'));
+                % Update plotted grid view image
+                set(imPlots(i),'CData',flippedIm);
+                
+                % Update stored image in handles
+                handles.images{testNum}{imageIndex} = flippedIm;
+                % Update corresponding single view image
+                axesHandle = handles.([testName '_axes_list'])(imageIndex);
+                imSingle = findobj(get(axesHandle,'Children'),'Type','image');
+                set(imSingle,'CData',flippedIm);
+            end
+        else
+            % Single view - flip current image
+            imageIndex = handles.([testName '_imageIndex']);
+            axesHandle = handles.([testName '_axes_list'])(imageIndex);
+            imSingle = findobj(get(axesHandle,'Children'),'Type','image');
+            % Flip image
+            flippedIm = flipud(get(imSingle,'CData'));
+            % Update stored image in handles
+            handles.images{testNum}{imageIndex} = flippedIm;
+            % Update plotted single view image
+            set(imSingle,'CData',flippedIm);
+            
+            % Update corresponding grid view image
+            gridImage = findobj(get(gridPanel,'Children'),'Type','image',...
+                'UserData',imageIndex);
+            set(gridImage,'CData',flippedIm);
+        end
+    end
+    % Update handles
+    guidata(hObject,handles);
 end
