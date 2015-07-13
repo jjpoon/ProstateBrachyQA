@@ -14,7 +14,7 @@ switch get(gui,'SelectionType')
         im = findobj(plots,'Type','image');
         set(im,'ButtonDownFcn','');
         % axesPos = get(parent,'Position');
-        set(copiedAxes,'Position',[0 0 1 1]);
+        set(copiedAxes,'Units','normalized','Position',[0 0 1 1]);
         
         % Replot legend
         % Get original legend label
