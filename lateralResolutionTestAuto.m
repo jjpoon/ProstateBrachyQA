@@ -97,20 +97,46 @@ view = 'axial';
 % Find indices of regions with similar y coordinate and similar area
 for i = 1:numel(regions)
     % Get indices of regions with similar y coord
-    similarY = find(yCoords>yCoords(i)-10 & yCoords<yCoords(i)+10);
+    similarY = find(yCoords>yCoords(i)-6 & yCoords<yCoords(i)+6);
     % Get indices of regions with similar length
     similarLength = find(lengths>lengths(i)-4 & lengths<lengths(i)+4);
     % Get indices of regions with similar y and length
     rowFilaments = intersect(similarY,similarLength);
+    % Check left-to-right y difference for row filaments (look for outliers)
+    if numel(rowFilaments) >= 6
+        while any(abs(diff(yCoords(rowFilaments)))>3)
+            diffs = abs(diff(yCoords(rowFilaments)))>3;
+            % Find first outlier index
+            ind1 = find(diffs,1);
+            if ind1 == numel(diffs)
+                outlier = ind1 + 1;
+            else
+                if diffs(ind1 + 1) == 1
+                    outlier = ind1 + 1;
+                else
+                    outlier = ind1;
+                end
+            end
+            % Remove outlier
+            rowFilaments(outlier) = [];
+            % If number of row filaments drops below 6, break
+            if numel(rowFilaments) < 6
+                break
+            end
+        end
+    end
     % Check if found 6 similar regions
     if numel(rowFilaments) == 6
-        % Found filaments in row, image was taken in sagittal view
-        view = 'sagittal';
-        % Restrict regions to row filaments
-        regions = regions(rowFilaments);
-        % Restrict centroids to row filaments
-        centroids = centroids(rowFilaments,:);
-        break
+        % If there are too many regions with similar y, assume false positive
+        if numel(similarY) < 10
+            % Found filaments in row, image was taken in sagittal view
+            view = 'sagittal';
+            % Restrict regions to row filaments
+            regions = regions(rowFilaments);
+            % Restrict centroids to row filaments
+            centroids = centroids(rowFilaments,:);
+            break
+        end
     end
 end
 
