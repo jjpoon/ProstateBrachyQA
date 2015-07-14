@@ -24,10 +24,11 @@ for n = 2:numel(imageInputs)
 end
 addParameter(p,'UpperScale',[]);
 addParameter(p,'LowerScale',[]);
-% Default step size 0.5 cm
-addParameter(p,'StepSize',0.5);
+% Default step size 5 mm
+addParameter(p,'StepSize',5);
 addParameter(p,'PanelHandle',[]);
 addParameter(p,'AxesHandle',[]);
+addParameter(p,'SlicesAxes',[]);
 % Parse inputs
 parse(p,imageFile1,varargin{:});
 upper = p.Results.UpperScale;
@@ -75,6 +76,13 @@ for i = 1:numel(imageInputs)
     
     % Segment circle from image
     [center,radius] = segmentCircle(imageFile);
+    
+    % Store radius for plotting
+    if isempty(radius)
+        radii(i) = 0;
+    else
+        radii(i) = radius;
+    end
     
     % Code for plotting the segmented circle on original image
     im_orig = imageFile;
@@ -173,11 +181,11 @@ if exist('fig','var')
 end
 
 % Calculate volume
-vol = sum(areas)*stepSize;
+vol = sum(areas)*(stepSize/10);
 measuredVal = vol;
 
 disp(['Areas (cm^2): ' sprintf('%.2f  ',areas)]);
-disp(['Step size: ' sprintf('%.2f mm',stepSize*10)]);
+disp(['Step size: ' sprintf('%.2f mm',stepSize)]);
 disp(['Baseline value: ' sprintf('%.2f',knownVal) ' cm^3']);
 disp(['New value: ' sprintf('%.2f',measuredVal) ' cm^3']);
 
