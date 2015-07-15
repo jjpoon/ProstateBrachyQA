@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 13-Jul-2015 15:31:19
+% Last Modified by GUIDE v2.5 15-Jul-2015 14:11:11
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -120,6 +120,10 @@ handles.volume_knownVal = {};
 % Initiate flags for scale warning
 handles.AssumedScale = 0;
 handles.ShowScaleWarning = 1;
+
+% Initiate mouse movement fields
+handles.rotateAxes = [];
+handles.oldMousePoint = [];
 
 % Add listener for selected tab index
 addlistener(handles.tabgroup,'SelectedIndex','PostSet',@(obj,eventdata)onSelectedTabChanged(hObject));
@@ -1402,6 +1406,8 @@ try
             parentPanel = get(axesHandles(1),'Parent');
             legends = findobj(get(parentPanel,'Children'),'Tag','legend');
             delete(legends);
+            % Clear volume slices axes
+            cla(handles.volume_axes_slices);
             % Bring panel_figure back on top
             uistack(panelHandle,'top');
             
@@ -1411,11 +1417,11 @@ try
                 % Scale readings were inputted
                 [result,knownVal,measuredVal] = volumeTestAuto(handles.images{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                    'PanelHandle',panelHandle,'AxesHandle',axesHandles);
+                    'PanelHandle',panelHandle,'AxesHandle',axesHandles,'SlicesAxes',handles.volume_axes_slices);
             else
                 % Read scale automatically from image
                 [result,knownVal,measuredVal] = volumeTestAuto(handles.images{testNum}{:},...
-                    'PanelHandle',panelHandle,'AxesHandle',axesHandles);
+                    'PanelHandle',panelHandle,'AxesHandle',axesHandles,'SlicesAxes',handles.volume_axes_slices);
             end
             
             % Get updated handles
@@ -1921,3 +1927,75 @@ if ~isempty(handles.images{testNum})
     % Update handles
     guidata(hObject,handles);
 end
+
+
+% --- Executes on mouse press over figure background, over a disabled or
+% --- inactive control, or over an axes background.
+function figure1_WindowButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+axesSlices = handles.volume_axes_slices;
+% Get position of axes relative to figure
+axPos = get(axesSlices,'Position');
+parent = get(axesSlices,'Parent');
+parentPos = get(parent,'Position');
+pos = [axPos(1)+parentPos(1) axPos(2)+parentPos(2) axPos(3) axPos(4)];
+
+% Get the coordinates of the mouse click
+mousePoint = get(hObject,'CurrentPoint');
+% Check if clicked within 3D plot axes
+if (mousePoint(1) > pos(1) && mousePoint(1) < pos(1)+pos(3)) && ...
+        (mousePoint(2) > pos(2) && mousePoint(2) < pos(2)+pos(4))
+    % Clicked within slices axes, store the handle for axes that will be
+    % rotate when moving mouse
+    handles.rotateAxes = axesSlices;
+end
+% Update handles
+guidata(hObject,handles);
+
+
+% --- Executes on mouse press over figure background, over a disabled or
+% --- inactive control, or over an axes background.
+function figure1_WindowButtonUpFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% Reset axes handle
+handles.rotateAxes = [];
+% Reset old mouse point (the first old mouse point should always be the
+% point when first clicking)
+handles.oldMousePoint = [];
+% Update handles
+guidata(hObject,handles);
+
+
+% --- Executes on mouse motion over figure - except title and menu.
+function figure1_WindowButtonMotionFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% Check if axes handle is set
+if ~isempty(handles.rotateAxes)
+    axesHandle = handles.rotateAxes;
+    % Get coordinates of new mouse point
+    newMousePoint = get(hObject,'CurrentPoint');
+    % If user just clicked, initialize oldMousePoint
+    if isempty(handles.oldMousePoint)
+        handles.oldMousePoint = newMousePoint;
+    end
+    % Rotate camera
+    switch get(hObject,'Units')
+        case 'normalized'
+            multiplier = 200;
+        case 'characters'
+            multiplier = 2;
+    end
+    dtheta = -(newMousePoint(1)-handles.oldMousePoint(1));
+    dphi = -(newMousePoint(2)-handles.oldMousePoint(2));
+    camorbit(axesHandle,multiplier*dtheta,multiplier*dphi);
+    % Store old mouse point
+    handles.oldMousePoint = newMousePoint;
+end
+% Update handles
+guidata(hObject,handles);

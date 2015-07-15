@@ -36,6 +36,7 @@ lower = p.Results.LowerScale;
 stepSize = p.Results.StepSize;
 panelHandle = p.Results.PanelHandle;
 axesHandles = p.Results.AxesHandle;
+slicesAxes = p.Results.SlicesAxes;
 
 % Get baseline values
 if ~exist('Baseline.mat','file')
@@ -81,7 +82,7 @@ for i = 1:numel(imageInputs)
     if isempty(radius)
         radii(i) = 0;
     else
-        radii(i) = radius;
+        radii(i) = radius*pixelScale;
     end
     
     % Code for plotting the segmented circle on original image
@@ -173,6 +174,11 @@ for i = 1:numel(imageInputs)
             set([im;c1;l],'Visible','off');
         end
     end
+end
+
+% Plot volume slices 3D visualization
+if ~isempty(slicesAxes)
+    plotVolumeSlices(radii,'AxesHandle',slicesAxes);
 end
 
 % Resize and position figure

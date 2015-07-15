@@ -2,6 +2,7 @@
 *.asv
 *.bmp
 out.txt
+plotEllipsoid.m
 
 # Folders
 20150521_144039/
