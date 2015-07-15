@@ -527,6 +527,9 @@ function figure1_ResizeFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% Set all units to normalized
+set(findobj(hObject),'Units','normalized');
+
 for str = {'volume','gridAlignment'}
     testName = str{1};
     % Get previous button position
@@ -1937,8 +1940,10 @@ function figure1_WindowButtonDownFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 axesSlices = handles.volume_axes_slices;
 % Get position of axes relative to figure
+set(axesSlices,'Units','normalized');
 axPos = get(axesSlices,'Position');
 parent = get(axesSlices,'Parent');
+set(parent,'Units','normalized');
 parentPos = get(parent,'Position');
 pos = [axPos(1)+parentPos(1) axPos(2)+parentPos(2) axPos(3) axPos(4)];
 
