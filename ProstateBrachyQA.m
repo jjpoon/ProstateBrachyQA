@@ -195,6 +195,9 @@ if ischar(filenames)
 end
 % If filenames is not 0 (0 if user pressed cancel)
 if ~isnumeric(filenames)
+    % Clear any old images for current test
+    handles.images{testNum} = [];
+    % Store new images
     for i = 1:numel(filenames)
         handles.images{testNum}{i} = imread(fullfile(pathname,filenames{i}));
     end
