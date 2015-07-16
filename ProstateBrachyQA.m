@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 15-Jul-2015 14:11:11
+% Last Modified by GUIDE v2.5 16-Jul-2015 17:23:52
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -122,8 +122,11 @@ handles.AssumedScale = 0;
 handles.ShowScaleWarning = 1;
 
 % Initiate mouse movement fields
-handles.rotateAxes = [];
+handles.rotate3D = 0;
 handles.oldMousePoint = [];
+
+% Initiate volume test 3DView option
+handles.volume_3DView = 'interp';
 
 % Add listener for selected tab index
 addlistener(handles.tabgroup,'SelectedIndex','PostSet',@(obj,eventdata)onSelectedTabChanged(hObject));
@@ -1409,8 +1412,9 @@ try
             parentPanel = get(axesHandles(1),'Parent');
             legends = findobj(get(parentPanel,'Children'),'Tag','legend');
             delete(legends);
-            % Clear volume slices axes
-            cla(handles.volume_axes_slices);
+            % Clear 3D view axes
+            cla(handles.volume_axes_interpView);
+            cla(handles.volume_axes_slicesView);
             % Bring panel_figure back on top
             uistack(panelHandle,'top');
             
@@ -1420,11 +1424,13 @@ try
                 % Scale readings were inputted
                 [result,knownVal,measuredVal] = volumeTestAuto(handles.images{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                    'PanelHandle',panelHandle,'AxesHandle',axesHandles,'SlicesAxes',handles.volume_axes_slices);
+                    'PanelHandle',panelHandle,'AxesHandle',axesHandles,...
+                    'SlicesAxes',handles.volume_axes_slicesView,'InterpAxes',handles.volume_axes_interpView);
             else
                 % Read scale automatically from image
                 [result,knownVal,measuredVal] = volumeTestAuto(handles.images{testNum}{:},...
-                    'PanelHandle',panelHandle,'AxesHandle',axesHandles,'SlicesAxes',handles.volume_axes_slices);
+                    'PanelHandle',panelHandle,'AxesHandle',axesHandles,...
+                    'SlicesAxes',handles.volume_axes_slicesView,'InterpAxes',handles.volume_axes_interpView);
             end
             
             % Get updated handles
@@ -1474,6 +1480,16 @@ try
                 % Show previous and next image buttons
                 set(handles.volume_button_prev,'Visible','on');
                 set(handles.volume_button_next,'Visible','on');
+            end
+            
+            % Show selected 3D view and hide the other view
+            switch handles.volume_3DView
+                case 'interp'
+                    set(get(handles.volume_axes_slicesView,'Children'),'Visible','off');
+                    set(get(handles.volume_axes_interpView,'Children'),'Visible','on');
+                case 'slices'
+                    set(get(handles.volume_axes_interpView,'Children'),'Visible','off');
+                    set(get(handles.volume_axes_slicesView,'Children'),'Visible','on');
             end
             
             % Show scale warning if needed
@@ -1938,7 +1954,7 @@ function figure1_WindowButtonDownFcn(hObject, eventdata, handles)
 % hObject    handle to figure1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-axesSlices = handles.volume_axes_slices;
+axesSlices = handles.volume_axes_slicesView;
 % Get position of axes relative to figure
 set(axesSlices,'Units','normalized');
 axPos = get(axesSlices,'Position');
@@ -1952,9 +1968,8 @@ mousePoint = get(hObject,'CurrentPoint');
 % Check if clicked within 3D plot axes
 if (mousePoint(1) > pos(1) && mousePoint(1) < pos(1)+pos(3)) && ...
         (mousePoint(2) > pos(2) && mousePoint(2) < pos(2)+pos(4))
-    % Clicked within slices axes, store the handle for axes that will be
-    % rotate when moving mouse
-    handles.rotateAxes = axesSlices;
+    % Clicked within slices axes, set rotate flag to on
+    handles.rotate3D = 1;
 end
 % Update handles
 guidata(hObject,handles);
@@ -1966,8 +1981,8 @@ function figure1_WindowButtonUpFcn(hObject, eventdata, handles)
 % hObject    handle to figure1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% Reset axes handle
-handles.rotateAxes = [];
+% Reset rotate flag
+handles.rotate3D = 0;
 % Reset old mouse point (the first old mouse point should always be the
 % point when first clicking)
 handles.oldMousePoint = [];
@@ -1980,9 +1995,9 @@ function figure1_WindowButtonMotionFcn(hObject, eventdata, handles)
 % hObject    handle to figure1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% Check if axes handle is set
-if ~isempty(handles.rotateAxes)
-    axesHandle = handles.rotateAxes;
+% Check if 3D view axes was clicked on, rotate flag is set
+if handles.rotate3D == 1
+    axesHandles = [handles.volume_axes_interpView;handles.volume_axes_slicesView];
     % Get coordinates of new mouse point
     newMousePoint = get(hObject,'CurrentPoint');
     % If user just clicked, initialize oldMousePoint
@@ -1998,9 +2013,39 @@ if ~isempty(handles.rotateAxes)
     end
     dtheta = -(newMousePoint(1)-handles.oldMousePoint(1));
     dphi = -(newMousePoint(2)-handles.oldMousePoint(2));
-    camorbit(axesHandle,multiplier*dtheta,multiplier*dphi);
+    
+    for a = 1:numel(axesHandles)
+        camorbit(axesHandles(a),multiplier*dtheta,multiplier*dphi);
+    end
+    
     % Store old mouse point
     handles.oldMousePoint = newMousePoint;
 end
 % Update handles
 guidata(hObject,handles);
+
+
+% --- Executes when selected object is changed in volume_buttongroup_3DView.
+function volume_buttongroup_3DView_SelectionChangeFcn(hObject, eventdata, handles)
+% hObject    handle to the selected object in volume_buttongroup_3DView 
+% eventdata  structure with the following fields (see UIBUTTONGROUP)
+%	EventName: string 'SelectionChanged' (read only)
+%	OldValue: handle of the previously selected object or empty if none was selected
+%	NewValue: handle of the currently selected object
+% handles    structure with handles and user data (see GUIDATA)
+selection = get(eventdata.NewValue,'Tag');
+switch selection
+    case 'volume_button_interpView'
+        handles.volume_3DView = 'interp';
+        % Show interp view plot, hide others
+        set(get(handles.volume_axes_slicesView,'Children'),'Visible','off');
+        set(get(handles.volume_axes_interpView,'Children'),'Visible','on');
+    case 'volume_button_slicesView'
+        handles.volume_3DView = 'slices';
+        % Show slices view plot, hide others
+        set(get(handles.volume_axes_interpView,'Children'),'Visible','off');
+        set(get(handles.volume_axes_slicesView,'Children'),'Visible','on');
+end
+% Update handles
+guidata(hObject,handles);
+        

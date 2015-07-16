@@ -29,6 +29,7 @@ addParameter(p,'StepSize',5);
 addParameter(p,'PanelHandle',[]);
 addParameter(p,'AxesHandle',[]);
 addParameter(p,'SlicesAxes',[]);
+addParameter(p,'InterpAxes',[]);
 % Parse inputs
 parse(p,imageFile1,varargin{:});
 upper = p.Results.UpperScale;
@@ -37,6 +38,7 @@ stepSize = p.Results.StepSize;
 panelHandle = p.Results.PanelHandle;
 axesHandles = p.Results.AxesHandle;
 slicesAxes = p.Results.SlicesAxes;
+interpAxes = p.Results.InterpAxes;
 
 % Get baseline values
 if ~exist('Baseline.mat','file')
@@ -179,6 +181,10 @@ end
 % Plot volume slices 3D visualization
 if ~isempty(slicesAxes)
     plotVolumeSlices(radii,'AxesHandle',slicesAxes);
+end
+% Plot volume solid 3D visualization
+if ~isempty(interpAxes)
+    plotVolumeObject(radii,'AxesHandle',interpAxes);
 end
 
 % Resize and position figure
