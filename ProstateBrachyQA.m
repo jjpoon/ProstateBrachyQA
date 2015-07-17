@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 16-Jul-2015 17:23:52
+% Last Modified by GUIDE v2.5 17-Jul-2015 17:18:16
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -300,9 +300,9 @@ if ~isnumeric(filenames)
         end
         
         % If in single view mode, show prev and next buttons
-        if get(handles.volume_button_singleView,'Value') == 1
-            set(handles.volume_button_prev,'Visible','on');
-            set(handles.volume_button_next,'Visible','on');
+        if get(handles.([testName '_button_singleView']),'Value') == 1
+            set(handles.([testName '_button_prev']),'Visible','on');
+            set(handles.([testName '_button_next']),'Visible','on');
         end
         
     end
