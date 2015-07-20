@@ -5,6 +5,7 @@ function baselineFile = readBaselineFile(fileName)
 
 [num,txt,baselineFile] = xlsread(fileName);
 save('Baseline.mat','baselineFile');
+disp('Values from Baseline.xls successfully saved to Baseline.mat');
 
 end
 
