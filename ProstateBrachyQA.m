@@ -56,8 +56,11 @@ function ProstateBrachyQA_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 
 % Initialize scale readings
-handles.upperScaleReading = cell(1,9);
-handles.lowerScaleReading = cell(1,9);
+handles.upperScaleReading = cell(1,10);
+handles.lowerScaleReading = cell(1,10);
+% Volume formula test can have separate scale reading for axial/sagittal image
+handles.upperScaleReading{9} = cell(1,2);
+handles.lowerScaleReading{9} = cell(1,2);
 
 % Set up tabs
 warning off MATLAB:uitabgroup:OldVersion
@@ -71,8 +74,9 @@ tab4 = uitab(handles.tabgroup,'Title','Lateral Resolution');
 tab5 = uitab(handles.tabgroup,'Title','Axial Distance');
 tab6 = uitab(handles.tabgroup,'Title','Lateral Distance');
 tab7 = uitab(handles.tabgroup,'Title','Area');
-tab8 = uitab(handles.tabgroup,'Title','Volume');
-tab9 = uitab(handles.tabgroup,'Title','Grid Alignment');
+tab8 = uitab(handles.tabgroup,'Title','Volume (Planimetric)');
+tab9 = uitab(handles.tabgroup,'Title','Volume (Formula)');
+tab10 = uitab(handles.tabgroup,'Title','Grid Alignment');
 % Set tabs as parents of appropriate test panels
 set(handles.grayscale_panel,'Parent',tab1);
 set(handles.grayscale_panel_result,'Parent',tab1);
@@ -90,11 +94,13 @@ set(handles.area_panel,'Parent',tab7);
 set(handles.area_panel_result,'Parent',tab7);
 set(handles.volume_panel,'Parent',tab8);
 set(handles.volume_panel_result,'Parent',tab8);
-set(handles.gridAlignment_panel,'Parent',tab9);
-set(handles.gridAlignment_panel_result,'Parent',tab9);
+set(handles.volumeFormula_panel,'Parent',tab9);
+set(handles.volumeFormula_panel_result,'Parent',tab9);
+set(handles.gridAlignment_panel,'Parent',tab10);
+set(handles.gridAlignment_panel_result,'Parent',tab10);
 
 % Initiate images
-handles.images = cell(9,1);
+handles.images = cell(10,1);
 
 % Initiate testNum and testName
 handles.testNum = 1;
@@ -102,6 +108,7 @@ handles.testName = 'grayscale';
 
 % Initiate single view image index
 handles.volume_imageIndex = 1;
+handles.volumeFormula_imageIndex = 1;
 handles.gridAlignment_imageIndex = 1;
 
 % Initiate view plane for tests where axial/sagittal views are used
@@ -116,6 +123,7 @@ handles.axialDistance_knownVal = {};
 handles.lateralDistance_knownVal = {};
 handles.area_knownVal = {};
 handles.volume_knownVal = {};
+handles.volumeFormula_knownVal = {};
 
 % Initiate flags for scale warning
 handles.AssumedScale = 0;
@@ -177,6 +185,8 @@ switch handles.testNum
     case 8
         testName = 'volume';
     case 9
+        testName = 'volumeFormula';
+    case 10
         testName = 'gridAlignment';
 end
 handles.testName = testName;
@@ -195,18 +205,32 @@ testNum = handles.testNum;
 testName = handles.testName;
 
 % Open dialog for selecting image(s)
-[filenames,pathname] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
-    '*.*','All Files' },'Select Image(s)','MultiSelect','on');
+if strcmp(testName,'volumeFormula')
+    [axialFile,axialPath] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
+        '*.*','All Files' },'Select Axial Image');
+    [sagittalFile,sagittalPath] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
+        '*.*','All Files' },'Select Sagittal Image');
+    filenames = {axialFile, sagittalFile};
+else
+    [filenames,pathname] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
+        '*.*','All Files' },'Select Image(s)','MultiSelect','on');
+end
+
 if ischar(filenames)
     filenames = {filenames};
 end
-% If filenames is not 0 (0 if user pressed cancel)
-if ~isnumeric(filenames)
+% If all filenames are not 0 (0 if user pressed cancel)
+if ~any(cellfun(@isnumeric,filenames))
     % Clear any old images for current test
     handles.images{testNum} = [];
     % Store new images
-    for i = 1:numel(filenames)
-        handles.images{testNum}{i} = imread(fullfile(pathname,filenames{i}));
+    if strcmp(testName,'volumeFormula')
+        handles.images{testNum}{1} = imread(fullfile(axialPath,axialFile));
+        handles.images{testNum}{2} = imread(fullfile(sagittalPath,sagittalFile));
+    else
+        for i = 1:numel(filenames)
+            handles.images{testNum}{i} = imread(fullfile(pathname,filenames{i}));
+        end
     end
     % Get the listbox that is also on this panel
     listbox = handles.([testName '_listbox']);
@@ -222,7 +246,7 @@ if ~isnumeric(filenames)
     set(handles.([testName '_button_flipVert']),'Enable','on');
     
     % Show image preview
-    if ~any(strcmp(testName,{'volume','gridAlignment'}))
+    if ~any(strcmp(testName,{'volume','volumeFormula','gridAlignment'}))
         % For all tests except volume and grid alignment
         % Clear axes
         axesHandle = handles.([testName '_axes']);
@@ -276,6 +300,13 @@ if ~isnumeric(filenames)
         
         % Plot images
         for i = 1:numImages
+            if strcmp(testName,'volumeFormula')
+                if i == 1
+                    pathname = axialPath;
+                else
+                    pathname = sagittalPath;
+                end
+            end
             im = imread(fullfile(pathname,filenames{i}));
             % Create subplots
             [c,r] = ind2sub([gridSize(2) gridSize(1)], i);
@@ -1317,6 +1348,9 @@ switch testName
     case 'volume'
         str = 'volume';
         baselineText = 'Volume';
+    case 'volumeFormula'
+        str = 'volume';
+        baselineText = 'Volume';
 end
 
 % Manually input known value
@@ -1784,7 +1818,7 @@ testName = handles.testName;
 
 % If images have been selected
 if ~isempty(handles.images{testNum})
-    if ~any(strcmp(testName,{'volume','gridAlignment'}))
+    if ~any(strcmp(testName,{'volume','volumeFormula','gridAlignment'}))
         % For any test other than volume or grid alignment
         % Flip image horizontally
         flippedIm = fliplr(handles.images{testNum}{1});
@@ -1871,7 +1905,7 @@ testName = handles.testName;
 
 % If images have been selected
 if ~isempty(handles.images{testNum})
-    if ~any(strcmp(testName,{'volume','gridAlignment'}))
+    if ~any(strcmp(testName,{'volume','volumeFormula','gridAlignment'}))
         % For any test other than volume or grid alignment
         % Flip image vertically
         flippedIm = flipud(handles.images{testNum}{1});
@@ -1954,25 +1988,36 @@ function figure1_WindowButtonDownFcn(hObject, eventdata, handles)
 % hObject    handle to figure1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-axesSlices = handles.volume_axes_slicesView;
-% Get position of axes relative to figure
-set(axesSlices,'Units','normalized');
-axPos = get(axesSlices,'Position');
-parent = get(axesSlices,'Parent');
-set(parent,'Units','normalized');
-parentPos = get(parent,'Position');
-pos = [axPos(1)+parentPos(1) axPos(2)+parentPos(2) axPos(3) axPos(4)];
-
-% Get the coordinates of the mouse click
-mousePoint = get(hObject,'CurrentPoint');
-% Check if clicked within 3D plot axes
-if (mousePoint(1) > pos(1) && mousePoint(1) < pos(1)+pos(3)) && ...
-        (mousePoint(2) > pos(2) && mousePoint(2) < pos(2)+pos(4))
-    % Clicked within slices axes, set rotate flag to on
-    handles.rotate3D = 1;
+testName = handles.testName;
+switch testName
+    case 'volume'
+        axes3D = handles.volume_axes_slicesView;
+    case 'volumeFormula'
+        axes3D = handles.volumeFormula_axes_ellipsoidView;
+    otherwise
+        axes3D = [];
 end
-% Update handles
-guidata(hObject,handles);
+% Only rotate if on volume (planimetric) or volume (formula) test
+if ~isempty(axes3D)
+    % Get position of axes relative to figure
+    set(axes3D,'Units','normalized');
+    axPos = get(axes3D,'Position');
+    parent = get(axes3D,'Parent');
+    set(parent,'Units','normalized');
+    parentPos = get(parent,'Position');
+    pos = [axPos(1)+parentPos(1) axPos(2)+parentPos(2) axPos(3) axPos(4)];
+    
+    % Get the coordinates of the mouse click
+    mousePoint = get(hObject,'CurrentPoint');
+    % Check if clicked within 3D plot axes
+    if (mousePoint(1) > pos(1) && mousePoint(1) < pos(1)+pos(3)) && ...
+            (mousePoint(2) > pos(2) && mousePoint(2) < pos(2)+pos(4))
+        % Clicked within slices axes, set rotate flag to on
+        handles.rotate3D = 1;
+    end
+    % Update handles
+    guidata(hObject,handles);
+end
 
 
 % --- Executes on mouse press over figure background, over a disabled or
@@ -1997,7 +2042,12 @@ function figure1_WindowButtonMotionFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 % Check if 3D view axes was clicked on, rotate flag is set
 if handles.rotate3D == 1
-    axesHandles = [handles.volume_axes_interpView;handles.volume_axes_slicesView];
+    switch handles.testName
+        case 'volume'
+            axesHandles = [handles.volume_axes_interpView;handles.volume_axes_slicesView];
+        case 'volumeFormula'
+            axesHandles = handles.volumeFormula_axes_ellipsoidView;
+    end
     % Get coordinates of new mouse point
     newMousePoint = get(hObject,'CurrentPoint');
     % If user just clicked, initialize oldMousePoint
@@ -2049,3 +2099,152 @@ end
 % Update handles
 guidata(hObject,handles);
         
+
+
+% --- Executes on button press in volumeFormula_button_runTest.
+function volumeFormula_button_runTest_Callback(hObject, eventdata, handles)
+% hObject    handle to volumeFormula_button_runTest (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
+
+try
+    testNum = handles.testNum;
+    panelHandle = handles.volumeFormula_panel_figure;
+    axesHandles = handles.volumeFormula_axes_list;
+    
+    if numel(handles.images) >= testNum
+        if ~isempty(handles.images{testNum})
+            
+            % Clear existing grid view
+            delete(get(panelHandle,'Children'));
+            % Clear existing axes
+            for a = 1:numel(axesHandles)
+                cla(axesHandles(a));
+            end
+            % Remove old legends
+            parentPanel = get(axesHandles(1),'Parent');
+            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            delete(legends);
+            % Clear 3D view axes
+            cla(handles.volumeFormula_axes_ellipsoidView);
+            % Bring panel_figure back on top
+            uistack(panelHandle,'top');
+            
+            % Run test, plot on given axes
+            % Check if scale readings were set manually
+            if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+                % Scale readings were inputted
+                [result,knownVal,measuredVal] = volumeTestFormula(handles.images{testNum}{:},...
+                    'UpperScaleAxial',handles.upperScaleReading{testNum}{1},'LowerScaleAxial',handles.lowerScaleReading{testNum}{1},...
+                    'UpperScaleSagittal',handles.upperScaleReading{testNum}{2},'LowerScaleSagittal',handles.lowerScaleReading{testNum}{2},...
+                    'PanelHandle',panelHandle,'AxesHandle',axesHandles,...
+                    'EllipsoidAxes',handles.volumeFormula_axes_ellipsoidView);
+            else
+                % Read scale automatically from image
+                [result,knownVal,measuredVal] = volumeTestFormula(handles.images{testNum}{:},...
+                    'PanelHandle',panelHandle,'AxesHandle',axesHandles,...
+                    'EllipsoidAxes',handles.volumeFormula_axes_ellipsoidView);
+            end
+            
+            % Get updated handles
+            handles = guidata(hObject);
+            
+            % Get table data
+            table = handles.volumeFormula_table;
+            data = get(table,'Data');
+            % Modify table data
+            data{1,1} = sprintf('%.2f',knownVal);
+            data{1,2} = sprintf('%.2f',measuredVal);
+            % Absolute difference
+            absDiff = abs(measuredVal-knownVal);
+            data{1,3} = sprintf('%.2f',absDiff);
+            % Percent difference
+            avg = (knownVal+measuredVal)/2;
+            percentDiff = absDiff/avg*100;
+            data{1,4} = sprintf('%.2f',percentDiff);
+            % Result
+            if result == 1
+                data{1,5} = '<html><font color="green">PASS';
+            elseif result == 0
+                data{1,5} = '<html><font color="red">FAIL';
+            end
+            % Set table data
+            set(table,'Data',data);
+            
+            % If in single view mode, hide the grid panel and show current axes
+            if get(handles.volumeFormula_button_singleView,'Value') == 1
+                % Hide grid panel
+                set(handles.volumeFormula_panel_figure,'Visible','off');
+                % Show current image axes plots
+                imageIndex = handles.volumeFormula_imageIndex;
+                currImageAxes = handles.volumeFormula_axes_list(imageIndex);
+                plots = get(currImageAxes,'Children');
+                set(plots,'Visible','on');
+                % Show legend associated with current image
+                testPanelChildren = get(handles.volumeFormula_panel,'Children');
+                legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+                for n = 1:numel(legends)
+                    leg = legends(n);
+                    userData = get(leg,'UserData');
+                    if userData.ImageIndex == imageIndex
+                        set(leg,'Visible','on');
+                    end
+                end
+                % Show previous and next image buttons
+                set(handles.volumeFormula_button_prev,'Visible','on');
+                set(handles.volumeFormula_button_next,'Visible','on');
+            end
+            
+            % Show scale warning if needed
+            showScaleWarning(hObject,handles);
+            % Get updated handles
+            handles = guidata(hObject);
+        end
+    end
+catch exception
+    disp(getReport(exception));
+end
+
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer)
+
+guidata(hObject,handles);
+
+% --- Executes on button press in volumeFormula_button_setScale.
+function volumeFormula_button_setScale_Callback(hObject, eventdata, handles)
+% hObject    handle to volumeFormula_button_setScale (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get test number
+testNum = handles.testNum;
+
+% Manually input upper and lower scale readings
+prompt = {['\bf Axial Image: ','\rm Enter the upper scale reading (cm):'],...
+    ['\bf Axial Image: ','\rm Enter the lower scale reading (cm):'],...
+    ['\bf Sagittal Image: ','\rm Enter the upper scale reading (cm):'],...
+    ['\bf Sagittal Image: ','\rm Enter the lower scale reading (cm):']};
+title = 'Manually input scale readings (optional)';
+numlines = [1, length(title)+20];
+
+% Default values
+defaultAxialUpper = num2str(handles.upperScaleReading{testNum}{1});
+defaultAxialLower = num2str(handles.lowerScaleReading{testNum}{1});
+defaultSagittalUpper = num2str(handles.upperScaleReading{testNum}{2});
+defaultSagittalLower = num2str(handles.lowerScaleReading{testNum}{2});
+default = {defaultAxialUpper,defaultAxialLower,defaultSagittalUpper,defaultSagittalLower};
+
+options.Interpreter = 'tex';
+answer=inputdlg(prompt,title,numlines,default,options);
+% If user inputted both numbers
+if ~isempty(answer)
+    handles.upperScaleReading{testNum}{1} = str2num(answer{1});
+    handles.lowerScaleReading{testNum}{1} = str2num(answer{2});
+    handles.upperScaleReading{testNum}{2} = str2num(answer{3});
+    handles.lowerScaleReading{testNum}{2} = str2num(answer{4});
+end
+guidata(hObject,handles);
