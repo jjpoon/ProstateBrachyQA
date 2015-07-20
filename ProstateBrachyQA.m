@@ -562,7 +562,7 @@ function figure1_ResizeFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Set all units to normalized
-set(findobj(hObject),'Units','normalized');
+set(findobj(hObject,'-property','Units'),'Units','normalized');
 
 for str = {'volume','gridAlignment'}
     testName = str{1};
