@@ -2244,13 +2244,6 @@ end
 guidata(hObject,handles);
 
 
-% --- Executes on button press in phantom_button_saveDefFields.
-function phantom_button_saveDefFields_Callback(hObject, eventdata, handles)
-% hObject    handle to phantom_button_saveDefFields (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
 % --- Executes on button press in phantom_button_addField.
 function phantom_button_addField_Callback(hObject, eventdata, handles)
 % hObject    handle to phantom_button_addField (see GCBO)
@@ -2289,7 +2282,7 @@ y = round(screenSize(4)/2 - height/2);
 d = dialog('Name','Delete Fields','Position',[x y width height]);
 % set(d,'WindowStyle','normal');
 % Create instructions static text
-msg = uicontrol('Parent',d,'Style','text','String','Select field(s) to delete',...
+msg = uicontrol('Parent',d,'Style','text','String','Select field(s) to delete:',...
     'HorizontalAlignment','left','Position',[10 180 280 15]);
 msgPos = get(msg,'Position');
 % Create listbox showing fields
@@ -2326,22 +2319,38 @@ set(handles.phantom_table,'Data',tableData);
 delete(gcf);
 
 
+% --- Executes on button press in phantom_button_saveDefFields.
+function phantom_button_saveDefFields_Callback(hObject, eventdata, handles)
+% hObject    handle to phantom_button_saveDefFields (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+fields = get(handles.phantom_table,'RowName');
+save('DefaultFields.mat','fields');
+msgbox('Default fields saved.');
+
+
+
 % --- Executes during object creation, after setting all properties.
 function phantom_table_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to phantom_table (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-% Read excel file, check existing default fields
-filename = fullfile(pwd,'Log/','ProstateBrachyQA Log.xlsx');
-sheet = 1;
-% Read excel file
-[num,txt,excelData] = xlsread(filename,sheet);
-% Get field names
-fields = excelData(1,:);
-fields = fields(cellfun(@ischar,fields));
-% If sheet is empty (no field names), use default field 'Weight'
-if isempty(fields)
-    fields = {'Weight'};
+% Use default fields in Default Fields mat file if created
+if exist('DefaultFields.mat','file')
+    load('DefaultFields.mat','fields');
+else
+    % Read excel file, check existing default fields
+    filename = fullfile(pwd,'Log/','ProstateBrachyQA Log.xlsx');
+    sheet = 1;
+    % Read excel file
+    [num,txt,excelData] = xlsread(filename,sheet);
+    % Get field names
+    fields = excelData(1,:);
+    fields = fields(cellfun(@ischar,fields));
+    % If sheet is empty (no field names), use default field 'Weight'
+    if isempty(fields)
+        fields = {'Weight'};
+    end
 end
 
 tableData = cell(numel(fields),1);
