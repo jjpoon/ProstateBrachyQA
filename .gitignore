@@ -3,6 +3,7 @@
 *.bmp
 out.txt
 plotEllipsoid.m
+imageExcelTest.m
 
 # Folders
 20150521_144039/

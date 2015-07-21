@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 17-Jul-2015 17:18:16
+% Last Modified by GUIDE v2.5 21-Jul-2015 14:07:21
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -67,37 +67,29 @@ warning off MATLAB:uitabgroup:OldVersion
 % Create tab group
 handles.tabgroup = uitabgroup(hObject,'Position',[0 0 1 1]);
 % Create tabs
-tab1 = uitab(handles.tabgroup,'Title','Grayscale');
-tab2 = uitab(handles.tabgroup,'Title','Depth');
-tab3 = uitab(handles.tabgroup,'Title','Axial Resolution');
-tab4 = uitab(handles.tabgroup,'Title','Lateral Resolution');
-tab5 = uitab(handles.tabgroup,'Title','Axial Distance');
-tab6 = uitab(handles.tabgroup,'Title','Lateral Distance');
-tab7 = uitab(handles.tabgroup,'Title','Area');
-tab8 = uitab(handles.tabgroup,'Title','Volume (Planimetric)');
-tab9 = uitab(handles.tabgroup,'Title','Volume (Formula)');
-tab10 = uitab(handles.tabgroup,'Title','Grid Alignment');
+tab1 = uitab(handles.tabgroup,'Title','Phantom');
+tab2 = uitab(handles.tabgroup,'Title','Grayscale');
+tab3 = uitab(handles.tabgroup,'Title','Depth');
+tab4 = uitab(handles.tabgroup,'Title','Axial Resolution');
+tab5 = uitab(handles.tabgroup,'Title','Lateral Resolution');
+tab6 = uitab(handles.tabgroup,'Title','Axial Distance');
+tab7 = uitab(handles.tabgroup,'Title','Lateral Distance');
+tab8 = uitab(handles.tabgroup,'Title','Area');
+tab9 = uitab(handles.tabgroup,'Title','Volume (Planimetric)');
+tab10 = uitab(handles.tabgroup,'Title','Volume (Formula)');
+tab11 = uitab(handles.tabgroup,'Title','Grid Alignment');
 % Set tabs as parents of appropriate test panels
-set(handles.grayscale_panel,'Parent',tab1);
-set(handles.grayscale_panel_result,'Parent',tab1);
-set(handles.depth_panel,'Parent',tab2);
-set(handles.depth_panel_result,'Parent',tab2);
-set(handles.axialResolution_panel,'Parent',tab3);
-set(handles.axialResolution_panel_result,'Parent',tab3);
-set(handles.lateralResolution_panel,'Parent',tab4);
-set(handles.lateralResolution_panel_result,'Parent',tab4);
-set(handles.axialDistance_panel,'Parent',tab5);
-set(handles.axialDistance_panel_result,'Parent',tab5);
-set(handles.lateralDistance_panel,'Parent',tab6);
-set(handles.lateralDistance_panel_result,'Parent',tab6);
-set(handles.area_panel,'Parent',tab7);
-set(handles.area_panel_result,'Parent',tab7);
-set(handles.volume_panel,'Parent',tab8);
-set(handles.volume_panel_result,'Parent',tab8);
-set(handles.volumeFormula_panel,'Parent',tab9);
-set(handles.volumeFormula_panel_result,'Parent',tab9);
-set(handles.gridAlignment_panel,'Parent',tab10);
-set(handles.gridAlignment_panel_result,'Parent',tab10);
+set(handles.phantom_panel_parent,'Parent',tab1);
+set(handles.grayscale_panel_parent,'Parent',tab2);
+set(handles.depth_panel_parent,'Parent',tab3);
+set(handles.axialResolution_panel_parent,'Parent',tab4);
+set(handles.lateralResolution_panel_parent,'Parent',tab5);
+set(handles.axialDistance_panel_parent,'Parent',tab6);
+set(handles.lateralDistance_panel_parent,'Parent',tab7);
+set(handles.area_panel_parent,'Parent',tab8);
+set(handles.volume_panel_parent,'Parent',tab9);
+set(handles.volumeFormula_panel_parent,'Parent',tab10);
+set(handles.gridAlignment_panel_parent,'Parent',tab11);
 
 % Initiate images
 handles.images = cell(10,1);
@@ -169,24 +161,26 @@ handles = guidata(hObject);
 handles.testNum = get(handles.tabgroup,'SelectedIndex');
 switch handles.testNum
     case 1
-        testName = 'grayscale';
+        testName = 'phantom';
     case 2
-        testName = 'depth';
+        testName = 'grayscale';
     case 3
-        testName = 'axialResolution';
+        testName = 'depth';
     case 4
-        testName = 'lateralResolution';
+        testName = 'axialResolution';
     case 5
-        testName = 'axialDistance';
+        testName = 'lateralResolution';
     case 6
-        testName = 'lateralDistance';
+        testName = 'axialDistance';
     case 7
-        testName = 'area';
+        testName = 'lateralDistance';
     case 8
-        testName = 'volume';
+        testName = 'area';
     case 9
-        testName = 'volumeFormula';
+        testName = 'volume';
     case 10
+        testName = 'volumeFormula';
+    case 11
         testName = 'gridAlignment';
 end
 handles.testName = testName;
@@ -2248,3 +2242,43 @@ if ~isempty(answer)
     handles.lowerScaleReading{testNum}{2} = str2num(answer{4});
 end
 guidata(hObject,handles);
+
+
+% --- Executes on button press in phantom_button_saveDefFields.
+function phantom_button_saveDefFields_Callback(hObject, eventdata, handles)
+% hObject    handle to phantom_button_saveDefFields (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in phantom_button_addField.
+function phantom_button_addField_Callback(hObject, eventdata, handles)
+% hObject    handle to phantom_button_addField (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes during object creation, after setting all properties.
+function phantom_table_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to phantom_table (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+% Read excel file, check existing default fields
+filename = fullfile(pwd,'Log/','ProstateBrachyQA Log.xlsx');
+sheet = 1;
+% Read excel file
+[num,txt,excelData] = xlsread(filename,sheet);
+% Get field names
+fields = excelData(1,:);
+fields = fields(cellfun(@ischar,fields));
+% If sheet is empty (no field names), use default field 'Weight'
+if isempty(fields)
+    fields = {'Weight'};
+end
+
+tableData = cell(numel(fields),1);
+set(hObject,'Data',tableData);
+set(hObject,'RowName',fields);
+set(hObject,'ColumnName',[]);
+set(hObject,'ColumnEditable',true);
+
