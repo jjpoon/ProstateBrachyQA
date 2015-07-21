@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 21-Jul-2015 14:07:21
+% Last Modified by GUIDE v2.5 21-Jul-2015 15:14:47
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -2256,6 +2256,74 @@ function phantom_button_addField_Callback(hObject, eventdata, handles)
 % hObject    handle to phantom_button_addField (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+% Manually input upper and lower scale readings
+prompt = 'Enter the new field name:';
+title = 'Add Field';
+numlines = [1, length(title)+20];
+answer=inputdlg(prompt,title,numlines);
+% If user inputted new field name
+if ~isempty(answer)
+    % Add new field to existing row headers
+    fields = get(handles.phantom_table,'RowName');
+    newFields = [fields;answer];
+    set(handles.phantom_table,'RowName',newFields);
+    % Add new entry for table data
+    tableData = get(handles.phantom_table,'Data');
+    newTableData = [tableData;cell(1)];
+    set(handles.phantom_table,'Data',newTableData);
+%     set(handles.phantom_table,'ColumnEditable',true);
+end
+guidata(hObject,handles);
+
+% --- Executes on button press in phantom_button_delField.
+function phantom_button_delField_Callback(hObject, eventdata, handles)
+% hObject    handle to phantom_button_delField (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% Create popup dialog
+width = 300;
+height = 200;
+screenSize = get(0,'screensize');
+x = round(screenSize(3)/2 - width/2);
+y = round(screenSize(4)/2 - height/2);
+d = dialog('Name','Delete Fields','Position',[x y width height]);
+% set(d,'WindowStyle','normal');
+% Create instructions static text
+msg = uicontrol('Parent',d,'Style','text','String','Select field(s) to delete',...
+    'HorizontalAlignment','left','Position',[10 180 280 15]);
+msgPos = get(msg,'Position');
+% Create listbox showing fields
+listbox = uicontrol('Parent',d,'Style','listbox',...
+    'Position',[msgPos(1) 50 msgPos(3) 125]);
+fields = get(handles.phantom_table,'RowName');
+set(listbox,'String',fields);
+% Set Max property so multiple fields can be selected
+set(listbox,'Max',numel(fields));
+% Create delete button and set callback
+deleteBtn = uicontrol('Parent',d,'String','Delete','Position',[100 10 50 30],...
+    'Callback',@(obj,eventdata)deleteFields(listbox,handles));
+% Create cancel button and set callback
+cancelBtn = uicontrol('Parent',d,'String','Cancel','Position',[160 10 50 30],...
+    'Callback','delete(gcf)');
+guidata(hObject,handles);
+
+function deleteFields(listbox,handles)
+% Get indices of selected fields
+selected = get(listbox,'Value');
+% Delete selected fields
+fields = get(handles.phantom_table,'RowName');
+fields(selected) = [];
+% Delete selected fields from table row headers
+set(handles.phantom_table,'RowName',fields);
+% Delete selected fields from listbox
+set(listbox,'Value',1);
+set(listbox,'String',fields);
+% Delete selected field rows from table data
+tableData = get(handles.phantom_table,'Data');
+tableData(selected) = [];
+set(handles.phantom_table,'Data',tableData);
+% Close the Delete Fields popup window
+delete(gcf);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -2281,4 +2349,7 @@ set(hObject,'Data',tableData);
 set(hObject,'RowName',fields);
 set(hObject,'ColumnName',[]);
 set(hObject,'ColumnEditable',true);
+
+
+
 
