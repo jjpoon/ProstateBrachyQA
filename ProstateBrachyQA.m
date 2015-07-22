@@ -2398,9 +2398,9 @@ try
         xlData = Sheet1.UsedRange.Value(1:numRows,1:numCols);
         
         % Write new data
-        newRow = numRows + 1;
+        numRows = numRows + 1;
         % Write date
-        Sheet1.get('Cells',newRow,1).Value = date;
+        Sheet1.get('Cells',numRows,1).Value = date;
         % Write fields
         for n = 1:numel(fields)
             field = fields{n};
@@ -2408,15 +2408,16 @@ try
             [~,fieldCol] = find(strcmp(xlData(1,:),field));
             if ~isempty(fieldCol)
                 % Column exists, write the value in new row
-                Sheet1.get('Cells',newRow,fieldCol).Value = val;
+                Sheet1.get('Cells',numRows,fieldCol).Value = val;
             else
                 % Create new column for new field
-                newHeader = Sheet1.get('Cells',1,numCols+1);
+                numCols = numCols + 1;
+                newHeader = Sheet1.get('Cells',1,numCols);
                 newHeader.Select;
                 newHeader.Value = field;
                 newHeader.DisplayFormat.Font.FontStyle = 'Bold';
                 % Write new value in new row
-                Sheet1.get('Cells',newRow,numCols+1).Value = val;
+                Sheet1.get('Cells',numRows,numCols).Value = val;
             end
         end
         
@@ -2433,10 +2434,11 @@ try
             chartShape.Select;
         end
         % Set/update chart data
-        Workbook.ActiveChart.SetSourceData(Sheet1.UsedRange)
+        range = Sheet1.get('Range',Sheet1.get('Cells',1,1),Sheet1.get('Cells',numRows,numCols));
+        Workbook.ActiveChart.SetSourceData(range)
         % Set/update chart position
-        chartShape.Top = Sheet1.get('Cells',newRow+2,1).Top;
-        chartShape.Left = Sheet1.get('Cells',newRow+2,1).Left+10;
+        chartShape.Top = Sheet1.get('Cells',numRows+2,1).Top;
+        chartShape.Left = Sheet1.get('Cells',numRows+2,1).Left+10;
         
         % Save the workbook
         invoke(Workbook, 'Save');
