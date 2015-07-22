@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 21-Jul-2015 15:14:47
+% Last Modified by GUIDE v2.5 21-Jul-2015 17:30:32
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -2360,5 +2360,97 @@ set(hObject,'ColumnName',[]);
 set(hObject,'ColumnEditable',true);
 
 
+% --- Executes on button press in phantom_button_export.
+function phantom_button_export_Callback(hObject, eventdata, handles)
+% hObject    handle to phantom_button_export (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+fields = get(handles.phantom_table,'RowName');
+tableData = get(handles.phantom_table,'Data');
 
-
+try
+    % Get handle to Excel COM Server
+    Excel = actxserver('Excel.Application');
+    Excel.DisplayAlerts = 0;
+    % Add a Workbook
+    Workbooks = Excel.Workbooks;
+    Workbook = Open(Workbooks,fullfile(pwd,'Log/','ProstateBrachyQA Log.xlsx'));
+    
+    if Workbook.ReadOnly == 0
+        % Have write access to excel file
+        % Get a handle to Sheets and select Sheet 1
+        Sheets = Excel.ActiveWorkBook.Sheets;
+        Sheet1 = get(Sheets, 'Item', 1);
+        Sheet1.Activate;
+        % Get number of last used row
+        lastRow = Sheet1.get('Cells').Find('*',Sheet1.get('Cells',1,1),[],[],1,2);
+        if ~isempty(lastRow)
+            numRows = lastRow.Row;
+        else
+            % No data, create first row of headers
+            headers = Sheet1.get('Range',Sheet1.get('Cells',1,2),Sheet1.get('Cells',1,numel(fields)+1));
+            headers.Value = fields;
+            headers.Select;
+            headers.DisplayFormat.Font.FontStyle = 'Bold';
+            numRows = 1;
+        end
+        numCols = Sheet1.get('Cells').Find('*',Sheet1.get('Cells',1,1),[],[],2,2).Column;
+        xlData = Sheet1.UsedRange.Value(1:numRows,1:numCols);
+        
+        % Write new data
+        newRow = numRows + 1;
+        % Write date
+        Sheet1.get('Cells',newRow,1).Value = date;
+        % Write fields
+        for n = 1:numel(fields)
+            field = fields{n};
+            val = tableData{n};
+            [~,fieldCol] = find(strcmp(xlData(1,:),field));
+            if ~isempty(fieldCol)
+                % Column exists, write the value in new row
+                Sheet1.get('Cells',newRow,fieldCol).Value = val;
+            else
+                % Create new column for new field
+                newHeader = Sheet1.get('Cells',1,numCols+1);
+                newHeader.Select;
+                newHeader.Value = field;
+                newHeader.DisplayFormat.Font.FontStyle = 'Bold';
+                % Write new value in new row
+                Sheet1.get('Cells',newRow,numCols+1).Value = val;
+            end
+        end
+        
+        % Create/modify chart
+        if Sheet1.ChartObjects.Count == 0
+            % If no chart exists, create one
+            chartShape = Sheet1.Shapes.AddChart;
+            chartShape.Select;
+            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
+            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
+        else
+            % Select existing chart
+            chartShape = Sheet1.ChartObjects.Item(1);
+            chartShape.Select;
+        end
+        % Set/update chart data
+        Workbook.ActiveChart.SetSourceData(Sheet1.UsedRange)
+        % Set/update chart position
+        chartShape.Top = Sheet1.get('Cells',newRow+2,1).Top;
+        chartShape.Left = Sheet1.get('Cells',newRow+2,1).Left+10;
+        
+        % Save the workbook
+        invoke(Workbook, 'Save');
+        msgbox('Export successful.');
+    else
+        % Don't have write access, file may be open in another program
+        errordlg('Cannot export to excel file. The file may be open in another application.',...
+            'Error');
+    end
+    % Close Excel
+    invoke(Excel, 'Quit');
+catch exception
+    disp(getReport(exception));
+    % Make sure to close excel if error occurs
+    invoke(Excel, 'Quit');
+end
+    
