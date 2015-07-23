@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 21-Jul-2015 17:30:32
+% Last Modified by GUIDE v2.5 23-Jul-2015 10:58:03
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -2393,6 +2393,11 @@ try
             headers.Select;
             headers.DisplayFormat.Font.FontStyle = 'Bold';
             numRows = 1;
+            % Set first row to bold
+            Sheet1.Range('1:1').Font.Bold = 1;
+            % Freeze first row
+            Sheet1.Application.ActiveWindow.SplitRow = 1;
+            Sheet1.Application.ActiveWindow.FreezePanes = true;
         end
         numCols = Sheet1.get('Cells').Find('*',Sheet1.get('Cells',1,1),[],[],2,2).Column;
         xlData = Sheet1.UsedRange.Value(1:numRows,1:numCols);
@@ -2436,6 +2441,7 @@ try
         % Set/update chart data
         range = Sheet1.get('Range',Sheet1.get('Cells',1,1),Sheet1.get('Cells',numRows,numCols));
         Workbook.ActiveChart.SetSourceData(range)
+        Workbook.ActiveChart.PlotBy = 'xlColumns';
         % Set/update chart position
         chartShape.Top = Sheet1.get('Cells',numRows+2,1).Top;
         chartShape.Left = Sheet1.get('Cells',numRows+2,1).Left+10;
@@ -2456,3 +2462,10 @@ catch exception
     invoke(Excel, 'Quit');
 end
     
+
+
+% --- Executes on button press in grayscale_button_export.
+function grayscale_button_export_Callback(hObject, eventdata, handles)
+% hObject    handle to grayscale_button_export (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
