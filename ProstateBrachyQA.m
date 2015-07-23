@@ -4290,11 +4290,37 @@ try
             chartShape.Select;
         end
         % Set/update chart data
-        rangeDate = Sheet.get('Range',Sheet.get('Cells',1,1),Sheet.get('Cells',numRows,1));
-        rangeVal = Sheet.get('Range',Sheet.get('Cells',1,3),Sheet.get('Cells',numRows,3));
-        range = Excel.Union(rangeDate,rangeVal);
-        Workbook.ActiveChart.SetSourceData(range)
-        Workbook.ActiveChart.PlotBy = 'xlColumns';
+        knownValsCol = Sheet.get('Range',Sheet.get('Cells',2,2),Sheet.get('Cells',numRows,2)).Value;
+        if iscell(knownValsCol)
+            knownValsCol = cell2mat(knownValsCol);
+        end
+        knownVals = unique(knownValsCol);
+        seriesCollection = Workbook.ActiveChart.SeriesCollection;
+        for s = 1:numel(knownVals)
+            if seriesCollection.Count < s
+                % Create series
+                seriesCollection.NewSeries;
+            end
+            series = seriesCollection.Item(s);
+            series.Name = ['Known Value: ' num2str(knownVals(s))];
+            % Get row numbers for this known value
+            rowNums = find(knownValsCol==knownVals(s));
+            % X Data
+            % Get test dates for this known value
+            dateColumn = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',numRows,1));
+            dateRange = dateColumn.Cells.Item(rowNums(1));
+            for n = 2:numel(rowNums)
+                dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(rowNums(n)));
+            end
+            series.XValues = dateRange;
+            % Y Data
+            valColumn = Sheet.get('Range',Sheet.get('Cells',2,3),Sheet.get('Cells',numRows,3));
+            valRange = valColumn.Cells.Item(rowNums(1));
+            for n = 2:numel(rowNums)
+                valRange = Excel.Union(valRange,valColumn.Cells.Item(rowNums(n)));
+            end
+            series.Values = valRange;
+        end
         Workbook.ActiveChart.HasTitle = 1;
         Workbook.ActiveChart.ChartTitle.Text = 'Area';
         % Set/update chart position
@@ -4456,7 +4482,10 @@ try
             chartShape.Select;
         end
         % Set/update chart data
-        knownValsCol = cell2mat(Sheet.get('Range',Sheet.get('Cells',2,2),Sheet.get('Cells',numRows,2)).Value);
+        knownValsCol = Sheet.get('Range',Sheet.get('Cells',2,2),Sheet.get('Cells',numRows,2)).Value;
+        if iscell(knownValsCol)
+            knownValsCol = cell2mat(knownValsCol);
+        end
         knownVals = unique(knownValsCol);
         seriesCollection = Workbook.ActiveChart.SeriesCollection;
         for s = 1:numel(knownVals)
@@ -4645,7 +4674,10 @@ try
             chartShape.Select;
         end
         % Set/update chart data
-        knownValsCol = cell2mat(Sheet.get('Range',Sheet.get('Cells',2,2),Sheet.get('Cells',numRows,2)).Value);
+        knownValsCol = Sheet.get('Range',Sheet.get('Cells',2,2),Sheet.get('Cells',numRows,2)).Value;
+        if iscell(knownValsCol)
+            knownValsCol = cell2mat(knownValsCol);
+        end
         knownVals = unique(knownValsCol);
         seriesCollection = Workbook.ActiveChart.SeriesCollection;
         for s = 1:numel(knownVals)
