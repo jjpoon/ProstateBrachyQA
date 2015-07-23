@@ -88,7 +88,8 @@ splineX = splinePoints(1,:);
 splineY = splinePoints(2,:);
 splineZ = splinePoints(3,:);
 
-% Create 3D object from spline, if spline were rotated about z-axis
+% Create 3D object from spline, if spline were rotated about z-axis (based
+% on MATLAB example makevase)
 n=180;
 t=(0:n)'*2*pi/n;
 obj=surf(ones(n+1,1)*splineZ,cos(t)*splineY,sin(t)*splineY,...
