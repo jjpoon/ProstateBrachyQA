@@ -219,18 +219,17 @@ function button_images_Callback(hObject, eventdata, handles)
 testNum = handles.testNum;
 testName = handles.testName;
 
+filenames = 0;
+
 % Open dialog for selecting image(s)
 if strcmp(testName,'volumeFormula')
     [axialFile,axialPath] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
         '*.*','All Files' },'Select Axial Image');
     if axialPath ~= 0
-        folder = axialPath;
-    else
-        folder = pwd;
+        [sagittalFile,sagittalPath] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
+            '*.*','All Files' },'Select Sagittal Image',axialPath);
+        filenames = {axialFile, sagittalFile};
     end
-    [sagittalFile,sagittalPath] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
-        '*.*','All Files' },'Select Sagittal Image',folder);
-    filenames = {axialFile, sagittalFile};
 else
     [filenames,pathname] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
         '*.*','All Files' },'Select Image(s)','MultiSelect','on');
