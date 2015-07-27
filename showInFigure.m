@@ -24,7 +24,15 @@ switch get(gui,'SelectionType')
             for n = 1:numel(labels)
                 labelStr = labels{n};
                 % Get copied plot object with matching label name
-                markers(n) = findobj(plots,'DisplayName',labelStr);
+                copiedPlot = findobj(plots,'DisplayName',labelStr);
+                if numel(copiedPlot) > 1
+                    % If more than one plot with same label, take the one
+                    % that hasn't been copied yet
+                    ind = find(~ismember(copiedPlot,markers),1);
+                    markers(n) = copiedPlot(ind);
+                else
+                    markers(n) = copiedPlot;
+                end
             end
             % Create legend
             l = legend(markers,labels,'Location','southeast','Orientation','horizontal');
