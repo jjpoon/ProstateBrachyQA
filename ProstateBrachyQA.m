@@ -59,8 +59,8 @@ handles.output = hObject;
 handles.upperScaleReading = cell(1,10);
 handles.lowerScaleReading = cell(1,10);
 % Volume formula test can have separate scale reading for axial/sagittal image
-handles.upperScaleReading{9} = cell(1,2);
-handles.lowerScaleReading{9} = cell(1,2);
+handles.upperScaleReading{10} = cell(1,2);
+handles.lowerScaleReading{10} = cell(1,2);
 
 % Set up tabs
 warning off MATLAB:uitabgroup:OldVersion
@@ -203,7 +203,7 @@ if strcmp(testName,'volumeFormula')
     [axialFile,axialPath] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
         '*.*','All Files' },'Select Axial Image');
     [sagittalFile,sagittalPath] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
-        '*.*','All Files' },'Select Sagittal Image');
+        '*.*','All Files' },'Select Sagittal Image',axialPath);
     filenames = {axialFile, sagittalFile};
 else
     [filenames,pathname] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
