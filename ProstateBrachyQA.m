@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 23-Jul-2015 10:58:03
+% Last Modified by GUIDE v2.5 28-Jul-2015 14:10:25
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -127,6 +127,9 @@ handles.oldMousePoint = [];
 
 % Initiate volume test 3DView option
 handles.volume_3DView = 'interp';
+
+% Initiate grid coordinates variable
+handles.gridAlignmentCoords = [];
 
 % Add listener for selected tab index
 addlistener(handles.tabgroup,'SelectedIndex','PostSet',@(obj,eventdata)onSelectedTabChanged(hObject));
@@ -330,6 +333,12 @@ if ~any(cellfun(@isnumeric,filenames))
             set(handles.([testName '_button_next']),'Visible','on');
         end
         
+    end
+    
+    % Enable button to assign grid coordinates to each image
+    if strcmp(testName,'gridAlignment')
+        handles.gridAlignmentCoords = repmat({''},size(filenames));
+        set(handles.gridAlignment_button_assignCoords,'Enable','on');
     end
     
 end
@@ -1541,9 +1550,9 @@ function gridAlignment_table_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to gridAlignment_table (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-data = cell(5,2);
+data = cell(1,2);
 set(hObject,'Data',data);
-set(hObject,'RowName',{'Image 1','Image 2','Image 3','Image 4','Image 5'});
+set(hObject,'RowName',{'  '});
 set(hObject,'ColumnName',{'Error (mm)','Result'});
 set(hObject,'ColumnEditable',false(1,size(data,2)));
 
@@ -1561,86 +1570,91 @@ set(handles.figure1,'pointer','watch')
 drawnow;
 
 try
-    testNum = handles.testNum;
-    panelHandle = handles.gridAlignment_panel_figure;
-    axesHandles = handles.gridAlignment_axes_list;
-    
-    if numel(handles.images) >= testNum
-        if ~isempty(handles.images{testNum})
-            
-            % Clear existing grid view
-            delete(get(panelHandle,'Children'));
-            % Clear existing axes
-            for a = 1:numel(axesHandles)
-                cla(axesHandles(a));
-            end
-            % Remove old legends
-            parentPanel = get(axesHandles(1),'Parent');
-            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
-            delete(legends);
-            % Bring panel_figure back on top
-            uistack(panelHandle,'top');
-            
-            % Run test, plot on given axes
-            % Check if scale readings were set manually
-            if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
-                % Scale readings were inputted
-                [result,errors] = gridAlignmentTestAuto(handles.images{testNum}{:},...
-                    'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
-                    'PanelHandle',panelHandle,'AxesHandle',axesHandles);
-            else
-                % Read scale automatically from image
-                [result,errors] = gridAlignmentTestAuto(handles.images{testNum}{:},...
-                    'PanelHandle',panelHandle,'AxesHandle',axesHandles);
-            end
-            
-            % Get updated handles
-            handles = guidata(hObject);
-            
-            % Get table data
-            table = handles.gridAlignment_table;
-            data = get(table,'Data');
-            for n = 1:numel(errors)
-                % Modify table data
-                data{n,1} = sprintf('%.2f',errors(n));
-                % Result
-                if result(n) == 1
-                    data{n,2} = '<html><font color="green">PASS';
-                else
-                    data{n,2} = '<html><font color="red">FAIL';
+    if ~any(cellfun(@isempty,handles.gridAlignmentCoords))
+        % Only run test if grid coords have been assigned for each image
+        testNum = handles.testNum;
+        panelHandle = handles.gridAlignment_panel_figure;
+        axesHandles = handles.gridAlignment_axes_list;
+        
+        if numel(handles.images) >= testNum
+            if ~isempty(handles.images{testNum})
+                
+                % Clear existing grid view
+                delete(get(panelHandle,'Children'));
+                % Clear existing axes
+                for a = 1:numel(axesHandles)
+                    cla(axesHandles(a));
                 end
-            end
-            % Set table data
-            set(table,'Data',data);
-            
-            % If in single view mode, hide the grid panel and show current axes
-            if get(handles.gridAlignment_button_singleView,'Value') == 1
-                % Hide grid panel
-                set(handles.gridAlignment_panel_figure,'Visible','off');
-                % Show current image axes plots
-                imageIndex = handles.gridAlignment_imageIndex;
-                currImageAxes = handles.gridAlignment_axes_list(imageIndex);
-                plots = get(currImageAxes,'Children');
-                set(plots,'Visible','on');
-                % Show legend associated with current image
-                testPanelChildren = get(handles.gridAlignment_panel,'Children');
-                legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
-                for n = 1:numel(legends)
-                    leg = legends(n);
-                    userData = get(leg,'UserData');
-                    if userData.ImageIndex == imageIndex
-                        set(leg,'Visible','on');
+                % Remove old legends
+                parentPanel = get(axesHandles(1),'Parent');
+                legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+                delete(legends);
+                % Bring panel_figure back on top
+                uistack(panelHandle,'top');
+                
+                % Run test, plot on given axes
+                % Check if scale readings were set manually
+                if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
+                    % Scale readings were inputted
+                    [result,errors] = gridAlignmentTestAuto(handles.images{testNum}{:},...
+                        'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
+                        'GridCoords',handles.gridAlignmentCoords,...
+                        'PanelHandle',panelHandle,'AxesHandle',axesHandles);
+                else
+                    % Read scale automatically from image
+                    [result,errors] = gridAlignmentTestAuto(handles.images{testNum}{:},...
+                        'GridCoords',handles.gridAlignmentCoords,...
+                        'PanelHandle',panelHandle,'AxesHandle',axesHandles);
+                end
+                
+                % Get updated handles
+                handles = guidata(hObject);
+                
+                % Get table data
+                table = handles.gridAlignment_table;
+                data = get(table,'Data');
+                for n = 1:numel(errors)
+                    % Modify table data
+                    data{n,1} = sprintf('%.2f',errors(n));
+                    % Result
+                    if result(n) == 1
+                        data{n,2} = '<html><font color="green">PASS';
+                    else
+                        data{n,2} = '<html><font color="red">FAIL';
                     end
                 end
-                % Show previous and next image buttons
-                set(handles.gridAlignment_button_prev,'Visible','on');
-                set(handles.gridAlignment_button_next,'Visible','on');
+                % Set table data
+                set(table,'Data',data);
+                
+                % If in single view mode, hide the grid panel and show current axes
+                if get(handles.gridAlignment_button_singleView,'Value') == 1
+                    % Hide grid panel
+                    set(handles.gridAlignment_panel_figure,'Visible','off');
+                    % Show current image axes plots
+                    imageIndex = handles.gridAlignment_imageIndex;
+                    currImageAxes = handles.gridAlignment_axes_list(imageIndex);
+                    plots = get(currImageAxes,'Children');
+                    set(plots,'Visible','on');
+                    % Show legend associated with current image
+                    testPanelChildren = get(handles.gridAlignment_panel,'Children');
+                    legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+                    for n = 1:numel(legends)
+                        leg = legends(n);
+                        userData = get(leg,'UserData');
+                        if userData.ImageIndex == imageIndex
+                            set(leg,'Visible','on');
+                        end
+                    end
+                    % Show previous and next image buttons
+                    set(handles.gridAlignment_button_prev,'Visible','on');
+                    set(handles.gridAlignment_button_next,'Visible','on');
+                end
+                
+                % Show scale warning if needed
+                showScaleWarning(hObject,handles);
+                % Get updated handles
+                handles = guidata(hObject);
             end
-            
-            % Show scale warning if needed
-            showScaleWarning(hObject,handles);
-            % Get updated handles
-            handles = guidata(hObject);
         end
     end
 catch exception
@@ -2469,3 +2483,35 @@ function grayscale_button_export_Callback(hObject, eventdata, handles)
 % hObject    handle to grayscale_button_export (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in gridAlignment_button_assignCoords.
+function gridAlignment_button_assignCoords_Callback(hObject, eventdata, handles)
+% hObject    handle to gridAlignment_button_assignCoords (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% Manually input upper and lower scale readings
+imageNames = get(handles.gridAlignment_listbox,'String');
+prompt = cell(1,numel(imageNames));
+for n = 1:numel(imageNames)
+    prompt{n} = ['\bf Image ' num2str(n) ': ' '\rm' strrep(imageNames{n},'_','\_')];
+end
+title = 'Assign grid coordinates';
+numlines = [1, length(title)+40];
+
+% Default values
+default = handles.gridAlignmentCoords;
+
+options.Interpreter = 'tex';
+answer=inputdlg(prompt,title,numlines,default,options);
+% If user inputted grid coordinates
+if ~isempty(answer)
+    % Store inputted coordinates
+    handles.gridAlignmentCoords = answer;
+    % Modify table
+    t = handles.gridAlignment_table;
+    set(t,'RowName',answer);
+    data = cell(numel(answer),2);
+    set(t,'Data',data);
+end
+guidata(hObject,handles);

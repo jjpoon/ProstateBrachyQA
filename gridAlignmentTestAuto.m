@@ -28,12 +28,14 @@ addParameter(p,'UpperScale',[]);
 addParameter(p,'LowerScale',[]);
 addParameter(p,'PanelHandle',[]);
 addParameter(p,'AxesHandle',[]);
+addParameter(p,'GridCoords',[]);
 % Parse inputs
 parse(p,imageFile1,varargin{:});
-upper = p.Results.UpperScale;
-lower = p.Results.LowerScale;
+upperScale = p.Results.UpperScale;
+lowerScale = p.Results.LowerScale;
 panelHandle = p.Results.PanelHandle;
 axesHandles = p.Results.AxesHandle;
+gridCoords = p.Results.GridCoords;
 
 % If running function without GUI, plot on new figure
 if isempty(panelHandle) && isempty(axesHandles)
@@ -47,13 +49,13 @@ end
 for i = 1:numel(imageInputs)
     imageFile = imageInputs{i};
     
-    if isempty(upper) && isempty(lower)
+    if isempty(upperScale) && isempty(lowerScale)
         % Get the pixel to mm conversion ratio, automatically reading scale
         % labels from the image
         pixelScale = getPixelScale(imageFile);
     else
         % Get pixel scale using scale readings inputted by user
-        pixelScale = getPixelScale(imageFile,upper,lower);
+        pixelScale = getPixelScale(imageFile,upperScale,lowerScale);
     end
         
     % Read image
@@ -112,78 +114,27 @@ for i = 1:numel(imageInputs)
         centroids(n,:) = gridRegions(n).Centroid;
     end
     
-    % ---------------------------------------------------------------------
-    % Get the indices of the corner points and center
-    
-    % Top left
-    topLeftCorner = [0 0];
-    % Get distances from corner to centroids
-    vectors = centroids - repmat(topLeftCorner,size(centroids,1),1);
-    distances = sqrt(vectors(:,1).^2 + vectors(:,2).^2);
-    [topLeft,topLeftInd] = min(distances);
-    
-    % Top right
-    topRightCorner = [size(im_grid,2) 0];
-    % Get distances from corner to centroids
-    vectors = centroids - repmat(topRightCorner,size(centroids,1),1);
-    distances = sqrt(vectors(:,1).^2 + vectors(:,2).^2);
-    [topRight,topRightInd] = min(distances);
-    
-    % Bottom left
-    bottomLeftCorner = [0 size(im_grid,1)];
-    % Get distances from corner to centroids
-    vectors = centroids - repmat(bottomLeftCorner,size(centroids,1),1);
-    distances = sqrt(vectors(:,1).^2 + vectors(:,2).^2);
-    [bottomLeft,bottomLeftInd] = min(distances);
-    
-    % Top right
-    bottomRightCorner = [size(im_grid,2) size(im_grid,1)];
-    % Get distances from corner to centroids
-    vectors = centroids - repmat(bottomRightCorner,size(centroids,1),1);
-    distances = sqrt(vectors(:,1).^2 + vectors(:,2).^2);
-    [bottomRight,bottomRightInd] = min(distances);
-    
-    % Center
-    gridHeight_v = centroids(bottomLeftInd,:) - centroids(topLeftInd,:);
-    gridWidth_v = centroids(topRightInd,:) - centroids(topLeftInd,:);
-    center = centroids(topLeftInd,:) + gridHeight_v/2 + gridWidth_v/2;
-    % Get distances from center to centroids
-    vectors = centroids - repmat(center,size(centroids,1),1);
-    distances = sqrt(vectors(:,1).^2 + vectors(:,2).^2);
-    [center,centerInd] = min(distances);
-    
-    gridIndices = [topLeftInd,topRightInd,bottomLeftInd,bottomRightInd,centerInd];
-    % ---------------------------------------------------------------------
-    
-%     % Show corner and center points
-%     imshow(ismember(bwlabel(im_grid),gridIndices));
-    
-    % ---------------------------------------------------------------------
-    % Compare region intensities (find point where needle is)
-    regionWidth = 100;
-    regionHeight = 100;
-    for n = gridIndices
-        point = centroids(n,:);
-        % Get region around current grid point
-        region{n} = im_tight(round(point(2)-regionHeight/2:point(2)+regionHeight/2),...
-            round(point(1)-regionWidth/2:point(1)+regionWidth/2),:);
-        % Convert to grayscale
-        region_gray{n} = rgb2gray(region{n});
-        % Measure total intensity by summing all pixels
-        regionIntensity(n) = sum(region_gray{n}(:));
-    end
-    % Get index of region with greatest intensity
-    [~,brightestInd] = max(regionIntensity);
-    % Get the grid point with brightest surroundings
-    gridPoint = gridRegions(brightestInd).Centroid;
+    % Get size of grid template
+    rows = numel(find(centroids(:,1)==min(centroids(:,1))));
+    cols = numel(find(centroids(:,2)==min(centroids(:,2))));
+    % Convert grid coordinates to row and column number
+    colNum = double(upper(gridCoords{i}(1)))-64;
+    % Grid template row coordinates increase going up
+    r = rows:-1:1;
+    rowNum = r(str2double(gridCoords{i}(2:end)));
+    % Get index of grid point from coordinates
+    gridInd = sub2ind([rows cols],rowNum,colNum);
+    gridPoint = gridRegions(gridInd).Centroid;
     
     % Region mask
+    regionWidth = 100;
+    regionHeight = 100;
     regionMask = zeros(size(im_tight,1),size(im_tight,2));
     regionMask(round(gridPoint(2)-regionHeight/2:gridPoint(2)+regionHeight/2),...
         round(gridPoint(1)-regionWidth/2:gridPoint(1)+regionWidth/2)) = 1;
     % Restrict image to region of interest
     reg = rgb2gray(im_tight).*uint8(regionMask);
-    regBW = im2bw(reg);
+    regBW = im2bw(reg,0.9);
     bwRegions = regionprops(regBW,'Area','Centroid','MinorAxisLength','Orientation');
     
     [~,biggest] = max([bwRegions.Area]);
