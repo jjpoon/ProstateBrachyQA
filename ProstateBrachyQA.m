@@ -56,8 +56,8 @@ function ProstateBrachyQA_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 
 % Initialize scale readings
-handles.upperScaleReading = cell(1,10);
-handles.lowerScaleReading = cell(1,10);
+handles.upperScaleReading = cell(1,11);
+handles.lowerScaleReading = cell(1,11);
 % Volume formula test can have separate scale reading for axial/sagittal image
 handles.upperScaleReading{10} = cell(1,2);
 handles.lowerScaleReading{10} = cell(1,2);
@@ -92,7 +92,7 @@ set(handles.volumeFormula_panel_parent,'Parent',tab10);
 set(handles.gridAlignment_panel_parent,'Parent',tab11);
 
 % Initiate images
-handles.images = cell(10,1);
+handles.images = cell(11,1);
 
 % Initiate testNum and testName
 handles.testNum = 1;
@@ -210,7 +210,7 @@ else
         '*.*','All Files' },'Select Image(s)','MultiSelect','on');
 end
 
-if ischar(filenames)
+if ischar(filenames) || isnumeric(filenames)
     filenames = {filenames};
 end
 % If all filenames are not 0 (0 if user pressed cancel)
