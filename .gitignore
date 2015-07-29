@@ -5,6 +5,7 @@ out.txt
 plotEllipsoid.m
 imageExcelTest.m
 circleSegmentTest.m
+segTest.m
 
 # Folders
 20150521_144039/

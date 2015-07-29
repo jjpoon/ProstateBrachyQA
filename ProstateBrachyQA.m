@@ -128,8 +128,10 @@ handles.oldMousePoint = [];
 % Initiate volume test 3DView option
 handles.volume_3DView = 'interp';
 
-% Initiate grid coordinates variable
+% Initiate grid coordinates
+handles.coordsPresetNum = [];
 handles.gridAlignmentCoords = [];
+
 
 % Add listener for selected tab index
 addlistener(handles.tabgroup,'SelectedIndex','PostSet',@(obj,eventdata)onSelectedTabChanged(hObject));
@@ -2491,27 +2493,122 @@ function gridAlignment_button_assignCoords_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % Manually input upper and lower scale readings
-imageNames = get(handles.gridAlignment_listbox,'String');
-prompt = cell(1,numel(imageNames));
-for n = 1:numel(imageNames)
-    prompt{n} = ['\bf Image ' num2str(n) ': ' '\rm' strrep(imageNames{n},'_','\_')];
-end
-title = 'Assign grid coordinates';
-numlines = [1, length(title)+40];
+images = handles.images{handles.testNum};
+% Create popup dialog
+width = 350;
+height = 450;
+screenSize = get(0,'screensize');
+x = round(screenSize(3)/2 - width/2);
+y = round(screenSize(4)/2 - height/2);
+d = dialog('Name','Assign Grid Coordinates','Position',[x y width height]);
+set(d,'WindowStyle','normal');
+% Create presets popup menu
+str = uicontrol('Parent',d,'Style','text','String','Preset:',...
+    'Position',[20 height-40 width-40 20],'HorizontalAlignment','left',...
+    'FontWeight','bold');
+presets{1} = 'B1,A3,A10,B12,L12,M10,M3,L1,H7,G7,F7,F6,G6,H6';
+presets{end+1} = 'Custom';
+menu = uicontrol('Parent',d,'Style','popup','String',presets,...
+    'Position',[20 height-50 width-40 10]);
 
-% Default values
-default = handles.gridAlignmentCoords;
-
-options.Interpreter = 'tex';
-answer=inputdlg(prompt,title,numlines,default,options);
-% If user inputted grid coordinates
-if ~isempty(answer)
-    % Store inputted coordinates
-    handles.gridAlignmentCoords = answer;
-    % Modify table
-    t = handles.gridAlignment_table;
-    set(t,'RowName',answer);
-    data = cell(numel(answer),2);
-    set(t,'Data',data);
+% Select previously chosen preset
+if ~isempty(handles.coordsPresetNum)
+    set(menu,'Value',handles.coordsPresetNum);
+    presetCell = handles.gridAlignmentCoords;
+else
+    % Get selected preset string
+    choice = presets{get(menu,'Value')};
+    % Convert selected preset to cell array
+    switch choice
+        case 'Custom'
+            % Empty table, allow user to input manually
+            presetCell = {''};
+        otherwise
+            % Automatically fill table with preset coordinates
+            presetCell = strsplit(choice,',');
+    end
 end
+
+% Create grid coords table
+data = cell(numel(images),1);
+data(1:numel(presetCell)) = presetCell;
+rowNames = cell(numel(images),1);
+for n = 1:numel(images)
+    rowNames{n} = ['Image ' num2str(n)];
+end
+tab = uitable('Parent',d,'RowName',rowNames,'ColumnName','Coordinates','Data',data,...
+    'ColumnEditable',true,'Position',[20 50 width-40 height-120]);
+set(tab,'CellEditCallback',@(obj,eventdata)updatePresetMenu(menu,tab));
+% Set callback for popup menu
+set(menu,'Callback',@(obj,eventdata)fillCoordsTable(menu,tab,handles));
+% Create OK button and set callback
+okBtn = uicontrol('Parent',d,'String','OK','Position',[width/2-55 10 50 30],...
+    'Callback',@(obj,eventdata)coordsOK_Callback(menu,tab,hObject,handles));
+% Create cancel button and set callback
+cancelBtn = uicontrol('Parent',d,'String','Cancel','Position',[width/2+5 10 50 30],...
+    'Callback','delete(gcf)');
 guidata(hObject,handles);
+
+function fillCoordsTable(menuHandle,tableHandle,handles)
+% Get list of presets in menu
+presets = get(menuHandle,'String');
+% Get selected preset string
+presetStr = presets{get(menuHandle,'Value')};
+% Convert selected preset to cell array
+switch presetStr
+    case 'Custom'
+        % Start with existing coords, whether empty or modified
+        presetCell = handles.gridAlignmentCoords;
+    otherwise
+        % Automatically fill table with preset coordinates
+        presetCell = strsplit(presetStr,',');
+end
+% Clear the current table
+oldData = get(tableHandle,'Data');
+tableData = cell(size(oldData));
+set(tableHandle,'Data',cell(size(tableData)));
+% Fill table with selected preset values
+if numel(tableData) < numel(presetCell)
+    tableData(1:end) = presetCell(1:numel(tableData));
+else
+    tableData(1:numel(presetCell)) = presetCell;
+end
+set(tableHandle,'Data',tableData);
+
+function coordsOK_Callback(menuHandle,tableHandle,hObject,handles)
+% Store selected preset number
+handles.coordsPresetNum = get(menuHandle,'Value');
+% Store grid coordinates
+gridCoords = get(tableHandle,'Data');
+handles.gridAlignmentCoords = gridCoords';
+% If there is a different number of new assigned coords or they are 
+% different than existing ones in table, clear any existing results
+if numel(gridCoords) ~= numel(get(handles.gridAlignment_table,'RowName'))
+    set(handles.gridAlignment_table,'Data',repmat({''},numel(gridCoords),1));
+elseif ~all(strcmp(gridCoords,get(handles.gridAlignment_table,'RowName')))
+    data = get(handles.gridAlignment_table,'Data');
+    set(handles.gridAlignment_table,'Data',repmat({''},size(data)));
+end
+% Set results table row headers
+set(handles.gridAlignment_table,'RowName',gridCoords);
+
+% Update handles
+guidata(hObject,handles)
+% Close assign coords dialog
+delete(gcf);
+
+function updatePresetMenu(menuHandle,tableHandle)
+presets = get(menuHandle,'String');
+preset = presets{get(menuHandle,'Value')};
+tableData = get(tableHandle,'Data');
+% If preset is not already 'Custom', check if table data matches
+if ~strcmp(preset,'Custom')
+    presetCell = strsplit(preset,',');
+    % If table was edited and does not match preset, switch menu to 'Custom'
+    if ~all(strcmp(presetCell(1:numel(tableData)),tableData'))
+        set(menuHandle,'Value',numel(presets));
+    end
+end
+    
+
+
