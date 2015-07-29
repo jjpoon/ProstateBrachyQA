@@ -2506,8 +2506,13 @@ set(d,'WindowStyle','normal');
 str = uicontrol('Parent',d,'Style','text','String','Preset:',...
     'Position',[20 height-40 width-40 20],'HorizontalAlignment','left',...
     'FontWeight','bold');
-presets{1} = 'B1,A3,A10,B12,L12,M10,M3,L1,H7,G7,F7,F6,G6,H6';
-presets{end+1} = 'Custom';
+% Load presets if file exists, otherwise create new presets
+if exist('GridCoordinatePresets.mat','file')
+    load('GridCoordinatePresets.mat');
+else
+    presets{1} = 'B1,A3,A10,B12,L12,M10,M3,L1,H7,G7,F7,F6,G6,H6';
+    presets{end+1} = 'Custom';
+end
 menu = uicontrol('Parent',d,'Style','popup','String',presets,...
     'Position',[20 height-50 width-40 10]);
 
@@ -2537,10 +2542,18 @@ for n = 1:numel(images)
     rowNames{n} = ['Image ' num2str(n)];
 end
 tab = uitable('Parent',d,'RowName',rowNames,'ColumnName','Coordinates','Data',data,...
-    'ColumnEditable',true,'Position',[20 50 width-40 height-120]);
+    'ColumnEditable',true,'Position',[20 50 width-40 height-160]);
 set(tab,'CellEditCallback',@(obj,eventdata)updatePresetMenu(menu,tab));
 % Set callback for popup menu
 set(menu,'Callback',@(obj,eventdata)fillCoordsTable(menu,tab,handles));
+
+% Create Save Preset button
+savePresetBtn = uicontrol('Parent',d,'String','Save Preset','Position',[20 height-100 100 30],...
+    'Callback',@(obj,eventdata)savePreset_Callback(menu,tab));
+% Create Delete Preset button
+delPresetBtn = uicontrol('Parent',d,'String','Delete Preset','Position',[130 height-100 100 30],...
+    'Callback',@(obj,eventdata)delPreset_Callback(menu,tab));
+
 % Create OK button and set callback
 okBtn = uicontrol('Parent',d,'String','OK','Position',[width/2-55 10 50 30],...
     'Callback',@(obj,eventdata)coordsOK_Callback(menu,tab,hObject,handles));
@@ -2609,6 +2622,62 @@ if ~strcmp(preset,'Custom')
         set(menuHandle,'Value',numel(presets));
     end
 end
+
+function savePreset_Callback(menuHandle,tableHandle)
+choices = get(menuHandle,'String');
+selected = choices{get(menuHandle,'Value')};
+% If presets file does not exist, create new one
+if ~exist('GridCoordinatePresets.mat','file')
+    presets = choices;
+    save('GridCoordinatePresets.mat','presets');
+end
+if ~strcmp(selected,'Custom')
+    warndlg('This preset already exists.','Save Preset');
+else
+    newPreset = strjoin(get(tableHandle,'Data')',',');
+    load('GridCoordinatePresets.mat');
+    % Check if preset already exists
+    if ~any(strcmp(presets,newPreset))
+        presets{end} = newPreset;
+        presets{end+1} = 'Custom';
+        set(menuHandle,'String',presets);
+        save('GridCoordinatePresets.mat','presets');
+        msgbox('Preset saved.','Save Preset');
+    else
+        warndlg('This preset already exists.','Save Preset');
+    end
+end
+
+function delPreset_Callback(menuHandle,tableHandle)
+choices = get(menuHandle,'String');
+selected = choices{get(menuHandle,'Value')};
+% If presets file does not exist, create new one
+if ~exist('GridCoordinatePresets.mat','file')
+    presets = choices;
+    save('GridCoordinatePresets.mat','presets');
+end
+if strcmp(selected,'Custom')
+    warndlg('This preset has not yet been saved.','Delete Preset');
+else
+    load('GridCoordinatePresets.mat');
+    ind = strcmp(presets,selected);
+    confirm = questdlg({'Are you sure you want to delete preset',[selected ' ?']},...
+        'Confirm Delete');
+    if strcmp(confirm,'Yes')
+        % Delete preset
+        presets(ind) = [];
+        % Update popup menu
+        set(menuHandle,'String',presets);
+        set(menuHandle,'Value',numel(presets));
+        % Clear table
+        tableData = get(tableHandle,'Data');
+        set(tableHandle,'Data',repmat({''},size(tableData)));
+        % Save presets to file
+        save('GridCoordinatePresets.mat','presets');
+        msgbox('Preset deleted.','Delete Preset');
+    end
+end
+    
     
 
 
