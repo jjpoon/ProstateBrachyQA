@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 28-Jul-2015 14:10:25
+% Last Modified by GUIDE v2.5 30-Jul-2015 11:11:17
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -2376,230 +2376,6 @@ set(hObject,'ColumnName',[]);
 set(hObject,'ColumnEditable',true);
 
 
-% --- Executes on button press in phantom_button_export.
-function phantom_button_export_Callback(hObject, eventdata, handles)
-% hObject    handle to phantom_button_export (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-fields = get(handles.phantom_table,'RowName');
-tableData = get(handles.phantom_table,'Data');
-
-try
-    % Get handle to Excel COM Server
-    Excel = actxserver('Excel.Application');
-    Excel.DisplayAlerts = 0;
-    % Open Workbook
-    Workbooks = Excel.Workbooks;
-    Workbook = Open(Workbooks,fullfile(pwd,'Log/','ProstateBrachyQA Log.xlsx'));
-    
-    if Workbook.ReadOnly == 0
-        % Have write access to excel file
-        % Get a handle to Sheets and select Sheet 1
-        Sheets = Excel.ActiveWorkBook.Sheets;
-        Sheet = get(Sheets, 'Item', 1);
-        Sheet.Name = 'Phantom';
-        Sheet.Activate;
-        % Get number of last used row
-        lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
-        if ~isempty(lastRow)
-            numRows = lastRow.Row;
-        else
-            % No data, create first row of headers
-            % Put title in first cell
-            Sheet.get('Cells',1,1).Value = 'Phantom';
-            % Colour first cell yellow
-            Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
-            headers = Sheet.get('Range',Sheet.get('Cells',1,2),Sheet.get('Cells',1,numel(fields)+1));
-            headers.Value = fields;
-            numRows = 1;
-            % Set first row to bold
-            Sheet.Range('1:1').Font.Bold = 1;
-            % Freeze first row
-            Sheet.Application.ActiveWindow.SplitRow = 1;
-            Sheet.Application.ActiveWindow.FreezePanes = true;
-        end
-        numCols = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],2,2).Column;
-        xlData = Sheet.UsedRange.Value(1:numRows,1:numCols);
-        
-        % Write new data
-        numRows = numRows + 1;
-        % Write date
-        Sheet.get('Cells',numRows,1).Value = date;
-        % Write fields
-        for n = 1:numel(fields)
-            field = fields{n};
-            val = tableData{n};
-            [~,fieldCol] = find(strcmp(xlData(1,:),field));
-            if ~isempty(fieldCol)
-                % Column exists, write the value in new row
-                Sheet.get('Cells',numRows,fieldCol).Value = val;
-            else
-                % Create new column for new field
-                numCols = numCols + 1;
-                newHeader = Sheet.get('Cells',1,numCols);
-                newHeader.Select;
-                newHeader.Value = field;
-                newHeader.DisplayFormat.Font.FontStyle = 'Bold';
-                % Write new value in new row
-                Sheet.get('Cells',numRows,numCols).Value = val;
-            end
-        end
-        
-        % Autofit columns
-        Sheet.UsedRange.Columns.AutoFit;
-        
-        % Create/modify chart
-        if Sheet.ChartObjects.Count == 0
-            % If no chart exists, create one
-            chartShape = Sheet.Shapes.AddChart;
-            chartShape.Select;
-            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
-            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
-        else
-            % Select existing chart
-            chartShape = Sheet.ChartObjects.Item(1);
-            chartShape.Select;
-        end
-        % Set/update chart data
-        range = Sheet.get('Range',Sheet.get('Cells',1,1),Sheet.get('Cells',numRows,numCols));
-        Workbook.ActiveChart.SetSourceData(range)
-        Workbook.ActiveChart.PlotBy = 'xlColumns';
-        % Set/update chart position
-        chartShape.Top = Sheet.get('Cells',numRows+2,1).Top;
-        chartShape.Left = Sheet.get('Cells',numRows+2,1).Left+10;
-        
-        % Save the workbook
-        invoke(Workbook, 'Save');
-        msgbox('Export successful.');
-    else
-        % Don't have write access, file may be open in another program
-        errordlg('Cannot export to excel file. The file may be open in another application.',...
-            'Error');
-    end
-    % Close Excel
-    invoke(Excel, 'Quit');
-catch exception
-    disp(getReport(exception));
-    % Make sure to close excel if error occurs
-    invoke(Excel, 'Quit');
-end
-    
-
-
-% --- Executes on button press in grayscale_button_export.
-function grayscale_button_export_Callback(hObject, eventdata, handles)
-% hObject    handle to grayscale_button_export (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-rowHeaders = get(handles.grayscale_table,'RowName');
-colHeaders = get(handles.grayscale_table,'ColumnName');
-tableData = get(handles.grayscale_table,'Data');
-
-try
-    % Get handle to Excel COM Server
-    Excel = actxserver('Excel.Application');
-    Excel.DisplayAlerts = 0;
-    % Open Workbook
-    Workbooks = Excel.Workbooks;
-    Workbook = Open(Workbooks,fullfile(pwd,'Log/','ProstateBrachyQA Log.xlsx'));
-    
-    if Workbook.ReadOnly == 0
-        % Have write access to excel file
-        % Get a handle to Sheets and select Sheet 1
-        Sheets = Excel.ActiveWorkBook.Sheets;
-        Sheet = get(Sheets, 'Item', 2);
-        Sheet.Name = 'Grayscale';
-        Sheet.Activate;
-        % Get number of last used row
-        lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
-        if ~isempty(lastRow)
-            numRows = lastRow.Row;
-        else
-            % No data, initialize headers
-            % Put test title in first cell
-            Sheet.get('Cells',1,1).Value = 'Gradient Length';
-            % Colour first cell yellow
-            Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
-            headers = Sheet.get('Range',Sheet.get('Cells',1,2),Sheet.get('Cells',1,numel(colHeaders)+1));
-            headers.Value = colHeaders';
-            numRows = 1;
-            % Set first row to bold
-            Sheet.Range('1:1').Font.Bold = 1;
-            % Freeze first row
-            Sheet.Application.ActiveWindow.SplitRow = 1;
-            Sheet.Application.ActiveWindow.FreezePanes = true;
-        end
-        numCols = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],2,2).Column;
-        xlData = Sheet.UsedRange.Value(1:numRows,1:numCols);
-        
-        % Write new data
-        numRows = numRows + 1;
-        % Write date
-        Sheet.get('Cells',numRows,1).Value = date;
-        % Write fields
-        for n = 1:numel(colHeaders)
-            field = colHeaders{n};
-            val = tableData{n};
-            % Remove any html formatting
-            val = regexprep(val, '<.*?>','');
-            [~,fieldCol] = find(strcmp(xlData(1,:),field));
-            if ~isempty(fieldCol)
-                % Column exists, write the value in new row
-                Sheet.get('Cells',numRows,fieldCol).Value = val;
-            else
-                % Create new column for new field
-                numCols = numCols + 1;
-                newHeader = Sheet.get('Cells',1,numCols);
-                newHeader.Select;
-                newHeader.Value = field;
-                newHeader.DisplayFormat.Font.FontStyle = 'Bold';
-                % Write new value in new row
-                Sheet.get('Cells',numRows,numCols).Value = val;
-            end
-        end
-        
-        % Autofit columns
-        Sheet.UsedRange.Columns.AutoFit;
-        
-        % Create/modify chart
-        if Sheet.ChartObjects.Count == 0
-            % If no chart exists, create one
-            chartShape = Sheet.Shapes.AddChart;
-            chartShape.Select;
-            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
-            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
-        else
-            % Select existing chart
-            chartShape = Sheet.ChartObjects.Item(1);
-            chartShape.Select;
-        end
-        % Set/update chart data
-        range = Sheet.get('Range',Sheet.get('Cells',1,1),Sheet.get('Cells',numRows,numCols-1));
-        Workbook.ActiveChart.SetSourceData(range)
-        Workbook.ActiveChart.PlotBy = 'xlColumns';
-        Workbook.ActiveChart.HasTitle = 1;
-        Workbook.ActiveChart.ChartTitle.Text = 'Gradient Length';
-        % Set/update chart position
-        chartShape.Top = Sheet.get('Cells',numRows+2,1).Top;
-        chartShape.Left = Sheet.get('Cells',numRows+2,1).Left+10;
-        
-        % Save the workbook
-        invoke(Workbook, 'Save');
-        msgbox('Export successful.');
-    else
-        % Don't have write access, file may be open in another program
-        errordlg('Cannot export to excel file. The file may be open in another application.',...
-            'Error');
-    end
-    % Close Excel
-    invoke(Excel, 'Quit');
-catch exception
-    disp(getReport(exception));
-    % Make sure to close excel if error occurs
-    invoke(Excel, 'Quit');
-end
-
-
 % --- Executes on button press in gridAlignment_button_assignCoords.
 function gridAlignment_button_assignCoords_Callback(hObject, eventdata, handles)
 % hObject    handle to gridAlignment_button_assignCoords (see GCBO)
@@ -2789,4 +2565,376 @@ else
         save('GridCoordinatePresets.mat','presets');
         msgbox('Preset deleted.','Delete Preset');
     end
+end
+
+
+% --- Executes on button press in phantom_button_export.
+function phantom_button_export_Callback(hObject, eventdata, handles)
+% hObject    handle to phantom_button_export (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+fields = get(handles.phantom_table,'RowName');
+tableData = get(handles.phantom_table,'Data');
+
+try
+    % Get handle to Excel COM Server
+    Excel = actxserver('Excel.Application');
+    Excel.DisplayAlerts = 0;
+    % Open Workbook
+    Workbooks = Excel.Workbooks;
+    Workbook = Open(Workbooks,fullfile(pwd,'Log/','ProstateBrachyQA Log.xlsx'));
+    
+    if Workbook.ReadOnly == 0
+        % Have write access to excel file
+        % Get a handle to Sheets and select Sheet 1
+        Sheets = Excel.ActiveWorkBook.Sheets;
+        Sheet = get(Sheets, 'Item', 1);
+        Sheet.Name = 'Phantom';
+        Sheet.Activate;
+        % Get number of last used row
+        lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
+        if ~isempty(lastRow)
+            numRows = lastRow.Row;
+        else
+            % No data, create first row of headers
+            % Put title in first cell
+            Sheet.get('Cells',1,1).Value = 'Phantom';
+            % Colour first cell yellow
+            Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
+            headers = Sheet.get('Range',Sheet.get('Cells',1,2),Sheet.get('Cells',1,numel(fields)+1));
+            headers.Value = fields;
+            numRows = 1;
+            % Set first row to bold
+            Sheet.Range('1:1').Font.Bold = 1;
+            % Freeze first row
+            Sheet.Application.ActiveWindow.SplitRow = 1;
+            Sheet.Application.ActiveWindow.FreezePanes = true;
+        end
+        numCols = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],2,2).Column;
+        xlData = Sheet.UsedRange.Value(1:numRows,1:numCols);
+        
+        % Write new data
+        numRows = numRows + 1;
+        % Write date
+        Sheet.get('Cells',numRows,1).Value = date;
+        % Write fields
+        for n = 1:numel(fields)
+            field = fields{n};
+            val = tableData{n};
+            [~,fieldCol] = find(strcmp(xlData(1,:),field));
+            if ~isempty(fieldCol)
+                % Column exists, write the value in new row
+                Sheet.get('Cells',numRows,fieldCol).Value = val;
+            else
+                % Create new column for new field
+                numCols = numCols + 1;
+                newHeader = Sheet.get('Cells',1,numCols);
+                newHeader.Select;
+                newHeader.Value = field;
+                newHeader.DisplayFormat.Font.FontStyle = 'Bold';
+                % Write new value in new row
+                Sheet.get('Cells',numRows,numCols).Value = val;
+            end
+        end
+        
+        % Autofit columns
+        Sheet.UsedRange.Columns.AutoFit;
+        
+        % Create/modify chart
+        if Sheet.ChartObjects.Count == 0
+            % If no chart exists, create one
+            chartShape = Sheet.Shapes.AddChart;
+            chartShape.Select;
+            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
+            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
+        else
+            % Select existing chart
+            chartShape = Sheet.ChartObjects.Item(1);
+            chartShape.Select;
+        end
+        % Set/update chart data
+        range = Sheet.get('Range',Sheet.get('Cells',1,1),Sheet.get('Cells',numRows,numCols));
+        Workbook.ActiveChart.SetSourceData(range)
+        Workbook.ActiveChart.PlotBy = 'xlColumns';
+        % Set/update chart position
+        chartShape.Top = Sheet.get('Cells',numRows+2,1).Top;
+        chartShape.Left = Sheet.get('Cells',numRows+2,1).Left+10;
+        
+        % Save the workbook
+        invoke(Workbook, 'Save');
+        msgbox('Export successful.');
+    else
+        % Don't have write access, file may be open in another program
+        errordlg('Cannot export to excel file. The file may be open in another application.',...
+            'Error');
+    end
+    % Close Excel
+    invoke(Excel, 'Quit');
+catch exception
+    disp(getReport(exception));
+    % Make sure to close excel if error occurs
+    invoke(Excel, 'Quit');
+end
+
+
+% --- Executes on button press in grayscale_button_export.
+function grayscale_button_export_Callback(hObject, eventdata, handles)
+% hObject    handle to grayscale_button_export (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+rowHeaders = get(handles.grayscale_table,'RowName');
+colHeaders = get(handles.grayscale_table,'ColumnName');
+tableData = get(handles.grayscale_table,'Data');
+
+try
+    % Get handle to Excel COM Server
+    Excel = actxserver('Excel.Application');
+    Excel.DisplayAlerts = 0;
+    % Open Workbook
+    Workbooks = Excel.Workbooks;
+    Workbook = Open(Workbooks,fullfile(pwd,'Log/','ProstateBrachyQA Log.xlsx'));
+    
+    if Workbook.ReadOnly == 0
+        % Have write access to excel file
+        % Get a handle to Sheets and select Sheet 1
+        Sheets = Excel.ActiveWorkBook.Sheets;
+        Sheet = get(Sheets, 'Item', 2);
+        Sheet.Name = 'Grayscale';
+        Sheet.Activate;
+        % Get number of last used row
+        lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
+        if ~isempty(lastRow)
+            numRows = lastRow.Row;
+        else
+            % No data, initialize headers
+            % Put test title in first cell
+            Sheet.get('Cells',1,1).Value = 'Gradient Length';
+            % Colour first cell yellow
+            Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
+            headers = Sheet.get('Range',Sheet.get('Cells',1,2),Sheet.get('Cells',1,numel(colHeaders)+1));
+            headers.Value = colHeaders';
+            numRows = 1;
+            % Set first row to bold
+            Sheet.Range('1:1').Font.Bold = 1;
+            % Freeze first row
+            Sheet.Application.ActiveWindow.SplitRow = 1;
+            Sheet.Application.ActiveWindow.FreezePanes = true;
+        end
+        numCols = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],2,2).Column;
+        xlData = Sheet.UsedRange.Value(1:numRows,1:numCols);
+        
+        % Write new data
+        numRows = numRows + 1;
+        % Write date
+        Sheet.get('Cells',numRows,1).Value = date;
+        % Write fields
+        for n = 1:numel(colHeaders)
+            field = colHeaders{n};
+            val = tableData{n};
+            % Remove any html formatting
+            val = regexprep(val, '<.*?>','');
+            [~,fieldCol] = find(strcmp(xlData(1,:),field));
+            if ~isempty(fieldCol)
+                % Column exists, write the value in new row
+                Sheet.get('Cells',numRows,fieldCol).Value = val;
+            else
+                % Create new column for new field
+                numCols = numCols + 1;
+                newHeader = Sheet.get('Cells',1,numCols);
+                newHeader.Select;
+                newHeader.Value = field;
+                newHeader.DisplayFormat.Font.FontStyle = 'Bold';
+                % Write new value in new row
+                Sheet.get('Cells',numRows,numCols).Value = val;
+            end
+        end
+        
+        % Autofit columns
+        Sheet.UsedRange.Columns.AutoFit;
+        
+        % Create/modify chart
+        if Sheet.ChartObjects.Count == 0
+            % If no chart exists, create one
+            chartShape = Sheet.Shapes.AddChart;
+            chartShape.Select;
+            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
+            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
+        else
+            % Select existing chart
+            chartShape = Sheet.ChartObjects.Item(1);
+            chartShape.Select;
+        end
+        % Set/update chart data
+        range = Sheet.get('Range',Sheet.get('Cells',1,1),Sheet.get('Cells',numRows,numCols-1));
+        Workbook.ActiveChart.SetSourceData(range)
+        Workbook.ActiveChart.PlotBy = 'xlColumns';
+        Workbook.ActiveChart.HasTitle = 1;
+        Workbook.ActiveChart.ChartTitle.Text = 'Gradient Length';
+        % Set/update chart position
+        chartShape.Top = Sheet.get('Cells',numRows+2,1).Top;
+        chartShape.Left = Sheet.get('Cells',numRows+2,1).Left+10;
+        
+        % Save the workbook
+        invoke(Workbook, 'Save');
+        msgbox('Export successful.');
+    else
+        % Don't have write access, file may be open in another program
+        errordlg('Cannot export to excel file. The file may be open in another application.',...
+            'Error');
+    end
+    % Close Excel
+    invoke(Excel, 'Quit');
+catch exception
+    disp(getReport(exception));
+    % Make sure to close excel if error occurs
+    invoke(Excel, 'Quit');
+end
+
+
+% --- Executes on button press in depth_button_export.
+function depth_button_export_Callback(hObject, eventdata, handles)
+% hObject    handle to depth_button_export (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+rowHeaders = get(handles.depth_table_axial,'RowName');
+colHeaders = get(handles.depth_table_axial,'ColumnName');
+tableDataAxial = get(handles.depth_table_axial,'Data');
+tableDataLong = get(handles.depth_table_long,'Data');
+
+try
+    % Get handle to Excel COM Server
+    Excel = actxserver('Excel.Application');
+    Excel.DisplayAlerts = 0;
+    % Open Workbook
+    Workbooks = Excel.Workbooks;
+    Workbook = Open(Workbooks,fullfile(pwd,'Log/','ProstateBrachyQA Log.xlsx'));
+    
+    if Workbook.ReadOnly == 0
+        % Have write access to excel file
+        % Get a handle to Sheets and select Sheet 1
+        Sheets = Excel.ActiveWorkBook.Sheets;
+        Sheet = get(Sheets, 'Item', 3);
+        Sheet.Name = 'Depth';
+        Sheet.Activate;
+        % Get number of last used row
+        lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
+        if ~isempty(lastRow)
+            numRows = lastRow.Row;
+        else
+            % No data, initialize headers
+            % Put test title in first cell
+            Sheet.get('Cells',1,1).Value = 'Gradient Length';
+            % Colour first cell yellow
+            Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
+            % Axial plane headers
+            titleAxial = Sheet.get('Range',Sheet.get('Cells',1,2),Sheet.get('Cells',1,numel(colHeaders)+1));
+            titleAxial.MergeCells = 1;
+            titleAxial.Value = 'Axial Plane';
+            headersAxial = Sheet.get('Range',Sheet.get('Cells',2,2),Sheet.get('Cells',2,numel(colHeaders)+1));
+            headersAxial.Value = colHeaders';
+            % Longitudinal plane headers
+            longCol = headersAxial.Column + headersAxial.Columns.Count;
+            titleLong = Sheet.get('Range',Sheet.get('Cells',1,longCol),Sheet.get('Cells',1,longCol+numel(colHeaders)-1));
+            titleLong.MergeCells = 1;
+            titleLong.Value = 'Longitudinal Plane';
+            headersAxial = Sheet.get('Range',Sheet.get('Cells',2,longCol),Sheet.get('Cells',2,longCol+numel(colHeaders)-1));
+            headersAxial.Value = colHeaders';
+            numRows = 2;
+            % Set first 2 rows to bold
+            Sheet.Range('1:2').Font.Bold = 1;
+            % Freeze first 2 rows
+            Sheet.Application.ActiveWindow.SplitRow = 2;
+            Sheet.Application.ActiveWindow.FreezePanes = true;
+        end
+        numCols = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],2,2).Column;
+        xlData = Sheet.UsedRange.Value(1:numRows,1:numCols);
+        
+        % Write new data
+        numRows = numRows + 1;
+        % Write date
+        Sheet.get('Cells',numRows,1).Value = date;
+        % Write fields 
+        % Axial plane
+        for n = 1:numel(colHeaders)
+            field = colHeaders{n};
+            val = tableDataAxial{n};
+            % Remove any html formatting
+            val = regexprep(val, '<.*?>','');
+            [~,fieldCol] = find(strcmp(xlData(2,:),field),1);
+            if ~isempty(fieldCol)
+                % Column exists, write the value in new row
+                Sheet.get('Cells',numRows,fieldCol).Value = val;
+            end
+        end
+        % Longitudinal plane
+        for n = 1:numel(colHeaders)
+            field = colHeaders{n};
+            val = tableDataLong{n};
+            % Remove any html formatting
+            val = regexprep(val, '<.*?>','');
+            [~,fieldCol] = find(strcmp(xlData(2,:),field),1,'last');
+            if ~isempty(fieldCol)
+                % Column exists, write the value in new row
+                Sheet.get('Cells',numRows,fieldCol).Value = val;
+            end
+        end
+        
+        % Autofit columns
+        Sheet.UsedRange.Columns.AutoFit;
+        
+        % Create/modify chart
+        if Sheet.ChartObjects.Count == 0
+            % If no chart exists, create them
+            for n = 1:2
+            chartShape = Sheet.Shapes.AddChart;
+            chartShape.Select;
+            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
+            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
+            end
+        end
+        
+        % Axial chart
+        axialCol = 2;
+        chartShape1 = Sheet.ChartObjects.Item(1);
+        chartShape1.Select;
+        % Set/update chart data
+        range = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',numRows,axialCol+1));
+        Workbook.ActiveChart.SetSourceData(range)
+        Workbook.ActiveChart.PlotBy = 'xlColumns';
+        Workbook.ActiveChart.HasTitle = 1;
+        Workbook.ActiveChart.ChartTitle.Text = 'Depth (Axial)';
+        % Set/update chart position
+        chartShape1.Top = Sheet.get('Cells',numRows+2,1).Top;
+        chartShape1.Left = Sheet.get('Cells',numRows+2,1).Left+10;
+        
+        % Longitudinal chart
+        longCol = numel(colHeaders)+2;
+        chartShape2 = Sheet.ChartObjects.Item(2);
+        chartShape2.Select;
+        % Set/update chart data
+        rangeDate = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',numRows,1));
+        rangeLong = Sheet.get('Range',Sheet.get('Cells',2,longCol),Sheet.get('Cells',numRows,longCol+1));
+        range = Excel.Union(rangeDate,rangeLong);
+        Workbook.ActiveChart.SetSourceData(range)
+        Workbook.ActiveChart.PlotBy = 'xlColumns';
+        Workbook.ActiveChart.HasTitle = 1;
+        Workbook.ActiveChart.ChartTitle.Text = 'Depth (Longitudinal)';
+        % Set/update chart position
+        chartShape2.Top = Sheet.get('Cells',numRows+2,chartShape1.BottomRightCell.Column+1).Top;
+        chartShape2.Left = Sheet.get('Cells',numRows+2,chartShape1.BottomRightCell.Column+1).Left+10;
+        
+        % Save the workbook
+        invoke(Workbook, 'Save');
+        msgbox('Export successful.');
+    else
+        % Don't have write access, file may be open in another program
+        errordlg('Cannot export to excel file. The file may be open in another application.',...
+            'Error');
+    end
+    % Close Excel
+    invoke(Excel, 'Quit');
+catch exception
+    disp(getReport(exception));
+    % Make sure to close excel if error occurs
+    invoke(Excel, 'Quit');
 end
