@@ -2707,7 +2707,7 @@ try
         if Sheets.Count < 2
             Sheet = Sheets.Add([],get(Sheets,'Item',Sheets.Count));
         else
-            Sheet = get(Sheets, 'Item', 4);
+            Sheet = get(Sheets, 'Item', 2);
         end
         Sheet.Name = 'Grayscale';
         Sheet.Activate;
@@ -2777,7 +2777,9 @@ try
             chartShape.Select;
         end
         % Set/update chart data
-        range = Sheet.get('Range',Sheet.get('Cells',1,1),Sheet.get('Cells',numRows,numCols-1));
+        rangeDate = Sheet.get('Range',Sheet.get('Cells',1,1),Sheet.get('Cells',numRows,1));
+        rangeVal = Sheet.get('Range',Sheet.get('Cells',1,3),Sheet.get('Cells',numRows,3));
+        range = Excel.Union(rangeDate,rangeVal);
         Workbook.ActiveChart.SetSourceData(range)
         Workbook.ActiveChart.PlotBy = 'xlColumns';
         Workbook.ActiveChart.HasTitle = 1;
@@ -2916,7 +2918,9 @@ try
         chartShape1 = Sheet.ChartObjects.Item(1);
         chartShape1.Select;
         % Set/update chart data
-        range = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',numRows,axialCol+1));
+        rangeDate = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',numRows,1));
+        rangeAxial = Sheet.get('Range',Sheet.get('Cells',2,axialCol+1),Sheet.get('Cells',numRows,axialCol+1));
+        range = Excel.Union(rangeDate,rangeAxial);
         Workbook.ActiveChart.SetSourceData(range)
         Workbook.ActiveChart.PlotBy = 'xlColumns';
         Workbook.ActiveChart.HasTitle = 1;
@@ -2931,7 +2935,7 @@ try
         chartShape2.Select;
         % Set/update chart data
         rangeDate = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',numRows,1));
-        rangeLong = Sheet.get('Range',Sheet.get('Cells',2,longCol),Sheet.get('Cells',numRows,longCol+1));
+        rangeLong = Sheet.get('Range',Sheet.get('Cells',2,longCol+1),Sheet.get('Cells',numRows,longCol+1));
         range = Excel.Union(rangeDate,rangeLong);
         Workbook.ActiveChart.SetSourceData(range)
         Workbook.ActiveChart.PlotBy = 'xlColumns';
