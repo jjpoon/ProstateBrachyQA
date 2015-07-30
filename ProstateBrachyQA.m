@@ -2588,7 +2588,11 @@ try
         % Have write access to excel file
         % Get a handle to Sheets and select Sheet 1
         Sheets = Excel.ActiveWorkBook.Sheets;
-        Sheet = get(Sheets, 'Item', 1);
+        if Sheets.Count < 1
+            Sheet = Sheets.Add([],get(Sheets,'Item',Sheets.Count));
+        else
+            Sheet = get(Sheets, 'Item', 1);
+        end
         Sheet.Name = 'Phantom';
         Sheet.Activate;
         % Get number of last used row
@@ -2700,7 +2704,11 @@ try
         % Have write access to excel file
         % Get a handle to Sheets and select Sheet 1
         Sheets = Excel.ActiveWorkBook.Sheets;
-        Sheet = get(Sheets, 'Item', 2);
+        if Sheets.Count < 2
+            Sheet = Sheets.Add([],get(Sheets,'Item',Sheets.Count));
+        else
+            Sheet = get(Sheets, 'Item', 4);
+        end
         Sheet.Name = 'Grayscale';
         Sheet.Activate;
         % Get number of last used row
@@ -2817,7 +2825,11 @@ try
         % Have write access to excel file
         % Get a handle to Sheets and select Sheet 1
         Sheets = Excel.ActiveWorkBook.Sheets;
-        Sheet = get(Sheets, 'Item', 3);
+        if Sheets.Count < 3
+            Sheet = Sheets.Add([],get(Sheets,'Item',Sheets.Count));
+        else
+            Sheet = get(Sheets, 'Item', 3);
+        end
         Sheet.Name = 'Depth';
         Sheet.Activate;
         % Get number of last used row
