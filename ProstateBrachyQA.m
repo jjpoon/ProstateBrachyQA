@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 30-Jul-2015 18:04:12
+% Last Modified by GUIDE v2.5 30-Jul-2015 18:31:58
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -3792,6 +3792,135 @@ try
         % Set/update chart position
         chartShape2.Top = Sheet.get('Cells',numRows+2,chartShape1.BottomRightCell.Column+1).Top;
         chartShape2.Left = Sheet.get('Cells',numRows+2,chartShape1.BottomRightCell.Column+1).Left+10;
+        
+        % Save the workbook
+        invoke(Workbook, 'Save');
+        msgbox('Export successful.');
+    else
+        % Don't have write access, file may be open in another program
+        errordlg('Cannot export to excel file. The file may be open in another application.',...
+            'Error');
+    end
+    % Close Excel
+    invoke(Excel, 'Quit');
+catch exception
+    disp(getReport(exception));
+    % Make sure to close excel if error occurs
+    invoke(Excel, 'Quit');
+end
+
+
+% --- Executes on button press in area_button_export.
+function area_button_export_Callback(hObject, eventdata, handles)
+% hObject    handle to axialResolution_button_export (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+rowHeaders = get(handles.area_table,'RowName');
+colHeaders = get(handles.area_table,'ColumnName');
+tableData = get(handles.area_table,'Data');
+
+% Remove formatting from column headers
+for h = 1:numel(colHeaders)
+    % Replace <sup> with ^
+    colHeaders{h} = regexprep(colHeaders{h}, '<sup>','^');
+    % Remove any html formatting
+    colHeaders{h} = regexprep(colHeaders{h}, '<.*?>','');
+end
+
+try
+    % Get handle to Excel COM Server
+    Excel = actxserver('Excel.Application');
+    Excel.DisplayAlerts = 0;
+    % Open Workbook
+    Workbooks = Excel.Workbooks;
+    Workbook = Open(Workbooks,fullfile(pwd,'Log/','ProstateBrachyQA Log.xlsx'));
+    
+    if Workbook.ReadOnly == 0
+        % Have write access to excel file
+        % Get a handle to Sheets and select Sheet 1
+        Sheets = Excel.ActiveWorkBook.Sheets;
+        if Sheets.Count < 8
+            Sheet = Sheets.Add([],get(Sheets,'Item',Sheets.Count));
+        else
+            Sheet = get(Sheets, 'Item', 8);
+        end
+        Sheet.Name = 'Area';
+        Sheet.Activate;
+        % Get number of last used row
+        lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
+        if ~isempty(lastRow)
+            numRows = lastRow.Row;
+        else
+            % No data, initialize headers
+            % Put test title in first cell
+            Sheet.get('Cells',1,1).Value = 'Area';
+            % Colour first cell yellow
+            Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
+            % Column headers
+            headers = Sheet.get('Range',Sheet.get('Cells',1,2),Sheet.get('Cells',1,numel(colHeaders)+1));
+            headers.Value = colHeaders';
+            numRows = 1;
+            % Set first row to bold
+            Sheet.Range('1:1').Font.Bold = 1;
+            % Freeze first row
+            Sheet.Application.ActiveWindow.SplitRow = 1;
+            Sheet.Application.ActiveWindow.FreezePanes = true;
+            % Set first column to bold
+            Sheet.Range('A:A').Font.Bold = 1;
+        end
+        numCols = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],2,2).Column;
+        xlData = Sheet.UsedRange.Value(1:numRows,1:numCols);
+        
+        numRows = numRows + 1;
+        % Write date
+        dateCell = Sheet.get('Cells',numRows,1);
+        dateCell.Value = date;
+        
+        % Write values
+        for m = 1:numel(rowHeaders)
+            rowNum = dateCell.Row + m - 1;
+            for n = 1:numel(colHeaders)
+                field = colHeaders{n};
+                val = tableData{m,n};
+                % Remove any html formatting
+                val = regexprep(val, '<.*?>','');
+                [~,fieldCol] = find(strcmp(xlData(1,:),field),1);
+                if ~isempty(fieldCol)
+                    % Column exists, write the value in new row
+                    Sheet.get('Cells',rowNum,fieldCol).Value = val;
+                end
+            end
+        end
+        
+        % Update number of rows
+        numRows = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2).Row;
+        
+        % Autofit columns
+        Sheet.UsedRange.Columns.AutoFit;
+        
+        % Create/modify chart
+        if Sheet.ChartObjects.Count == 0
+            % If no chart exists, create one
+            chartShape = Sheet.Shapes.AddChart;
+            chartShape.Select;
+            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
+            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
+        else
+            % Select existing chart
+            chartShape = Sheet.ChartObjects.Item(1);
+            chartShape.Select;
+        end
+        % Set/update chart data
+        rangeDate = Sheet.get('Range',Sheet.get('Cells',1,1),Sheet.get('Cells',numRows,1));
+        rangeVal = Sheet.get('Range',Sheet.get('Cells',1,3),Sheet.get('Cells',numRows,3));
+        range = Excel.Union(rangeDate,rangeVal);
+        Workbook.ActiveChart.SetSourceData(range)
+        Workbook.ActiveChart.PlotBy = 'xlColumns';
+        Workbook.ActiveChart.HasTitle = 1;
+        Workbook.ActiveChart.ChartTitle.Text = 'Area';
+        % Set/update chart position
+        chartShape.Top = Sheet.get('Cells',numRows+2,1).Top;
+        chartShape.Left = Sheet.get('Cells',numRows+2,1).Left+10;
         
         % Save the workbook
         invoke(Workbook, 'Save');
