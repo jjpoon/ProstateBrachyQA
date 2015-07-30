@@ -2405,6 +2405,10 @@ try
             numRows = lastRow.Row;
         else
             % No data, create first row of headers
+            % Put title in first cell
+            Sheet.get('Cells',1,1).Value = 'Phantom';
+            % Colour first cell yellow
+            Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
             headers = Sheet.get('Range',Sheet.get('Cells',1,2),Sheet.get('Cells',1,numel(fields)+1));
             headers.Value = fields;
             numRows = 1;
@@ -2512,7 +2516,10 @@ try
             numRows = lastRow.Row;
         else
             % No data, initialize headers
+            % Put test title in first cell
             Sheet.get('Cells',1,1).Value = 'Gradient Length';
+            % Colour first cell yellow
+            Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
             headers = Sheet.get('Range',Sheet.get('Cells',1,2),Sheet.get('Cells',1,numel(colHeaders)+1));
             headers.Value = colHeaders';
             numRows = 1;
