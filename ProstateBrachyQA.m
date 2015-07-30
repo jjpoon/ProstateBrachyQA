@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 30-Jul-2015 17:31:15
+% Last Modified by GUIDE v2.5 30-Jul-2015 18:04:12
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -3009,8 +3009,8 @@ try
             titleLong = Sheet.get('Range',Sheet.get('Cells',1,longCol),Sheet.get('Cells',1,longCol+numel(colHeaders)-1));
             titleLong.MergeCells = 1;
             titleLong.Value = 'Longitudinal Plane';
-            headersAxial = Sheet.get('Range',Sheet.get('Cells',2,longCol+1),Sheet.get('Cells',2,longCol+numel(colHeaders)));
-            headersAxial.Value = colHeaders';
+            headersLong = Sheet.get('Range',Sheet.get('Cells',2,longCol+1),Sheet.get('Cells',2,longCol+numel(colHeaders)));
+            headersLong.Value = colHeaders';
             numRows = 2;
             % Set first 2 rows to bold
             Sheet.Range('1:2').Font.Bold = 1;
@@ -3240,8 +3240,8 @@ try
             titleLong = Sheet.get('Range',Sheet.get('Cells',1,longCol),Sheet.get('Cells',1,longCol+numel(colHeaders)-1));
             titleLong.MergeCells = 1;
             titleLong.Value = 'Longitudinal Plane';
-            headersAxial = Sheet.get('Range',Sheet.get('Cells',2,longCol+1),Sheet.get('Cells',2,longCol+numel(colHeaders)));
-            headersAxial.Value = colHeaders';
+            headersLong = Sheet.get('Range',Sheet.get('Cells',2,longCol+1),Sheet.get('Cells',2,longCol+numel(colHeaders)));
+            headersLong.Value = colHeaders';
             numRows = 2;
             % Set first 2 rows to bold
             Sheet.Range('1:2').Font.Bold = 1;
@@ -3560,6 +3560,238 @@ try
         % Set/update chart position
         chartShape1.Top = Sheet.get('Cells',numRows+2,1).Top;
         chartShape1.Left = Sheet.get('Cells',numRows+2,1).Left+10;
+        
+        % Save the workbook
+        invoke(Workbook, 'Save');
+        msgbox('Export successful.');
+    else
+        % Don't have write access, file may be open in another program
+        errordlg('Cannot export to excel file. The file may be open in another application.',...
+            'Error');
+    end
+    % Close Excel
+    invoke(Excel, 'Quit');
+catch exception
+    disp(getReport(exception));
+    % Make sure to close excel if error occurs
+    invoke(Excel, 'Quit');
+end
+
+
+% --- Executes on button press in lateralDistance_button_export.
+function lateralDistance_button_export_Callback(hObject, eventdata, handles)
+% hObject    handle to axialResolution_button_export (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+rowHeadersAxial = get(handles.lateralDistance_table_axial,'RowName');
+rowHeadersLong = get(handles.lateralDistance_table_long,'RowName');
+colHeaders = get(handles.lateralDistance_table_axial,'ColumnName');
+tableDataAxial = get(handles.lateralDistance_table_axial,'Data');
+tableDataLong = get(handles.lateralDistance_table_long,'Data');
+
+try
+    % Get handle to Excel COM Server
+    Excel = actxserver('Excel.Application');
+    Excel.DisplayAlerts = 0;
+    % Open Workbook
+    Workbooks = Excel.Workbooks;
+    Workbook = Open(Workbooks,fullfile(pwd,'Log/','ProstateBrachyQA Log.xlsx'));
+    
+    if Workbook.ReadOnly == 0
+        % Have write access to excel file
+        % Get a handle to Sheets and select Sheet 1
+        Sheets = Excel.ActiveWorkBook.Sheets;
+        if Sheets.Count < 7
+            Sheet = Sheets.Add([],get(Sheets,'Item',Sheets.Count));
+        else
+            Sheet = get(Sheets, 'Item', 7);
+        end
+        Sheet.Name = 'Lateral Distance';
+        Sheet.Activate;
+        % Get number of last used row
+        lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
+        if ~isempty(lastRow)
+            numRows = lastRow.Row;
+        else
+            % No data, initialize headers
+            % Put test title in first cell
+            Sheet.get('Cells',1,1).Value = 'Lateral Distance';
+            % Colour first cell yellow
+            Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
+            % Axial plane headers
+            titleAxial = Sheet.get('Range',Sheet.get('Cells',1,2),Sheet.get('Cells',1,numel(colHeaders)+2));
+            titleAxial.MergeCells = 1;
+            titleAxial.Value = 'Axial Plane';
+            headersAxial = Sheet.get('Range',Sheet.get('Cells',2,3),Sheet.get('Cells',2,numel(colHeaders)+2));
+            headersAxial.Value = colHeaders';
+            % Longitudinal plane headers
+            longCol = headersAxial.End('xlToRight').Column + 1;
+            titleLong = Sheet.get('Range',Sheet.get('Cells',1,longCol),Sheet.get('Cells',1,longCol+numel(colHeaders)-1));
+            titleLong.MergeCells = 1;
+            titleLong.Value = 'Longitudinal Plane';
+            headersLong = Sheet.get('Range',Sheet.get('Cells',2,longCol+1),Sheet.get('Cells',2,longCol+numel(colHeaders)));
+            headersLong.Value = colHeaders';
+            numRows = 2;
+            % Set first 2 rows to bold
+            Sheet.Range('1:2').Font.Bold = 1;
+            % Freeze first 2 rows
+            Sheet.Application.ActiveWindow.SplitRow = 2;
+            Sheet.Application.ActiveWindow.FreezePanes = true;
+            % Set first column to bold
+            Sheet.Range('A:A').Font.Bold = 1;
+        end
+        numCols = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],2,2).Column;
+        xlData = Sheet.UsedRange.Value(1:numRows,1:numCols);
+        
+        % Write new data
+        if numRows > 2
+            % Add extra space between dates
+            numRows = numRows + 2;
+        else
+            % First entry, no need to add extra space
+            numRows = numRows + 1;
+        end
+        % Write date
+        dateCell = Sheet.get('Cells',numRows,1);
+        dateCell.Value = date;
+        
+        % Axial plane
+        % Write row headers
+        rowHeaderRange = Sheet.get('Range',Sheet.get('Cells',dateCell.Row,2),Sheet.get('Cells',dateCell.Row+numel(rowHeadersAxial)-1,2));
+        rowHeaderRange.Value = rowHeadersAxial;
+        rowHeaderRange.Font.Bold = 1;
+        % Write values
+        for m = 1:numel(rowHeadersAxial)
+            rowNum = dateCell.Row + m - 1;
+            for n = 1:numel(colHeaders)
+                field = colHeaders{n};
+                val = tableDataAxial{m,n};
+                % Remove any html formatting
+                val = regexprep(val, '<.*?>','');
+                [~,fieldCol] = find(strcmp(xlData(2,:),field),1);
+                if ~isempty(fieldCol)
+                    % Column exists, write the value in new row
+                    Sheet.get('Cells',rowNum,fieldCol).Value = val;
+                end
+            end
+        end
+        % Longitudinal plane
+        longCol = numel(colHeaders)+3;
+        % Write row headers
+        rowHeaderRange = Sheet.get('Range',Sheet.get('Cells',dateCell.Row,longCol),Sheet.get('Cells',dateCell.Row+numel(rowHeadersLong)-1,longCol));
+        rowHeaderRange.Value = rowHeadersLong;
+        rowHeaderRange.Font.Bold = 1;
+        % Write values
+        for m = 1:numel(rowHeadersLong)
+            rowNum = dateCell.Row + m - 1;
+            for n = 1:numel(colHeaders)
+                field = colHeaders{n};
+                val = tableDataLong{m,n};
+                % Remove any html formatting
+                val = regexprep(val, '<.*?>','');
+                [~,fieldCol] = find(strcmp(xlData(2,:),field),1,'last');
+                if ~isempty(fieldCol)
+                    % Column exists, write the value in new row
+                    Sheet.get('Cells',rowNum,fieldCol).Value = val;
+                end
+            end
+        end
+        
+        % Update number of rows
+        numRows = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2).Row;
+        
+        % Autofit columns
+        Sheet.UsedRange.Columns.AutoFit;
+        
+        % Create/modify chart
+        if Sheet.ChartObjects.Count == 0
+            % If no chart exists, create them
+            for n = 1:2
+                chartShape = Sheet.Shapes.AddChart;
+                chartShape.Select;
+                Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
+                Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
+                % Clear default data
+                Workbook.ActiveChart.ChartArea.ClearContents;
+            end
+        end
+        
+        % Number of rows between measurements of different dates
+        interval = 3;
+        
+        % Axial chart
+        axialCol = 2;
+        chartShape1 = Sheet.ChartObjects.Item(1);
+        chartShape1.Select;
+        % Set/update chart data
+        seriesCollection = Workbook.ActiveChart.SeriesCollection;
+        if seriesCollection.Count == 0
+            % Create series
+            for s = 1:numel(rowHeadersAxial)
+                seriesCollection.NewSeries;
+            end
+        end
+        for s = 1:numel(rowHeadersAxial)
+            series = seriesCollection.Item(s);
+            series.Name = rowHeadersAxial{s};
+            % X Data
+            dateColumn = Sheet.get('Range',Sheet.get('Cells',3,1),Sheet.get('Cells',dateCell.Row,1));
+            dateRange = dateColumn.Cells.Item(1);
+            for n = 1+interval:interval:dateColumn.Cells.Count;
+                dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
+            end
+            series.XValues = dateRange;
+            % Y Data
+            valColumn = Sheet.get('Range',Sheet.get('Cells',3,axialCol+2),...
+                Sheet.get('Cells',dateCell.Row+numel(rowHeadersAxial)-1,axialCol+2));
+            valRange = valColumn.Cells.Item(s);
+            for n = s+interval:interval:valColumn.Cells.Count;
+                valRange = Excel.Union(valRange,valColumn.Cells.Item(n));
+            end
+            series.Values = valRange;
+        end
+        Workbook.ActiveChart.HasTitle = 1;
+        Workbook.ActiveChart.ChartTitle.Text = 'Lateral Distance (Axial)';
+        % Set/update chart position
+        chartShape1.Top = Sheet.get('Cells',numRows+2,1).Top;
+        chartShape1.Left = Sheet.get('Cells',numRows+2,1).Left+10;
+        
+        % Longitudinal chart
+        longCol = numel(colHeaders)+3;
+        chartShape2 = Sheet.ChartObjects.Item(2);
+        chartShape2.Select;
+        % Set/update chart data
+        seriesCollection = Workbook.ActiveChart.SeriesCollection;
+        if seriesCollection.Count == 0
+            % Create series
+            for s = 1:numel(rowHeadersLong)
+                seriesCollection.NewSeries;
+            end
+        end
+        for s = 1:numel(rowHeadersLong)
+            series = seriesCollection.Item(s);
+            series.Name = rowHeadersLong{s};
+            % X Data
+            dateColumn = Sheet.get('Range',Sheet.get('Cells',3,1),Sheet.get('Cells',dateCell.Row,1));
+            dateRange = dateColumn.Cells.Item(1);
+            for n = 1+interval:interval:dateColumn.Cells.Count;
+                dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
+            end
+            series.XValues = dateRange;
+            % Y Data
+            valColumn = Sheet.get('Range',Sheet.get('Cells',3,longCol+2),...
+                Sheet.get('Cells',dateCell.Row+numel(rowHeadersLong)-1,longCol+2));
+            valRange = valColumn.Cells.Item(s);
+            for n = s+interval:interval:valColumn.Cells.Count;
+                valRange = Excel.Union(valRange,valColumn.Cells.Item(n));
+            end
+            series.Values = valRange;
+        end
+        Workbook.ActiveChart.HasTitle = 1;
+        Workbook.ActiveChart.ChartTitle.Text = 'Lateral Distance (Longitudinal)';
+        % Set/update chart position
+        chartShape2.Top = Sheet.get('Cells',numRows+2,chartShape1.BottomRightCell.Column+1).Top;
+        chartShape2.Left = Sheet.get('Cells',numRows+2,chartShape1.BottomRightCell.Column+1).Left+10;
         
         % Save the workbook
         invoke(Workbook, 'Save');
