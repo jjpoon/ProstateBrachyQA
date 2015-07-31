@@ -2739,6 +2739,10 @@ colHeaders = get(handles.grayscale_table,'ColumnName');
 colHeaders = [colHeaders; 'Image'];
 tableData = get(handles.grayscale_table,'Data');
 exportDate = datestr(clock,'yyyymmdd_HHMMSS');
+exportFolder = fullfile(pwd,'Log\Images',date);
+if ~exist(exportFolder,'dir')
+    mkdir(exportFolder);
+end
 
 try
     % Get handle to Excel COM Server
@@ -2821,7 +2825,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[exportDate '_Grayscale.bmp']);
+        filename = fullfile(exportFolder,[exportDate '_Grayscale.bmp']);
         imwrite(im,filename);
         [~,imageCol] = find(strcmp(xlData(1,:),'Image'),1);
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -2888,6 +2892,10 @@ colHeaders = [colHeaders; 'Image'];
 tableDataAxial = get(handles.depth_table_axial,'Data');
 tableDataLong = get(handles.depth_table_long,'Data');
 exportDate = datestr(clock,'yyyymmdd_HHMMSS');
+exportFolder = fullfile(pwd,'Log\Images',date);
+if ~exist(exportFolder,'dir')
+    mkdir(exportFolder);
+end
 
 try
     % Get handle to Excel COM Server
@@ -2910,8 +2918,12 @@ try
             end
         end
         if isempty(Sheet)
-            % Create new sheet after 2nd sheet
-            Sheet = Sheets.Add([],Sheets.Item(2));
+            % Create new sheet after 2nd sheet or last sheet
+            if Sheets.Count >= 2
+                Sheet = Sheets.Add([],Sheets.Item(2));
+            else
+                Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
+            end
         end
         Sheet.Name = 'Depth';
         Sheet.Activate;
@@ -2974,7 +2986,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[exportDate '_Depth_Axial.bmp']);
+        filename = fullfile(exportFolder,[exportDate '_Depth_Axial.bmp']);
         imwrite(imAxial,filename);
         [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1);
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -3003,7 +3015,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[exportDate '_Depth_Longitudinal.bmp']);
+        filename = fullfile(exportFolder,[exportDate '_Depth_Longitudinal.bmp']);
         imwrite(imLong,filename);
         [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1,'last');
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -3090,6 +3102,10 @@ colHeaders = [colHeaders; 'Image'];
 tableDataAxial = get(handles.axialResolution_table_axial,'Data');
 tableDataLong = get(handles.axialResolution_table_long,'Data');
 exportDate = datestr(clock,'yyyymmdd_HHMMSS');
+exportFolder = fullfile(pwd,'Log\Images',date);
+if ~exist(exportFolder,'dir')
+    mkdir(exportFolder);
+end
 
 try
     % Get handle to Excel COM Server
@@ -3112,8 +3128,12 @@ try
             end
         end
         if isempty(Sheet)
-            % Create new sheet after 3rd sheet
-            Sheet = Sheets.Add([],Sheets.Item(3));
+            % Create new sheet after 3rd sheet or last sheet
+            if Sheets.Count >= 3
+                Sheet = Sheets.Add([],Sheets.Item(3));
+            else
+                Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
+            end
         end
         Sheet.Name = 'Axial Resolution';
         Sheet.Activate;
@@ -3189,7 +3209,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[exportDate '_AxialResolution_Axial.bmp']);
+        filename = fullfile(exportFolder,[exportDate '_AxialResolution_Axial.bmp']);
         imwrite(imAxial,filename);
         [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1);
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -3227,7 +3247,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[exportDate '_AxialResolution_Longitudinal.bmp']);
+        filename = fullfile(exportFolder,[exportDate '_AxialResolution_Longitudinal.bmp']);
         imwrite(imLong,filename);
         [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1,'last');
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -3363,6 +3383,10 @@ colHeaders = [colHeaders; 'Image'];
 tableDataAxial = get(handles.lateralResolution_table_axial,'Data');
 tableDataLong = get(handles.lateralResolution_table_long,'Data');
 exportDate = datestr(clock,'yyyymmdd_HHMMSS');
+exportFolder = fullfile(pwd,'Log\Images',date);
+if ~exist(exportFolder,'dir')
+    mkdir(exportFolder);
+end
 
 try
     % Get handle to Excel COM Server
@@ -3385,8 +3409,12 @@ try
             end
         end
         if isempty(Sheet)
-            % Create new sheet after 4th sheet
-            Sheet = Sheets.Add([],Sheets.Item(4));
+            % Create new sheet after 4th sheet or last sheet
+            if Sheets.Count >= 4
+                Sheet = Sheets.Add([],Sheets.Item(4));
+            else
+                Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
+            end
         end
         Sheet.Name = 'Lateral Resolution';
         Sheet.Activate;
@@ -3462,7 +3490,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[exportDate '_LateralResolution_Axial.bmp']);
+        filename = fullfile(exportFolder,[exportDate '_LateralResolution_Axial.bmp']);
         imwrite(imAxial,filename);
         [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1);
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -3500,7 +3528,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[exportDate '_LateralResolution_Longitudinal.bmp']);
+        filename = fullfile(exportFolder,[exportDate '_LateralResolution_Longitudinal.bmp']);
         imwrite(im,filename);
         [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1,'last');
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -3635,6 +3663,10 @@ colHeaders = get(handles.axialDistance_table,'ColumnName');
 colHeaders = [colHeaders; 'Image'];
 tableData = get(handles.axialDistance_table,'Data');
 exportDate = datestr(clock,'yyyymmdd_HHMMSS');
+exportFolder = fullfile(pwd,'Log\Images',date);
+if ~exist(exportFolder,'dir')
+    mkdir(exportFolder);
+end
 
 try
     % Get handle to Excel COM Server
@@ -3657,8 +3689,12 @@ try
             end
         end
         if isempty(Sheet)
-            % Create new sheet after 5th sheet
-            Sheet = Sheets.Add([],Sheets.Item(5));
+            % Create new sheet after 5th sheet or last sheet
+            if Sheets.Count >= 5
+                Sheet = Sheets.Add([],Sheets.Item(5));
+            else
+                Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
+            end
         end
         Sheet.Name = 'Axial Distance';
         Sheet.Activate;
@@ -3723,7 +3759,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[exportDate '_AxialDistance.bmp']);
+        filename = fullfile(exportFolder,[exportDate '_AxialDistance.bmp']);
         imwrite(im,filename);
         [~,imageCol] = find(strcmp(xlData(1,:),'Image'),1);
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -3819,6 +3855,10 @@ colHeaders = [colHeaders; 'Image'];
 tableDataAxial = get(handles.lateralDistance_table_axial,'Data');
 tableDataLong = get(handles.lateralDistance_table_long,'Data');
 exportDate = datestr(clock,'yyyymmdd_HHMMSS');
+exportFolder = fullfile(pwd,'Log\Images',date);
+if ~exist(exportFolder,'dir')
+    mkdir(exportFolder);
+end
 
 try
     % Get handle to Excel COM Server
@@ -3841,8 +3881,12 @@ try
             end
         end
         if isempty(Sheet)
-            % Create new sheet after 6th sheet
-            Sheet = Sheets.Add([],Sheets.Item(6));
+            % Create new sheet after 6th sheet or last sheet
+            if Sheets.Count >= 6
+                Sheet = Sheets.Add([],Sheets.Item(6));
+            else
+                Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
+            end
         end
         Sheet.Name = 'Lateral Distance';
         Sheet.Activate;
@@ -3918,7 +3962,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[exportDate '_LateralDistance_Axial.bmp']);
+        filename = fullfile(exportFolder,[exportDate '_LateralDistance_Axial.bmp']);
         imwrite(imAxial,filename);
         [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1);
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -3956,7 +4000,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[exportDate '_LateralDistance_Longitudinal.bmp']);
+        filename = fullfile(exportFolder,[exportDate '_LateralDistance_Longitudinal.bmp']);
         imwrite(imLong,filename);
         [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1,'last');
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -4091,6 +4135,10 @@ colHeaders = get(handles.area_table,'ColumnName');
 colHeaders = [colHeaders; 'Image'];
 tableData = get(handles.area_table,'Data');
 exportDate = datestr(clock,'yyyymmdd_HHMMSS');
+exportFolder = fullfile(pwd,'Log\Images',date);
+if ~exist(exportFolder,'dir')
+    mkdir(exportFolder);
+end
 
 % Remove formatting from column headers
 for h = 1:numel(colHeaders)
@@ -4121,8 +4169,12 @@ try
             end
         end
         if isempty(Sheet)
-            % Create new sheet after 7th sheet
-            Sheet = Sheets.Add([],Sheets.Item(7));
+            % Create new sheet after 7th sheet or last sheet
+            if Sheets.Count >= 7
+                Sheet = Sheets.Add([],Sheets.Item(7));
+            else
+                Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
+            end
         end
         Sheet.Name = 'Area';
         Sheet.Activate;
@@ -4176,7 +4228,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[exportDate '_Area.bmp']);
+        filename = fullfile(exportFolder,[exportDate '_Area.bmp']);
         imwrite(im,filename);
         [~,imageCol] = find(strcmp(xlData(1,:),'Image'),1);
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
