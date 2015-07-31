@@ -669,7 +669,7 @@ try
             
             % Store image for export
             im = getframe(handles.grayscale_axes);
-            handles.exportImages{testNum} = im.cdata;
+            handles.exportImages{testNum}{1} = im.cdata;
         end
     end
 catch exception
@@ -1152,7 +1152,7 @@ try
             
             % Store image for export
             im = getframe(handles.axialDistance_axes);
-            handles.exportImages{testNum} = im.cdata;
+            handles.exportImages{testNum}{1} = im.cdata;
         end
     end
 catch exception
@@ -1366,7 +1366,7 @@ try
             
             % Store image for export
             im = getframe(handles.area_axes);
-            handles.exportImages{testNum} = im.cdata;
+            handles.exportImages{testNum}{1} = im.cdata;
         end
     end
 catch exception
@@ -2738,6 +2738,7 @@ rowHeaders = get(handles.grayscale_table,'RowName');
 colHeaders = get(handles.grayscale_table,'ColumnName');
 colHeaders = [colHeaders; 'Image'];
 tableData = get(handles.grayscale_table,'Data');
+exportDate = datestr(clock,'yyyymmdd_HHMMSS');
 
 try
     % Get handle to Excel COM Server
@@ -2816,11 +2817,11 @@ try
             end
         end
         % Save image and add to excel sheet
-        im = handles.exportImages{handles.testNum};
+        im = handles.exportImages{handles.testNum}{1};
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[date '_Grayscale.bmp']);
+        filename = fullfile(pwd,'Log\Images',[exportDate '_Grayscale.bmp']);
         imwrite(im,filename);
         [~,imageCol] = find(strcmp(xlData(1,:),'Image'),1);
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -2886,6 +2887,7 @@ colHeaders = get(handles.depth_table_axial,'ColumnName');
 colHeaders = [colHeaders; 'Image'];
 tableDataAxial = get(handles.depth_table_axial,'Data');
 tableDataLong = get(handles.depth_table_long,'Data');
+exportDate = datestr(clock,'yyyymmdd_HHMMSS');
 
 try
     % Get handle to Excel COM Server
@@ -2972,7 +2974,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[date '_Depth_Axial.bmp']);
+        filename = fullfile(pwd,'Log\Images',[exportDate '_Depth_Axial.bmp']);
         imwrite(imAxial,filename);
         [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1);
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -3001,7 +3003,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[date '_Depth_Longitudinal.bmp']);
+        filename = fullfile(pwd,'Log\Images',[exportDate '_Depth_Longitudinal.bmp']);
         imwrite(imLong,filename);
         [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1,'last');
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -3087,6 +3089,7 @@ colHeaders = get(handles.axialResolution_table_axial,'ColumnName');
 colHeaders = [colHeaders; 'Image'];
 tableDataAxial = get(handles.axialResolution_table_axial,'Data');
 tableDataLong = get(handles.axialResolution_table_long,'Data');
+exportDate = datestr(clock,'yyyymmdd_HHMMSS');
 
 try
     % Get handle to Excel COM Server
@@ -3186,7 +3189,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[date '_AxialResolution_Axial.bmp']);
+        filename = fullfile(pwd,'Log\Images',[exportDate '_AxialResolution_Axial.bmp']);
         imwrite(imAxial,filename);
         [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1);
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -3224,7 +3227,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[date '_Depth_Axial.bmp']);
+        filename = fullfile(pwd,'Log\Images',[exportDate '_AxialResolution_Longitudinal.bmp']);
         imwrite(imLong,filename);
         [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1,'last');
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -3356,8 +3359,10 @@ function lateralResolution_button_export_Callback(hObject, eventdata, handles)
 rowHeadersAxial = get(handles.lateralResolution_table_axial,'RowName');
 rowHeadersLong = get(handles.lateralResolution_table_long,'RowName');
 colHeaders = get(handles.lateralResolution_table_axial,'ColumnName');
+colHeaders = [colHeaders; 'Image'];
 tableDataAxial = get(handles.lateralResolution_table_axial,'Data');
 tableDataLong = get(handles.lateralResolution_table_long,'Data');
+exportDate = datestr(clock,'yyyymmdd_HHMMSS');
 
 try
     % Get handle to Excel COM Server
@@ -3440,7 +3445,7 @@ try
         % Write values
         for m = 1:numel(rowHeadersAxial)
             rowNum = dateCell.Row + m - 1;
-            for n = 1:numel(colHeaders)
+            for n = 1:numel(colHeaders)-1
                 field = colHeaders{n};
                 val = tableDataAxial{m,n};
                 % Remove any html formatting
@@ -3452,6 +3457,23 @@ try
                 end
             end
         end
+        % Save axial image and add to excel sheet
+        imAxial = handles.exportImages{handles.testNum}{1};
+        if ~exist(fullfile(pwd,'Log\Images'),'dir')
+            mkdir(fullfile(pwd,'Log\Images'));
+        end
+        filename = fullfile(pwd,'Log\Images',[exportDate '_LateralResolution_Axial.bmp']);
+        imwrite(imAxial,filename);
+        [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1);
+        imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
+        % Add link to image
+        Sheet.Hyperlinks.Add(imageCell,filename,[],[],'View Image');
+        % Create comment for image preview on mouse hover
+        imageCell.AddComment;
+        imageCell.Comment.Shape.Fill.UserPicture(filename);
+        imageCell.Comment.Shape.Width = size(imAxial,2)/2;
+        imageCell.Comment.Shape.Height = size(imAxial,1)/2;
+        
         % Longitudinal plane
         longCol = numel(colHeaders)+3;
         % Write row headers
@@ -3461,7 +3483,7 @@ try
         % Write values
         for m = 1:numel(rowHeadersLong)
             rowNum = dateCell.Row + m - 1;
-            for n = 1:numel(colHeaders)
+            for n = 1:numel(colHeaders)-1
                 field = colHeaders{n};
                 val = tableDataLong{m,n};
                 % Remove any html formatting
@@ -3473,6 +3495,22 @@ try
                 end
             end
         end
+        % Save longitudinal image and add to excel sheet
+        im = handles.exportImages{handles.testNum}{2};
+        if ~exist(fullfile(pwd,'Log\Images'),'dir')
+            mkdir(fullfile(pwd,'Log\Images'));
+        end
+        filename = fullfile(pwd,'Log\Images',[exportDate '_LateralResolution_Longitudinal.bmp']);
+        imwrite(im,filename);
+        [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1,'last');
+        imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
+        % Add link to image
+        Sheet.Hyperlinks.Add(imageCell,filename,[],[],'View Image');
+        % Create comment for image preview on mouse hover
+        imageCell.AddComment;
+        imageCell.Comment.Shape.Fill.UserPicture(filename);
+        imageCell.Comment.Shape.Width = size(im,2)/2;
+        imageCell.Comment.Shape.Height = size(im,1)/2;
         
         % Update number of rows
         numRows = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2).Row;
@@ -3594,7 +3632,9 @@ function axialDistance_button_export_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 rowHeaders = get(handles.axialDistance_table,'RowName');
 colHeaders = get(handles.axialDistance_table,'ColumnName');
+colHeaders = [colHeaders; 'Image'];
 tableData = get(handles.axialDistance_table,'Data');
+exportDate = datestr(clock,'yyyymmdd_HHMMSS');
 
 try
     % Get handle to Excel COM Server
@@ -3666,7 +3706,7 @@ try
         % Write values
         for m = 1:numel(rowHeaders)
             rowNum = dateCell.Row + m - 1;
-            for n = 1:numel(colHeaders)
+            for n = 1:numel(colHeaders)-1
                 field = colHeaders{n};
                 val = tableData{m,n};
                 % Remove any html formatting
@@ -3683,7 +3723,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[date '_AxialDistance.bmp']);
+        filename = fullfile(pwd,'Log\Images',[exportDate '_AxialDistance.bmp']);
         imwrite(im,filename);
         [~,imageCol] = find(strcmp(xlData(1,:),'Image'),1);
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -3775,8 +3815,10 @@ function lateralDistance_button_export_Callback(hObject, eventdata, handles)
 rowHeadersAxial = get(handles.lateralDistance_table_axial,'RowName');
 rowHeadersLong = get(handles.lateralDistance_table_long,'RowName');
 colHeaders = get(handles.lateralDistance_table_axial,'ColumnName');
+colHeaders = [colHeaders; 'Image'];
 tableDataAxial = get(handles.lateralDistance_table_axial,'Data');
 tableDataLong = get(handles.lateralDistance_table_long,'Data');
+exportDate = datestr(clock,'yyyymmdd_HHMMSS');
 
 try
     % Get handle to Excel COM Server
@@ -3859,7 +3901,7 @@ try
         % Write values
         for m = 1:numel(rowHeadersAxial)
             rowNum = dateCell.Row + m - 1;
-            for n = 1:numel(colHeaders)
+            for n = 1:numel(colHeaders)-1
                 field = colHeaders{n};
                 val = tableDataAxial{m,n};
                 % Remove any html formatting
@@ -3876,7 +3918,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[date '_LateralDistance_Axial.bmp']);
+        filename = fullfile(pwd,'Log\Images',[exportDate '_LateralDistance_Axial.bmp']);
         imwrite(imAxial,filename);
         [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1);
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -3897,7 +3939,7 @@ try
         % Write values
         for m = 1:numel(rowHeadersLong)
             rowNum = dateCell.Row + m - 1;
-            for n = 1:numel(colHeaders)
+            for n = 1:numel(colHeaders)-1
                 field = colHeaders{n};
                 val = tableDataLong{m,n};
                 % Remove any html formatting
@@ -3914,7 +3956,7 @@ try
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
-        filename = fullfile(pwd,'Log\Images',[date '_LateralDistance_Longitudinal.bmp']);
+        filename = fullfile(pwd,'Log\Images',[exportDate '_LateralDistance_Longitudinal.bmp']);
         imwrite(imLong,filename);
         [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1,'last');
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
@@ -4046,7 +4088,9 @@ function area_button_export_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 rowHeaders = get(handles.area_table,'RowName');
 colHeaders = get(handles.area_table,'ColumnName');
+colHeaders = [colHeaders; 'Image'];
 tableData = get(handles.area_table,'Data');
+exportDate = datestr(clock,'yyyymmdd_HHMMSS');
 
 % Remove formatting from column headers
 for h = 1:numel(colHeaders)
@@ -4115,7 +4159,7 @@ try
         % Write values
         for m = 1:numel(rowHeaders)
             rowNum = dateCell.Row + m - 1;
-            for n = 1:numel(colHeaders)
+            for n = 1:numel(colHeaders)-1
                 field = colHeaders{n};
                 val = tableData{m,n};
                 % Remove any html formatting
@@ -4127,6 +4171,22 @@ try
                 end
             end
         end
+        % Save image and add to excel sheet
+        im = handles.exportImages{handles.testNum}{1};
+        if ~exist(fullfile(pwd,'Log\Images'),'dir')
+            mkdir(fullfile(pwd,'Log\Images'));
+        end
+        filename = fullfile(pwd,'Log\Images',[exportDate '_Area.bmp']);
+        imwrite(im,filename);
+        [~,imageCol] = find(strcmp(xlData(1,:),'Image'),1);
+        imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
+        % Add link to image
+        Sheet.Hyperlinks.Add(imageCell,filename,[],[],'View Image');
+        % Create comment for image preview on mouse hover
+        imageCell.AddComment;
+        imageCell.Comment.Shape.Fill.UserPicture(filename);
+        imageCell.Comment.Shape.Width = size(im,2)/2;
+        imageCell.Comment.Shape.Height = size(im,1)/2;
         
         % Update number of rows
         numRows = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2).Row;
