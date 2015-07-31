@@ -2690,6 +2690,7 @@ function grayscale_button_export_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 rowHeaders = get(handles.grayscale_table,'RowName');
 colHeaders = get(handles.grayscale_table,'ColumnName');
+colHeaders = [colHeaders; 'Image'];
 tableData = get(handles.grayscale_table,'Data');
 
 try
@@ -2745,9 +2746,10 @@ try
         % Write new data
         numRows = numRows + 1;
         % Write date
-        Sheet.get('Cells',numRows,1).Value = date;
+        dateCell = Sheet.get('Cells',numRows,1);
+        dateCell.Value = date;
         % Write fields
-        for n = 1:numel(colHeaders)
+        for n = 1:numel(colHeaders)-1
             field = colHeaders{n};
             val = tableData{n};
             % Remove any html formatting
@@ -2767,6 +2769,22 @@ try
                 Sheet.get('Cells',numRows,numCols).Value = val;
             end
         end
+        % Save image and add to excel sheet
+        im = getframe(handles.grayscale_axes);
+        if ~exist(fullfile(pwd,'Log\Images'),'dir')
+            mkdir(fullfile(pwd,'Log\Images'));
+        end
+        filename = fullfile(pwd,'Log\Images',[date '_Grayscale.bmp']);
+        imwrite(im.cdata,filename);
+        [~,imageCol] = find(strcmp(xlData(1,:),'Image'),1);
+        imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
+        % Add link to image
+        Sheet.Hyperlinks.Add(imageCell,filename,[],[],'View Image');
+        % Create comment for image preview on mouse hover
+        imageCell.AddComment;
+        imageCell.Comment.Shape.Fill.UserPicture(filename);
+        imageCell.Comment.Shape.Width = size(im.cdata,2)/2;
+        imageCell.Comment.Shape.Height = size(im.cdata,1)/2;
         
         % Autofit columns
         Sheet.UsedRange.Columns.AutoFit;
