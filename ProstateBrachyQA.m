@@ -2702,12 +2702,19 @@ try
     
     if Workbook.ReadOnly == 0
         % Have write access to excel file
-        % Get a handle to Sheets and select Sheet 1
+        % Get a handle to Sheets
         Sheets = Excel.ActiveWorkBook.Sheets;
-        if Sheets.Count < 2
-            Sheet = Sheets.Add([],get(Sheets,'Item',Sheets.Count));
-        else
-            Sheet = get(Sheets, 'Item', 2);
+        Sheet = [];
+        for sheetNum = 1:Sheets.Count
+            % Get existing Grayscale sheet
+            if strcmp(Sheets.Item(sheetNum).Name,'Grayscale')
+                Sheet = get(Sheets, 'Item', sheetNum);
+                break
+            end
+        end
+        if isempty(Sheet)
+            % Create new sheet after 1st sheet
+            Sheet = Sheets.Add([],Sheets.Item(1));
         end
         Sheet.Name = 'Grayscale';
         Sheet.Activate;
@@ -2825,12 +2832,19 @@ try
     
     if Workbook.ReadOnly == 0
         % Have write access to excel file
-        % Get a handle to Sheets and select Sheet 1
+        % Get a handle to Sheets
         Sheets = Excel.ActiveWorkBook.Sheets;
-        if Sheets.Count < 3
-            Sheet = Sheets.Add([],get(Sheets,'Item',Sheets.Count));
-        else
-            Sheet = get(Sheets, 'Item', 3);
+        Sheet = [];
+        for sheetNum = 1:Sheets.Count
+            % Get existing Depth sheet
+            if strcmp(Sheets.Item(sheetNum).Name,'Depth')
+                Sheet = get(Sheets, 'Item', sheetNum);
+                break
+            end
+        end
+        if isempty(Sheet)
+            % Create new sheet after 2nd sheet
+            Sheet = Sheets.Add([],Sheets.Item(2));
         end
         Sheet.Name = 'Depth';
         Sheet.Activate;
@@ -2983,12 +2997,19 @@ try
     
     if Workbook.ReadOnly == 0
         % Have write access to excel file
-        % Get a handle to Sheets and select Sheet 1
+        % Get a handle to Sheets
         Sheets = Excel.ActiveWorkBook.Sheets;
-        if Sheets.Count < 4
-            Sheet = Sheets.Add([],get(Sheets,'Item',Sheets.Count));
-        else
-            Sheet = get(Sheets, 'Item', 4);
+        Sheet = [];
+        for sheetNum = 1:Sheets.Count
+            % Get existing Axial Resolution sheet
+            if strcmp(Sheets.Item(sheetNum).Name,'Axial Resolution')
+                Sheet = get(Sheets, 'Item', sheetNum);
+                break
+            end
+        end
+        if isempty(Sheet)
+            % Create new sheet after 3rd sheet
+            Sheet = Sheets.Add([],Sheets.Item(3));
         end
         Sheet.Name = 'Axial Resolution';
         Sheet.Activate;
@@ -3214,12 +3235,19 @@ try
     
     if Workbook.ReadOnly == 0
         % Have write access to excel file
-        % Get a handle to Sheets and select Sheet 1
+        % Get a handle to Sheets
         Sheets = Excel.ActiveWorkBook.Sheets;
-        if Sheets.Count < 5
-            Sheet = Sheets.Add([],get(Sheets,'Item',Sheets.Count));
-        else
-            Sheet = get(Sheets, 'Item', 5);
+        Sheet = [];
+        for sheetNum = 1:Sheets.Count
+            % Get existing Lateral Resolution sheet
+            if strcmp(Sheets.Item(sheetNum).Name,'Lateral Resolution')
+                Sheet = get(Sheets, 'Item', sheetNum);
+                break
+            end
+        end
+        if isempty(Sheet)
+            % Create new sheet after 4th sheet
+            Sheet = Sheets.Add([],Sheets.Item(4));
         end
         Sheet.Name = 'Lateral Resolution';
         Sheet.Activate;
@@ -3444,12 +3472,19 @@ try
     
     if Workbook.ReadOnly == 0
         % Have write access to excel file
-        % Get a handle to Sheets and select Sheet 1
+        % Get a handle to Sheets
         Sheets = Excel.ActiveWorkBook.Sheets;
-        if Sheets.Count < 6
-            Sheet = Sheets.Add([],get(Sheets,'Item',Sheets.Count));
-        else
-            Sheet = get(Sheets, 'Item', 6);
+        Sheet = [];
+        for sheetNum = 1:Sheets.Count
+            % Get existing Axial Distance sheet
+            if strcmp(Sheets.Item(sheetNum).Name,'Axial Distance')
+                Sheet = get(Sheets, 'Item', sheetNum);
+                break
+            end
+        end
+        if isempty(Sheet)
+            % Create new sheet after 5th sheet
+            Sheet = Sheets.Add([],Sheets.Item(5));
         end
         Sheet.Name = 'Axial Distance';
         Sheet.Activate;
@@ -3603,12 +3638,19 @@ try
     
     if Workbook.ReadOnly == 0
         % Have write access to excel file
-        % Get a handle to Sheets and select Sheet 1
+        % Get a handle to Sheets
         Sheets = Excel.ActiveWorkBook.Sheets;
-        if Sheets.Count < 7
-            Sheet = Sheets.Add([],get(Sheets,'Item',Sheets.Count));
-        else
-            Sheet = get(Sheets, 'Item', 7);
+        Sheet = [];
+        for sheetNum = 1:Sheets.Count
+            % Get existing Lateral Distance sheet
+            if strcmp(Sheets.Item(sheetNum).Name,'Lateral Distance')
+                Sheet = get(Sheets, 'Item', sheetNum);
+                break
+            end
+        end
+        if isempty(Sheet)
+            % Create new sheet after 6th sheet
+            Sheet = Sheets.Add([],Sheets.Item(6));
         end
         Sheet.Name = 'Lateral Distance';
         Sheet.Activate;
@@ -3841,12 +3883,19 @@ try
     
     if Workbook.ReadOnly == 0
         % Have write access to excel file
-        % Get a handle to Sheets and select Sheet 1
+        % Get a handle to Sheets
         Sheets = Excel.ActiveWorkBook.Sheets;
-        if Sheets.Count < 8
-            Sheet = Sheets.Add([],get(Sheets,'Item',Sheets.Count));
-        else
-            Sheet = get(Sheets, 'Item', 8);
+        Sheet = [];
+        for sheetNum = 1:Sheets.Count
+            % Get existing Area sheet
+            if strcmp(Sheets.Item(sheetNum).Name,'Area')
+                Sheet = get(Sheets, 'Item', sheetNum);
+                break
+            end
+        end
+        if isempty(Sheet)
+            % Create new sheet after 7th sheet
+            Sheet = Sheets.Add([],Sheets.Item(7));
         end
         Sheet.Name = 'Area';
         Sheet.Activate;
