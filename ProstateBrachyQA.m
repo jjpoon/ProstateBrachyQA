@@ -132,6 +132,8 @@ handles.volume_3DView = 'interp';
 handles.coordsPresetNum = [];
 handles.gridAlignmentCoords = [];
 
+% Initiate export images
+handles.exportImages = cell(11,1);
 
 % Add listener for selected tab index
 addlistener(handles.tabgroup,'SelectedIndex','PostSet',@(obj,eventdata)onSelectedTabChanged(hObject));
@@ -656,15 +658,19 @@ try
             end
             % Set table data
             set(table,'Data',data);
+            
+            % Enable Set Baseline button
+            set(handles.grayscale_button_setBaseline,'Enable','on');
+            
+            % Show scale warning if needed
+            showScaleWarning(hObject,handles);
+            % Get updated handles
+            handles = guidata(hObject);
+            
+            % Store image for export
+            im = getframe(handles.grayscale_axes);
+            handles.exportImages{testNum} = im.cdata;
         end
-        
-        % Enable Set Baseline button
-        set(handles.grayscale_button_setBaseline,'Enable','on');
-        
-        % Show scale warning if needed
-        showScaleWarning(hObject,handles);
-        % Get updated handles
-        handles = guidata(hObject);
     end
 catch exception
     disp(getReport(exception));
@@ -754,15 +760,23 @@ try
             end
             % Set table data
             set(table,'Data',data);
+            
+            % Enable Set Baseline button
+            set(handles.depth_button_setBaseline,'Enable','on');
+            
+            % Show scale warning if needed
+            showScaleWarning(hObject,handles);
+            % Get updated handles
+            handles = guidata(hObject);
+            
+            % Store image for export
+            im = getframe(handles.depth_axes);
+            if strcmp(handles.depth_plane,'axial')
+                handles.exportImages{testNum}{1} = im.cdata;
+            elseif strcmp(handles.depth_plane,'longitudinal')
+                handles.exportImages{testNum}{2} = im.cdata;
+            end
         end
-        
-        % Enable Set Baseline button
-        set(handles.depth_button_setBaseline,'Enable','on');
-        
-        % Show scale warning if needed
-        showScaleWarning(hObject,handles);
-        % Get updated handles
-        handles = guidata(hObject);
     end
 catch exception
     disp(getReport(exception));
@@ -909,6 +923,14 @@ try
             showScaleWarning(hObject,handles);
             % Get updated handles
             handles = guidata(hObject);
+            
+            % Store image for export
+            im = getframe(handles.axialResolution_axes);
+            if strcmp(handles.axialResolution_plane,'axial')
+                handles.exportImages{testNum}{1} = im.cdata;
+            elseif strcmp(handles.axialResolution_plane,'longitudinal')
+                handles.exportImages{testNum}{2} = im.cdata;
+            end
         end
     end
 catch exception
@@ -1023,6 +1045,14 @@ try
             showScaleWarning(hObject,handles);
             % Get updated handles
             handles = guidata(hObject);
+            
+            % Store image for export
+            im = getframe(handles.lateralResolution_axes);
+            if strcmp(handles.lateralResolution_plane,'axial')
+                handles.exportImages{testNum}{1} = im.cdata;
+            elseif strcmp(handles.lateralResolution_plane,'longitudinal')
+                handles.exportImages{testNum}{2} = im.cdata;
+            end
         end
     end
 catch exception
@@ -1119,6 +1149,10 @@ try
             showScaleWarning(hObject,handles);
             % Get updated handles
             handles = guidata(hObject);
+            
+            % Store image for export
+            im = getframe(handles.axialDistance_axes);
+            handles.exportImages{testNum} = im.cdata;
         end
     end
 catch exception
@@ -1230,6 +1264,14 @@ try
             showScaleWarning(hObject,handles);
             % Get updated handles
             handles = guidata(hObject);
+            
+            % Store image for export
+            im = getframe(handles.lateralDistance_axes);
+            if strcmp(handles.lateralDistance_plane,'axial')
+                handles.exportImages{testNum}{1} = im.cdata;
+            elseif strcmp(handles.lateralDistance_plane,'longitudinal')
+                handles.exportImages{testNum}{2} = im.cdata;
+            end
         end
     end
 catch exception
@@ -1321,6 +1363,10 @@ try
             showScaleWarning(hObject,handles);
             % Get updated handles
             handles = guidata(hObject);
+            
+            % Store image for export
+            im = getframe(handles.area_axes);
+            handles.exportImages{testNum} = im.cdata;
         end
     end
 catch exception
@@ -2770,12 +2816,12 @@ try
             end
         end
         % Save image and add to excel sheet
-        im = getframe(handles.grayscale_axes);
+        im = handles.exportImages{handles.testNum};
         if ~exist(fullfile(pwd,'Log\Images'),'dir')
             mkdir(fullfile(pwd,'Log\Images'));
         end
         filename = fullfile(pwd,'Log\Images',[date '_Grayscale.bmp']);
-        imwrite(im.cdata,filename);
+        imwrite(im,filename);
         [~,imageCol] = find(strcmp(xlData(1,:),'Image'),1);
         imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
         % Add link to image
@@ -2783,8 +2829,8 @@ try
         % Create comment for image preview on mouse hover
         imageCell.AddComment;
         imageCell.Comment.Shape.Fill.UserPicture(filename);
-        imageCell.Comment.Shape.Width = size(im.cdata,2)/2;
-        imageCell.Comment.Shape.Height = size(im.cdata,1)/2;
+        imageCell.Comment.Shape.Width = size(im,2)/2;
+        imageCell.Comment.Shape.Height = size(im,1)/2;
         
         % Autofit columns
         Sheet.UsedRange.Columns.AutoFit;
@@ -2837,6 +2883,7 @@ function depth_button_export_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 rowHeaders = get(handles.depth_table_axial,'RowName');
 colHeaders = get(handles.depth_table_axial,'ColumnName');
+colHeaders = [colHeaders; 'Image'];
 tableDataAxial = get(handles.depth_table_axial,'Data');
 tableDataLong = get(handles.depth_table_long,'Data');
 
@@ -2904,10 +2951,12 @@ try
         % Write new data
         numRows = numRows + 1;
         % Write date
-        Sheet.get('Cells',numRows,1).Value = date;
+        dateCell = Sheet.get('Cells',numRows,1);
+        dateCell.Value = date;
+        
         % Write fields 
         % Axial plane
-        for n = 1:numel(colHeaders)
+        for n = 1:numel(colHeaders)-1
             field = colHeaders{n};
             val = tableDataAxial{n};
             % Remove any html formatting
@@ -2918,8 +2967,25 @@ try
                 Sheet.get('Cells',numRows,fieldCol).Value = val;
             end
         end
+        % Save axial image and add to excel sheet
+        imAxial = handles.exportImages{handles.testNum}{1};
+        if ~exist(fullfile(pwd,'Log\Images'),'dir')
+            mkdir(fullfile(pwd,'Log\Images'));
+        end
+        filename = fullfile(pwd,'Log\Images',[date '_Depth_Axial.bmp']);
+        imwrite(imAxial,filename);
+        [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1);
+        imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
+        % Add link to image
+        Sheet.Hyperlinks.Add(imageCell,filename,[],[],'View Image');
+        % Create comment for image preview on mouse hover
+        imageCell.AddComment;
+        imageCell.Comment.Shape.Fill.UserPicture(filename);
+        imageCell.Comment.Shape.Width = size(imAxial,2)/2;
+        imageCell.Comment.Shape.Height = size(imAxial,1)/2;
+        
         % Longitudinal plane
-        for n = 1:numel(colHeaders)
+        for n = 1:numel(colHeaders)-1
             field = colHeaders{n};
             val = tableDataLong{n};
             % Remove any html formatting
@@ -2930,6 +2996,22 @@ try
                 Sheet.get('Cells',numRows,fieldCol).Value = val;
             end
         end
+        % Save longitudinal image and add to excel sheet
+        imLong = handles.exportImages{handles.testNum}{2};
+        if ~exist(fullfile(pwd,'Log\Images'),'dir')
+            mkdir(fullfile(pwd,'Log\Images'));
+        end
+        filename = fullfile(pwd,'Log\Images',[date '_Depth_Longitudinal.bmp']);
+        imwrite(imLong,filename);
+        [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1,'last');
+        imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
+        % Add link to image
+        Sheet.Hyperlinks.Add(imageCell,filename,[],[],'View Image');
+        % Create comment for image preview on mouse hover
+        imageCell.AddComment;
+        imageCell.Comment.Shape.Fill.UserPicture(filename);
+        imageCell.Comment.Shape.Width = size(imLong,2)/2;
+        imageCell.Comment.Shape.Height = size(imLong,1)/2;
         
         % Autofit columns
         Sheet.UsedRange.Columns.AutoFit;
@@ -3002,6 +3084,7 @@ function axialResolution_button_export_Callback(hObject, eventdata, handles)
 rowHeadersAxial = get(handles.axialResolution_table_axial,'RowName');
 rowHeadersLong = get(handles.axialResolution_table_long,'RowName');
 colHeaders = get(handles.axialResolution_table_axial,'ColumnName');
+colHeaders = [colHeaders; 'Image'];
 tableDataAxial = get(handles.axialResolution_table_axial,'Data');
 tableDataLong = get(handles.axialResolution_table_long,'Data');
 
@@ -3086,7 +3169,7 @@ try
         % Write values
         for m = 1:numel(rowHeadersAxial)
             rowNum = dateCell.Row + m - 1;
-            for n = 1:numel(colHeaders)
+            for n = 1:numel(colHeaders)-1
                 field = colHeaders{n};
                 val = tableDataAxial{m,n};
                 % Remove any html formatting
@@ -3098,6 +3181,23 @@ try
                 end
             end
         end
+        % Save axial image and add to excel sheet
+        imAxial = handles.exportImages{handles.testNum}{1};
+        if ~exist(fullfile(pwd,'Log\Images'),'dir')
+            mkdir(fullfile(pwd,'Log\Images'));
+        end
+        filename = fullfile(pwd,'Log\Images',[date '_AxialResolution_Axial.bmp']);
+        imwrite(imAxial,filename);
+        [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1);
+        imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
+        % Add link to image
+        Sheet.Hyperlinks.Add(imageCell,filename,[],[],'View Image');
+        % Create comment for image preview on mouse hover
+        imageCell.AddComment;
+        imageCell.Comment.Shape.Fill.UserPicture(filename);
+        imageCell.Comment.Shape.Width = size(imAxial,2)/2;
+        imageCell.Comment.Shape.Height = size(imAxial,1)/2;
+        
         % Longitudinal plane
         longCol = numel(colHeaders)+3;
         % Write row headers
@@ -3107,7 +3207,7 @@ try
         % Write values
         for m = 1:numel(rowHeadersLong)
             rowNum = dateCell.Row + m - 1;
-            for n = 1:numel(colHeaders)
+            for n = 1:numel(colHeaders)-1
                 field = colHeaders{n};
                 val = tableDataLong{m,n};
                 % Remove any html formatting
@@ -3119,6 +3219,22 @@ try
                 end
             end
         end
+        % Save longitudinal image and add to excel sheet
+        imLong = handles.exportImages{handles.testNum}{2};
+        if ~exist(fullfile(pwd,'Log\Images'),'dir')
+            mkdir(fullfile(pwd,'Log\Images'));
+        end
+        filename = fullfile(pwd,'Log\Images',[date '_Depth_Axial.bmp']);
+        imwrite(imLong,filename);
+        [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1,'last');
+        imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
+        % Add link to image
+        Sheet.Hyperlinks.Add(imageCell,filename,[],[],'View Image');
+        % Create comment for image preview on mouse hover
+        imageCell.AddComment;
+        imageCell.Comment.Shape.Fill.UserPicture(filename);
+        imageCell.Comment.Shape.Width = size(imLong,2)/2;
+        imageCell.Comment.Shape.Height = size(imLong,1)/2;
         
         % Update number of rows
         numRows = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2).Row;
@@ -3562,6 +3678,22 @@ try
                 end
             end
         end
+        % Save image and add to excel sheet
+        im = handles.exportImages{handles.testNum}{1};
+        if ~exist(fullfile(pwd,'Log\Images'),'dir')
+            mkdir(fullfile(pwd,'Log\Images'));
+        end
+        filename = fullfile(pwd,'Log\Images',[date '_AxialDistance.bmp']);
+        imwrite(im,filename);
+        [~,imageCol] = find(strcmp(xlData(1,:),'Image'),1);
+        imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
+        % Add link to image
+        Sheet.Hyperlinks.Add(imageCell,filename,[],[],'View Image');
+        % Create comment for image preview on mouse hover
+        imageCell.AddComment;
+        imageCell.Comment.Shape.Fill.UserPicture(filename);
+        imageCell.Comment.Shape.Width = size(im,2)/2;
+        imageCell.Comment.Shape.Height = size(im,1)/2;
         
         % Update number of rows
         numRows = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2).Row;
@@ -3739,6 +3871,23 @@ try
                 end
             end
         end
+        % Save axial image and add to excel sheet
+        imAxial = handles.exportImages{handles.testNum}{1};
+        if ~exist(fullfile(pwd,'Log\Images'),'dir')
+            mkdir(fullfile(pwd,'Log\Images'));
+        end
+        filename = fullfile(pwd,'Log\Images',[date '_LateralDistance_Axial.bmp']);
+        imwrite(imAxial,filename);
+        [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1);
+        imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
+        % Add link to image
+        Sheet.Hyperlinks.Add(imageCell,filename,[],[],'View Image');
+        % Create comment for image preview on mouse hover
+        imageCell.AddComment;
+        imageCell.Comment.Shape.Fill.UserPicture(filename);
+        imageCell.Comment.Shape.Width = size(imAxial,2)/2;
+        imageCell.Comment.Shape.Height = size(imAxial,1)/2;
+        
         % Longitudinal plane
         longCol = numel(colHeaders)+3;
         % Write row headers
@@ -3760,6 +3909,22 @@ try
                 end
             end
         end
+        % Save longitudinal image and add to excel sheet
+        imLong = handles.exportImages{handles.testNum}{2};
+        if ~exist(fullfile(pwd,'Log\Images'),'dir')
+            mkdir(fullfile(pwd,'Log\Images'));
+        end
+        filename = fullfile(pwd,'Log\Images',[date '_LateralDistance_Longitudinal.bmp']);
+        imwrite(imLong,filename);
+        [~,imageCol] = find(strcmp(xlData(2,:),'Image'),1,'last');
+        imageCell = Sheet.get('Cells',dateCell.Row,imageCol);
+        % Add link to image
+        Sheet.Hyperlinks.Add(imageCell,filename,[],[],'View Image');
+        % Create comment for image preview on mouse hover
+        imageCell.AddComment;
+        imageCell.Comment.Shape.Fill.UserPicture(filename);
+        imageCell.Comment.Shape.Width = size(imLong,2)/2;
+        imageCell.Comment.Shape.Height = size(imLong,1)/2;
         
         % Update number of rows
         numRows = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2).Row;
