@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 04-Aug-2015 14:13:39
+% Last Modified by GUIDE v2.5 04-Aug-2015 16:08:49
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1651,13 +1651,13 @@ try
                 % Check if scale readings were set manually
                 if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
                     % Scale readings were inputted
-                    [result,errors] = gridAlignmentTestAuto(handles.images{testNum}{:},...
+                    [result,errors,probeToG2] = gridAlignmentTestAuto(handles.images{testNum}{:},...
                         'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
                         'GridCoords',handles.gridAlignmentCoords,...
                         'PanelHandle',panelHandle,'AxesHandle',axesHandles);
                 else
                     % Read scale automatically from image
-                    [result,errors] = gridAlignmentTestAuto(handles.images{testNum}{:},...
+                    [result,errors,probeToG2] = gridAlignmentTestAuto(handles.images{testNum}{:},...
                         'GridCoords',handles.gridAlignmentCoords,...
                         'PanelHandle',panelHandle,'AxesHandle',axesHandles);
                 end
@@ -1680,6 +1680,12 @@ try
                 end
                 % Set table data
                 set(table,'Data',data);
+                
+                % Set Probe to G2 table data
+                table2 = handles.gridAlignment_table_probeToG2;
+                data2 = get(table2,'Data');
+                data2{1} = sprintf('%.2f',probeToG2);
+                set(table2,'Data',data2);
                 
                 % If in single view mode, hide the grid panel and show current axes
                 if get(handles.gridAlignment_button_singleView,'Value') == 1
@@ -4681,6 +4687,9 @@ rowHeaders = get(handles.gridAlignment_table,'RowName');
 colHeaders = get(handles.gridAlignment_table,'ColumnName');
 colHeaders = [colHeaders; 'Image'];
 tableData = get(handles.gridAlignment_table,'Data');
+rowHeaders2 = get(handles.gridAlignment_table_probeToG2,'RowName');
+colHeaders2 = get(handles.gridAlignment_table_probeToG2,'ColumnName');
+tableData2 = get(handles.gridAlignment_table_probeToG2,'Data');
 exportDate = datestr(clock,'yyyymmdd_HHMMSS');
 exportFolder = fullfile(pwd,'Log\Images',date);
 if ~exist(exportFolder,'dir')
@@ -4728,8 +4737,13 @@ try
             % Colour first cell yellow
             Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
             % Column headers
+            % Grid coordinates headers
             headers = Sheet.get('Range',Sheet.get('Cells',1,3),Sheet.get('Cells',1,numel(colHeaders)+2));
             headers.Value = colHeaders';
+            % Probe to G2 headers
+            header2Col = headers.End('xlToRight').Column+2;
+            headers2 = Sheet.get('Cells',1,header2Col);
+            headers2.Value = colHeaders2;
             numRows = 1;
             % Set first row to bold
             Sheet.Range('1:1').Font.Bold = 1;
@@ -4795,6 +4809,23 @@ try
         end
         % Delete the copied plots figure
         delete(fig);
+        
+        % Write Probe to G2 measurement results
+        % Write row header
+        rowHeaders2Cell = Sheet.get('Cells',dateCell.Row,numel(colHeaders)+3);
+        rowHeaders2Cell.Value = rowHeaders2;
+        rowHeaders2Cell.Font.Bold = 1;
+        % Write Probe to G2 value
+        rowNum = dateCell.Row;
+        field = colHeaders2;
+        val = tableData2{1};
+        % Remove any html formatting
+        val = regexprep(val, '<.*?>','');
+        [~,fieldCol] = find(strcmp(xlData(1,:),field),1);
+        if ~isempty(fieldCol)
+            % Column exists, write the value in new row
+            Sheet.get('Cells',rowNum,fieldCol).Value = val;
+        end
         
         % Update number of rows
         numRows = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2).Row;
@@ -4870,3 +4901,15 @@ catch exception
     % Make sure to close excel if error occurs
     invoke(Excel, 'Quit');
 end
+
+
+% --- Executes during object creation, after setting all properties.
+function gridAlignment_table_probeToG2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gridAlignment_table_probeToG2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+data = cell(1,1);
+set(hObject,'Data',data);
+set(hObject,'RowName','Probe to G2');
+set(hObject,'ColumnName','Distance (mm)');
+set(hObject,'ColumnEditable',false(1,size(data,2)));

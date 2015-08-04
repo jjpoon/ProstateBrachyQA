@@ -1,4 +1,4 @@
-function [result,errors] = gridAlignmentTestAuto(imageFile1,varargin)
+function [result,errors,probeToG2] = gridAlignmentTestAuto(imageFile1,varargin)
 % GRIDALIGNMENTEST is for the needle template alignment quality control test.
 % The function checks the difference between the actual needle location 
 % (using the needle template) and the corresponding point on the electronic
@@ -248,6 +248,24 @@ for i = 1:numel(imageInputs)
     end
     
 end
+
+% Get probe to G2 distance (using same grid  template and pixel scale as images)
+% Convert G2 grid coordinate to row and column number
+colNum = double('G')-64;
+% Grid template row coordinates increase going up
+r = rows:-1:1;
+rowNum = r(2);
+% Get index of grid point from coordinates
+G2Ind = sub2ind([rows cols],rowNum,colNum);
+G2Point = gridRegions(G2Ind).Centroid;
+% Get probe point (top of semi-circle)
+im_bw = im2bw(im_tight,0.01);
+im_bw = bwareaopen(im_bw,10000);
+y = find(im_bw(:,round(size(im_bw,2)/2)),1,'last');
+probePoint = [size(im_bw,2)/2,y];
+% Get probe to G2 distance
+probeToG2_pixels = norm(G2Point - probePoint);
+probeToG2 = probeToG2_pixels*pixelScale;
 
 % Resize and position figure
 if exist('fig','var')
