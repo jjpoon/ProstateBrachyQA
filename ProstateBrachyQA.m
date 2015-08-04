@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 30-Jul-2015 18:31:58
+% Last Modified by GUIDE v2.5 31-Jul-2015 16:15:48
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1581,6 +1581,13 @@ try
             showScaleWarning(hObject,handles);
             % Get updated handles
             handles = guidata(hObject);
+            
+            % Store images for export
+            for a = 1:numel(handles.volume_axes_list)
+                ax = handles.volume_axes_list(a);
+                im = getframe(ax);
+                handles.exportImages{testNum}{a} = im.cdata;
+            end
         end
     end
 catch exception
@@ -4266,6 +4273,191 @@ try
         Workbook.ActiveChart.PlotBy = 'xlColumns';
         Workbook.ActiveChart.HasTitle = 1;
         Workbook.ActiveChart.ChartTitle.Text = 'Area';
+        % Set/update chart position
+        chartShape.Top = Sheet.get('Cells',numRows+2,1).Top;
+        chartShape.Left = Sheet.get('Cells',numRows+2,1).Left+10;
+        
+        % Save the workbook
+        invoke(Workbook, 'Save');
+        msgbox('Export successful.');
+    else
+        % Don't have write access, file may be open in another program
+        errordlg('Cannot export to excel file. The file may be open in another application.',...
+            'Error');
+    end
+    % Close Excel
+    invoke(Excel, 'Quit');
+catch exception
+    disp(getReport(exception));
+    % Make sure to close excel if error occurs
+    invoke(Excel, 'Quit');
+end
+
+
+% --- Executes on button press in volme_button_export.
+function volme_button_export_Callback(hObject, eventdata, handles)
+% hObject    handle to volme_button_export (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+rowHeaders = get(handles.volume_table,'RowName');
+colHeaders = get(handles.volume_table,'ColumnName');
+colHeaders = [colHeaders; 'Images'];
+tableData = get(handles.volume_table,'Data');
+exportDate = datestr(clock,'yyyymmdd_HHMMSS');
+exportFolder = fullfile(pwd,'Log\Images',date);
+if ~exist(exportFolder,'dir')
+    mkdir(exportFolder);
+end
+
+% Remove formatting from column headers
+for h = 1:numel(colHeaders)
+    % Replace <sup> with ^
+    colHeaders{h} = regexprep(colHeaders{h}, '<sup>','^');
+    % Remove any html formatting
+    colHeaders{h} = regexprep(colHeaders{h}, '<.*?>','');
+end
+
+try
+    % Get handle to Excel COM Server
+    Excel = actxserver('Excel.Application');
+    Excel.DisplayAlerts = 0;
+    % Open Workbook
+    Workbooks = Excel.Workbooks;
+    Workbook = Open(Workbooks,fullfile(pwd,'Log/','ProstateBrachyQA Log.xlsx'));
+    
+    if Workbook.ReadOnly == 0
+        % Have write access to excel file
+        % Get a handle to Sheets
+        Sheets = Excel.ActiveWorkBook.Sheets;
+        Sheet = [];
+        for sheetNum = 1:Sheets.Count
+            % Get existing Volume sheet
+            if strcmp(Sheets.Item(sheetNum).Name,'Volume')
+                Sheet = get(Sheets, 'Item', sheetNum);
+                break
+            end
+        end
+        if isempty(Sheet)
+            % Create new sheet after 8th sheet or last sheet
+            if Sheets.Count >= 8
+                Sheet = Sheets.Add([],Sheets.Item(8));
+            else
+                Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
+            end
+        end
+        Sheet.Name = 'Volume';
+        Sheet.Activate;
+        % Get number of last used row
+        lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
+        if ~isempty(lastRow)
+            numRows = lastRow.Row;
+        else
+            % No data, initialize headers
+            % Put test title in first cell
+            Sheet.get('Cells',1,1).Value = 'Volume';
+            % Colour first cell yellow
+            Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
+            % Column headers
+            headers = Sheet.get('Range',Sheet.get('Cells',1,2),Sheet.get('Cells',1,numel(colHeaders)+1));
+            headers.Value = colHeaders';
+            numRows = 1;
+            % Set first row to bold
+            Sheet.Range('1:1').Font.Bold = 1;
+            % Freeze first row
+            Sheet.Application.ActiveWindow.SplitRow = 1;
+            Sheet.Application.ActiveWindow.FreezePanes = true;
+            % Set first column to bold
+            Sheet.Range('A:A').Font.Bold = 1;
+        end
+        numCols = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],2,2).Column;
+        xlData = Sheet.UsedRange.Value(1:numRows,1:numCols);
+        
+        numRows = numRows + 1;
+        % Write date
+        dateCell = Sheet.get('Cells',numRows,1);
+        dateCell.Value = date;
+        
+        % Write values
+        for m = 1:numel(rowHeaders)
+            rowNum = dateCell.Row + m - 1;
+            for n = 1:numel(colHeaders)-1
+                field = colHeaders{n};
+                val = tableData{m,n};
+                % Remove any html formatting
+                val = regexprep(val, '<.*?>','');
+                [~,fieldCol] = find(strcmp(xlData(1,:),field),1);
+                if ~isempty(fieldCol)
+                    % Column exists, write the value in new row
+                    Sheet.get('Cells',rowNum,fieldCol).Value = val;
+                end
+            end
+        end
+        % Save images and add to excel sheet
+        for imNum = 1:numel(handles.volume_axes_list)
+            im = getAxesImage(handles.volume_axes_list(imNum));
+            handles.exportImages{handles.testNum}{imNum} = im;
+            filename = fullfile(exportFolder,[exportDate '_Volume_' num2str(imNum) '.bmp']);
+            imwrite(im,filename);
+            [~,imageCol] = find(strcmp(xlData(1,:),'Images'),1);
+            imageCell = Sheet.get('Cells',dateCell.Row,imageCol+imNum-1);
+            % Add link to image
+            Sheet.Hyperlinks.Add(imageCell,filename,[],[],['View Image ' num2str(imNum)]);
+            % Create comment for image preview on mouse hover
+            imageCell.AddComment;
+            imageCell.Comment.Shape.Fill.UserPicture(filename);
+            imageCell.Comment.Shape.Width = size(im,2)/2;
+            imageCell.Comment.Shape.Height = size(im,1)/2;
+        end
+        
+        % Update number of rows
+        numRows = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2).Row;
+        
+        % Autofit columns
+        Sheet.UsedRange.Columns.AutoFit;
+        
+        % Create/modify chart
+        if Sheet.ChartObjects.Count == 0
+            % If no chart exists, create one
+            chartShape = Sheet.Shapes.AddChart;
+            chartShape.Select;
+            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
+            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
+        else
+            % Select existing chart
+            chartShape = Sheet.ChartObjects.Item(1);
+            chartShape.Select;
+        end
+        % Set/update chart data
+        knownValsCol = cell2mat(Sheet.get('Range',Sheet.get('Cells',2,2),Sheet.get('Cells',numRows,2)).Value);
+        knownVals = unique(knownValsCol);
+        seriesCollection = Workbook.ActiveChart.SeriesCollection;
+        for s = 1:numel(knownVals)
+            if seriesCollection.Count < s
+                % Create series
+                seriesCollection.NewSeries;
+            end
+            series = seriesCollection.Item(s);
+            series.Name = ['Known Value: ' num2str(knownVals(s))];
+            % Get row numbers for this known value
+            rowNums = find(knownValsCol==knownVals(s));
+            % X Data
+            % Get test dates for this known value
+            dateColumn = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',dateCell.Row,1));
+            dateRange = dateColumn.Cells.Item(rowNums(1));
+            for n = 2:numel(rowNums)
+                dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(rowNums(n)));
+            end
+            series.XValues = dateRange;
+            % Y Data
+            valColumn = Sheet.get('Range',Sheet.get('Cells',2,3),Sheet.get('Cells',numRows,3));
+            valRange = valColumn.Cells.Item(rowNums(1));
+            for n = 2:numel(rowNums)
+                valRange = Excel.Union(valRange,valColumn.Cells.Item(rowNums(n)));
+            end
+            series.Values = valRange;
+        end
+        Workbook.ActiveChart.HasTitle = 1;
+        Workbook.ActiveChart.ChartTitle.Text = 'Volume';
         % Set/update chart position
         chartShape.Top = Sheet.get('Cells',numRows+2,1).Top;
         chartShape.Left = Sheet.get('Cells',numRows+2,1).Left+10;
