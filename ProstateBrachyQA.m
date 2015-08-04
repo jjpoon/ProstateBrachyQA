@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 04-Aug-2015 14:07:07
+% Last Modified by GUIDE v2.5 04-Aug-2015 14:13:39
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -4393,8 +4393,10 @@ try
             end
         end
         % Save images and add to excel sheet
+        % Create figure for copying axes onto and saving image
+        fig = figure('Visible','off');
         for imNum = 1:numel(handles.volume_axes_list)
-            im = getAxesImage(handles.volume_axes_list(imNum));
+            im = getAxesImage(handles.volume_axes_list(imNum),fig);
             handles.exportImages{handles.testNum}{imNum} = im;
             filename = fullfile(exportFolder,[exportDate '_Volume_' num2str(imNum) '.bmp']);
             imwrite(im,filename);
@@ -4408,6 +4410,8 @@ try
             imageCell.Comment.Shape.Width = size(im,2)/2;
             imageCell.Comment.Shape.Height = size(im,1)/2;
         end
+        % Delete the copied plots figure
+        delete(fig);
         
         % Update number of rows
         numRows = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2).Row;
@@ -4442,7 +4446,7 @@ try
             rowNums = find(knownValsCol==knownVals(s));
             % X Data
             % Get test dates for this known value
-            dateColumn = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',dateCell.Row,1));
+            dateColumn = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',numRows,1));
             dateRange = dateColumn.Cells.Item(rowNums(1));
             for n = 2:numel(rowNums)
                 dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(rowNums(n)));
@@ -4578,8 +4582,10 @@ try
             end
         end
         % Save images and add to excel sheet
+        % Create figure for copying axes onto and saving image
+        fig = figure('Visible','off');
         for imNum = 1:numel(handles.volumeFormula_axes_list)
-            im = getAxesImage(handles.volumeFormula_axes_list(imNum));
+            im = getAxesImage(handles.volumeFormula_axes_list(imNum),fig);
             handles.exportImages{handles.testNum}{imNum} = im;
             filename = fullfile(exportFolder,[exportDate '_Volume_' num2str(imNum) '.bmp']);
             imwrite(im,filename);
@@ -4593,6 +4599,8 @@ try
             imageCell.Comment.Shape.Width = size(im,2)/2;
             imageCell.Comment.Shape.Height = size(im,1)/2;
         end
+        % Delete the copied plots figure
+        delete(fig);
         
         % Update number of rows
         numRows = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2).Row;
@@ -4627,7 +4635,7 @@ try
             rowNums = find(knownValsCol==knownVals(s));
             % X Data
             % Get test dates for this known value
-            dateColumn = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',dateCell.Row,1));
+            dateColumn = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',numRows,1));
             dateRange = dateColumn.Cells.Item(rowNums(1));
             for n = 2:numel(rowNums)
                 dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(rowNums(n)));

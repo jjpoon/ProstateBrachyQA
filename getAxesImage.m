@@ -1,7 +1,23 @@
-function img = getAxesImage(axesHandle)
-% SHOWINFIGURE opens the plotted image in a new figure window.
-% Create new figure
-fig = figure('Units','normalized','Position',[0.1 0.1 0.8 0.8],'Visible','off');
+function img = getAxesImage(varargin)
+% GETAXESIMAGE copies the plots/legends displayed on the given axesHandle
+% to a new figure, then uses getframe to save the image as a variable.
+
+axesHandle = varargin{1};
+figHandle = [];
+
+if nargin > 1
+    figHandle = varargin{2};
+    if ~isempty(figHandle)
+        % Figure has been created already, use this for plotting
+        fig = figHandle;
+        clf(fig);
+        set(fig,'Units','normalized');
+        set(fig,'Position',[0.1 0.1 0.8 0.8]);
+    end
+else
+    % Create new figure
+    fig = figure('Units','normalized','Position',[0.1 0.1 0.8 0.8],'Visible','off');
+end
 copiedAxes = copyobj(axesHandle,fig);
 plots = get(copiedAxes,'Children');
 set(plots,'Visible','on');
@@ -55,5 +71,10 @@ end
 % delete('AxesImage.png');
 frame = getframe(get(fig,'CurrentAxes'));
 img = frame.cdata;
-delete(fig);
+
+% If figure was given as input, don't delete
+if isempty(figHandle)
+    % Delete figure automatically if created inside this function
+    delete(fig);
+end
 
