@@ -260,8 +260,17 @@ G2Ind = sub2ind([rows cols],rowNum,colNum);
 G2Point = gridRegions(G2Ind).Centroid;
 % Get probe point (top of semi-circle)
 im_bw = im2bw(im_tight,0.01);
-im_bw = bwareaopen(im_bw,10000);
-y = find(im_bw(:,round(size(im_bw,2)/2)),1,'last');
+im_bw = imcomplement(im_bw);
+% Remove large regions
+im_bw = im_bw - bwareaopen(im_bw,10000);
+% Remove small regions
+im_bw = bwareaopen(im_bw,100);
+% Limit to probe region
+im_bw(1:round(0.9*size(im_bw,1)),:) = 0;
+im_bw(:,1:round(0.35*size(im_bw,2))) = 0;
+im_bw(:,round(0.65*size(im_bw,2)):end) = 0;
+% Get y position of probe surface
+y = find(im_bw(:,round(size(im_bw,2)/2)),1,'first');
 probePoint = [size(im_bw,2)/2,y];
 % Get probe to G2 distance
 probeToG2_pixels = norm(G2Point - probePoint);
@@ -273,6 +282,7 @@ if exist('fig','var')
 end
 
 disp(['Errors (mm): ' sprintf('%.2f  ',errors)]);
+disp(['Probe to G2 (mm): ' sprintf('%.2f',probeToG2)]);
 
 % Compare errors between needle template and electronic grid
 % Check if any errors (corners and center) are greater than 3 mm.
