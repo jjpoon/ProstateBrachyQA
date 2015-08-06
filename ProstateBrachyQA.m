@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 04-Aug-2015 16:08:49
+% Last Modified by GUIDE v2.5 05-Aug-2015 08:27:25
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -78,6 +78,7 @@ tab8 = uitab(handles.tabgroup,'Title','Area');
 tab9 = uitab(handles.tabgroup,'Title','Volume (Planimetric)');
 tab10 = uitab(handles.tabgroup,'Title','Volume (Formula)');
 tab11 = uitab(handles.tabgroup,'Title','Grid Alignment');
+tab12 = uitab(handles.tabgroup,'Title','Overlay Images');
 % Set tabs as parents of appropriate test panels
 set(handles.phantom_panel_parent,'Parent',tab1);
 set(handles.grayscale_panel_parent,'Parent',tab2);
@@ -90,6 +91,7 @@ set(handles.area_panel_parent,'Parent',tab8);
 set(handles.volume_panel_parent,'Parent',tab9);
 set(handles.volumeFormula_panel_parent,'Parent',tab10);
 set(handles.gridAlignment_panel_parent,'Parent',tab11);
+set(handles.overlay_panel_parent,'Parent',tab12);
 
 % Initiate images
 handles.images = cell(11,1);
@@ -134,6 +136,12 @@ handles.gridAlignmentCoords = [];
 
 % Initiate export images
 handles.exportImages = cell(11,1);
+
+% Initiate overlay images
+handles.overlayImage1 = [];
+handles.overlayImage2 = [];
+handles.overlayImagePlot1 = [];
+handles.overlayImagePlot2 = [];
 
 % Add listener for selected tab index
 addlistener(handles.tabgroup,'SelectedIndex','PostSet',@(obj,eventdata)onSelectedTabChanged(hObject));
@@ -189,13 +197,15 @@ switch handles.testNum
         testName = 'volumeFormula';
     case 11
         testName = 'gridAlignment';
+    case 12
+        testName = 'overlay';
 end
 handles.testName = testName;
 % Update handles
 guidata(hObject,handles);
 
 
-% --- Executes on button press in grayscale_button_images.
+% --- Executes on Select Images button press.
 function button_images_Callback(hObject, eventdata, handles)
 % hObject    handle to grayscale_button_images (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -209,8 +219,13 @@ testName = handles.testName;
 if strcmp(testName,'volumeFormula')
     [axialFile,axialPath] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
         '*.*','All Files' },'Select Axial Image');
+    if axialPath ~= 0
+        folder = axialPath;
+    else
+        folder = pwd;
+    end
     [sagittalFile,sagittalPath] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
-        '*.*','All Files' },'Select Sagittal Image',axialPath);
+        '*.*','All Files' },'Select Sagittal Image',folder);
     filenames = {axialFile, sagittalFile};
 else
     [filenames,pathname] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
@@ -4913,3 +4928,232 @@ set(hObject,'Data',data);
 set(hObject,'RowName','Probe to G2');
 set(hObject,'ColumnName','Distance (mm)');
 set(hObject,'ColumnEditable',false(1,size(data,2)));
+
+
+% --- Executes on button press in overlay_button_image1.
+function overlay_button_image1_Callback(hObject, eventdata, handles)
+% hObject    handle to overlay_button_image1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[filename,pathname] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
+        '*.*','All Files' },'Select Image(s)');
+
+if filename ~= 0
+    % Get the listbox that is also on this panel
+    listbox = handles.overlay_listbox;
+    % Display filenames in listbox
+    files = get(listbox,'String');
+    files{1} = filename;
+    set(listbox,'String',files);
+    % Set listbox 'Value' property
+    set(listbox,'Value',1);
+    
+    % Show image
+    axesHandle = handles.overlay_axes;
+    set(axesHandle,'NextPlot','add');
+    im = imread(fullfile(pathname,filename));
+    handles.overlayImage1 = im;
+    % Delete old image if exists
+    if ishandle(handles.overlayImage1)
+        delete(handles.overlayImage1);
+    end
+    handles.overlayImagePlot1 = imshow(im,'Parent',axesHandle);
+    axis(axesHandle,'tight');
+end
+guidata(hObject,handles);
+
+
+% --- Executes on button press in overlay_button_image2.
+function overlay_button_image2_Callback(hObject, eventdata, handles)
+% hObject    handle to overlay_button_image2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[filename,pathname] = uigetfile({'*.bmp;*.jpg;*.tif;*.png;*.gif;*.dcm','All Image Files';...
+        '*.*','All Files' },'Select Image(s)');
+
+if filename ~= 0
+    % Get the listbox that is also on this panel
+    listbox = handles.overlay_listbox;
+    % Display filenames in listbox
+    files = get(listbox,'String');
+    files{2} = filename;
+    set(listbox,'String',files);
+    % Set listbox 'Value' property
+    set(listbox,'Value',2);
+    
+    % Show image
+    axesHandle = handles.overlay_axes;
+    set(axesHandle,'NextPlot','add');
+    im = imread(fullfile(pathname,filename));
+    handles.overlayImage2 = im;
+    % Delete old image if exists
+    if ishandle(handles.overlayImage2)
+        delete(handles.overlayImage2);
+    end
+    handles.overlayImagePlot2 = imshow(im,'Parent',axesHandle);
+    axis(axesHandle,'tight');
+end
+guidata(hObject,handles);
+
+    
+% --- Executes on slider movement.
+function overlay_slider_transparency2_Callback(hObject, eventdata, handles)
+% hObject    handle to overlay_slider_transparency2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+sliderVal = get(hObject,'Value');
+if ishandle(handles.overlayImagePlot2)
+    set(handles.overlayImagePlot2,'AlphaData',sliderVal);
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function overlay_slider_transparency2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to overlay_slider_transparency2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function overlay_slider_brightness2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to overlay_slider_brightness2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+% --- Executes on slider movement.
+function overlay_slider_brightnesscontrast2_Callback(hObject, eventdata, handles)
+% hObject    handle to overlay_slider_contrast2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+if ishandle(handles.overlayImagePlot2)
+    % Get original image
+    im = handles.overlayImage2;
+    
+    % Get factor to adjust brightness
+    brightVal = get(handles.overlay_slider_brightness2,'Value');
+    if brightVal > 0
+        brightFactor = 1 + brightVal*5;
+    else
+        brightFactor = 1 + brightVal;
+    end
+    
+    % Adjust contrast
+    contrastVal = get(handles.overlay_slider_contrast2,'Value');
+    if contrastVal > 0
+        set(handles.overlayImagePlot2,'CData',...
+            imadjust(brightFactor*im,[0.5*contrastVal 1-0.5*contrastVal],[0 1]));
+    else
+        set(handles.overlayImagePlot2,'CData',...
+            imadjust(brightFactor*im,[0 1],[0.5*-contrastVal 1-0.5*-contrastVal]));
+    end
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function overlay_slider_contrast2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to overlay_slider_contrast2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+% --- Executes on slider movement.
+function overlay_slider_transparency1_Callback(hObject, eventdata, handles)
+% hObject    handle to overlay_slider_transparency1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+sliderVal = get(hObject,'Value');
+if ishandle(handles.overlayImagePlot1)
+    set(handles.overlayImagePlot1,'AlphaData',sliderVal);
+end
+
+% --- Executes during object creation, after setting all properties.
+function overlay_slider_transparency1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to overlay_slider_transparency1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function overlay_slider_brightness1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to overlay_slider_brightness1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+% --- Executes on slider movement.
+function overlay_slider_brightnesscontrast1_Callback(hObject, eventdata, handles)
+% hObject    handle to overlay_slider_contrast1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+if ishandle(handles.overlayImagePlot1)
+    % Get original image
+    im = handles.overlayImage1;
+    
+    % Get factor to adjust brightness
+    brightVal = get(handles.overlay_slider_brightness1,'Value');
+    if brightVal > 0
+        brightFactor = 1 + brightVal*5;
+    else
+        brightFactor = 1 + brightVal;
+    end
+    
+    % Adjust contrast
+    contrastVal = get(handles.overlay_slider_contrast1,'Value');
+    if contrastVal > 0
+        set(handles.overlayImagePlot1,'CData',...
+            imadjust(brightFactor*im,[0.5*contrastVal 1-0.5*contrastVal],[0 1]));
+    else
+        set(handles.overlayImagePlot1,'CData',...
+            imadjust(brightFactor*im,[0 1],[0.5*-contrastVal 1-0.5*-contrastVal]));
+    end
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function overlay_slider_contrast1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to overlay_slider_contrast1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
