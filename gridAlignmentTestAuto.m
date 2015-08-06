@@ -83,23 +83,24 @@ for i = 1:numel(imageInputs)
     % Get template grid points
     
     % Get image with only yellow pixels
-    pixelMask = im_tight(:,:,1) == 255 & im_tight(:,:,2) == 255 & im_tight(:,:,3) == 0;
+    pixelMask = im_tight(:,:,1) > 200 & im_tight(:,:,2) > 200 & im_tight(:,:,3) < 100;
     im_grid_yellow = rgb2gray(im_tight).*uint8(pixelMask);
     % Convert to black and white
     im_grid_yellow = im2bw(im_grid_yellow);
     % Remove large objects
     im_grid_yellow = im_grid_yellow - bwareaopen(im_grid_yellow,6);
     
-    % Get image with only cyan pixels
-    pixelMask = im_tight(:,:,1) == 128 & im_tight(:,:,2) == 255 & im_tight(:,:,3) == 255;
-    im_grid_cyan = rgb2gray(im_tight).*uint8(pixelMask);
-    % Convert to black and white
-    im_grid_cyan = im2bw(im_grid_cyan);
-    % Remove large objects
+%     % Get image with only cyan pixels
+%     pixelMask = im_tight(:,:,1) == 128 & im_tight(:,:,2) == 255 & im_tight(:,:,3) == 255;
+%     im_grid_cyan = rgb2gray(im_tight).*uint8(pixelMask);
+%     % Convert to black and white
+%     im_grid_cyan = im2bw(im_grid_cyan);
+%     % Remove large objects
 %     im_grid_cyan = im_grid_cyan - bwareaopen(im_grid_cyan,6);
     
     % Final grid template
-    im_grid = im_grid_yellow + im_grid_cyan;
+    im_grid = im_grid_yellow;
+%     im_grid = im_grid_yellow + im_grid_cyan;
     % Convert to black and white
     im_grid = im2bw(im_grid);
 %     % Remove large objects
@@ -134,7 +135,15 @@ for i = 1:numel(imageInputs)
         round(gridPoint(1)-regionWidth/2:gridPoint(1)+regionWidth/2)) = 1;
     % Restrict image to region of interest
     reg = rgb2gray(im_tight).*uint8(regionMask);
-    regBW = im2bw(reg,0.9);
+    % Remove grid template from image
+    reg = reg.*uint8(imcomplement(pixelMask));
+    % Find brightest region (needle point)
+    for thresh = 0.9:-0.1:0.5
+        regBW = im2bw(reg,thresh);
+        if max(regBW(:)) > 0
+            break
+        end
+    end
     bwRegions = regionprops(regBW,'Area','Centroid','MinorAxisLength','Orientation');
     
     [~,biggest] = max([bwRegions.Area]);
@@ -271,6 +280,10 @@ im_bw(:,1:round(0.35*size(im_bw,2))) = 0;
 im_bw(:,round(0.65*size(im_bw,2)):end) = 0;
 % Get y position of probe surface
 y = find(im_bw(:,round(size(im_bw,2)/2)),1,'first');
+% If top of probe could not be found (eg. image gain too low), assume y = 540
+if isempty(y)
+    y = 540;
+end
 probePoint = [size(im_bw,2)/2,y];
 % Get probe to G2 distance
 probeToG2_pixels = norm(G2Point - probePoint);
