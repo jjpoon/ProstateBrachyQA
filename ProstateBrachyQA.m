@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 05-Aug-2015 08:27:25
+% Last Modified by GUIDE v2.5 06-Aug-2015 15:22:45
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -93,25 +93,25 @@ set(handles.volumeFormula_panel_parent,'Parent',tab10);
 set(handles.gridAlignment_panel_parent,'Parent',tab11);
 set(handles.overlay_panel_parent,'Parent',tab12);
 
-% Initiate images
+% Initialize images
 handles.images = cell(11,1);
 
-% Initiate testNum and testName
+% Initialize testNum and testName
 handles.testNum = 1;
 handles.testName = 'grayscale';
 
-% Initiate single view image index
+% Initialize single view image index
 handles.volume_imageIndex = 1;
 handles.volumeFormula_imageIndex = 1;
 handles.gridAlignment_imageIndex = 1;
 
-% Initiate view plane for tests where axial/sagittal views are used
+% Initialize view plane for tests where axial/sagittal views are used
 handles.depth_plane = 'axial';
 handles.axialResolution_plane = 'axial';
 handles.lateralResolution_plane = 'axial';
 handles.lateralDistance_plane = 'axial';
 
-% Initiate known values (if given, will use instead of value in baseline
+% Initialize known values (if given, will use instead of value in baseline
 % file)
 handles.axialDistance_knownVal = {};
 handles.lateralDistance_knownVal = {};
@@ -119,29 +119,33 @@ handles.area_knownVal = {};
 handles.volume_knownVal = {};
 handles.volumeFormula_knownVal = {};
 
-% Initiate flags for scale warning
+% Initialize flags for scale warning
 handles.AssumedScale = 0;
 handles.ShowScaleWarning = 1;
 
-% Initiate mouse movement fields
+% Initialize mouse movement fields
 handles.rotate3D = 0;
 handles.oldMousePoint = [];
 
-% Initiate volume test 3DView option
+% Initialize volume test 3DView option
 handles.volume_3DView = 'interp';
 
-% Initiate grid coordinates
+% Initialize grid coordinates
 handles.coordsPresetNum = [];
 handles.gridAlignmentCoords = [];
 
-% Initiate export images
+% Initialize export images
 handles.exportImages = cell(11,1);
 
-% Initiate overlay images
+% Initialize overlay images
 handles.overlayImage1 = [];
 handles.overlayImage2 = [];
 handles.overlayImagePlot1 = [];
 handles.overlayImagePlot2 = [];
+
+% Initialize overlay image colour tint
+handles.overlayImage1Colour = [1 1 1];
+handles.overlayImage2Colour = [1 1 1];
 
 % Add listener for selected tab index
 addlistener(handles.tabgroup,'SelectedIndex','PostSet',@(obj,eventdata)onSelectedTabChanged(hObject));
@@ -4957,7 +4961,18 @@ if filename ~= 0
     if ishandle(handles.overlayImage1)
         delete(handles.overlayImage1);
     end
-    handles.overlayImagePlot1 = imshow(im,'Parent',axesHandle);
+    
+    % Get size of image
+    s = size(handles.overlayImage1);
+    imsize = [s(1) s(2)];
+    % Create colour mask
+    colour = handles.overlayImage1Colour;
+    mask(:,:,1) = repmat(colour(1),imsize);
+    mask(:,:,2) = repmat(colour(2),imsize);
+    mask(:,:,3) = repmat(colour(3),imsize);
+    mask = uint8(mask);
+    
+    handles.overlayImagePlot1 = imshow(mask.*im,'Parent',axesHandle);
     axis(axesHandle,'tight');
 end
 guidata(hObject,handles);
@@ -4990,7 +5005,18 @@ if filename ~= 0
     if ishandle(handles.overlayImage2)
         delete(handles.overlayImage2);
     end
-    handles.overlayImagePlot2 = imshow(im,'Parent',axesHandle);
+    
+    % Get size of image
+    s = size(handles.overlayImage2);
+    imsize = [s(1) s(2)];
+    % Create colour mask
+    colour = handles.overlayImage2Colour;
+    mask(:,:,1) = repmat(colour(1),imsize);
+    mask(:,:,2) = repmat(colour(2),imsize);
+    mask(:,:,3) = repmat(colour(3),imsize);
+    mask = uint8(mask);
+    
+    handles.overlayImagePlot2 = imshow(mask.*im,'Parent',axesHandle);
     axis(axesHandle,'tight');
 end
 guidata(hObject,handles);
@@ -5031,38 +5057,6 @@ function overlay_slider_brightness2_CreateFcn(hObject, eventdata, handles)
 % Hint: slider controls usually have a light gray background.
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
-end
-
-
-% --- Executes on slider movement.
-function overlay_slider_brightnesscontrast2_Callback(hObject, eventdata, handles)
-% hObject    handle to overlay_slider_contrast2 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-if ishandle(handles.overlayImagePlot2)
-    % Get original image
-    im = handles.overlayImage2;
-    
-    % Get factor to adjust brightness
-    brightVal = get(handles.overlay_slider_brightness2,'Value');
-    if brightVal > 0
-        brightFactor = 1 + brightVal*5;
-    else
-        brightFactor = 1 + brightVal;
-    end
-    
-    % Adjust contrast
-    contrastVal = get(handles.overlay_slider_contrast2,'Value');
-    if contrastVal > 0
-        set(handles.overlayImagePlot2,'CData',...
-            imadjust(brightFactor*im,[0.5*contrastVal 1-0.5*contrastVal],[0 1]));
-    else
-        set(handles.overlayImagePlot2,'CData',...
-            imadjust(brightFactor*im,[0 1],[0.5*-contrastVal 1-0.5*-contrastVal]));
-    end
 end
 
 
@@ -5115,20 +5109,30 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
 end
 
 
-% --- Executes on slider movement.
-function overlay_slider_brightnesscontrast1_Callback(hObject, eventdata, handles)
+% --- Executes on brightness/contrast slider movement and tint colour selected.
+function overlay_updateImage_Callback(imageNum, handles)
 % hObject    handle to overlay_slider_contrast1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-if ishandle(handles.overlayImagePlot1)
+if ishandle(handles.(['overlayImagePlot' num2str(imageNum)]))
     % Get original image
-    im = handles.overlayImage1;
+    im = handles.(['overlayImage' num2str(imageNum)]);
+    
+    % Get size of image
+    s = size(im);
+    imsize = [s(1) s(2)];
+    % Create colour mask
+    colour = handles.(['overlayImage' num2str(imageNum) 'Colour']);
+    mask(:,:,1) = repmat(colour(1),imsize);
+    mask(:,:,2) = repmat(colour(2),imsize);
+    mask(:,:,3) = repmat(colour(3),imsize);
+    mask = uint8(mask);
     
     % Get factor to adjust brightness
-    brightVal = get(handles.overlay_slider_brightness1,'Value');
+    brightVal = get(handles.(['overlay_slider_brightness' num2str(imageNum)]),'Value');
     if brightVal > 0
         brightFactor = 1 + brightVal*5;
     else
@@ -5136,13 +5140,13 @@ if ishandle(handles.overlayImagePlot1)
     end
     
     % Adjust contrast
-    contrastVal = get(handles.overlay_slider_contrast1,'Value');
+    contrastVal = get(handles.(['overlay_slider_contrast' num2str(imageNum)]),'Value');
     if contrastVal > 0
-        set(handles.overlayImagePlot1,'CData',...
-            imadjust(brightFactor*im,[0.5*contrastVal 1-0.5*contrastVal],[0 1]));
+        set(handles.(['overlayImagePlot' num2str(imageNum)]),'CData',...
+            imadjust(mask.*(brightFactor*im),[0.5*contrastVal 1-0.5*contrastVal],[0 1]));
     else
-        set(handles.overlayImagePlot1,'CData',...
-            imadjust(brightFactor*im,[0 1],[0.5*-contrastVal 1-0.5*-contrastVal]));
+        set(handles.(['overlayImagePlot' num2str(imageNum)]),'CData',...
+            imadjust(mask.*(brightFactor*im),[0 1],[0.5*-contrastVal 1-0.5*-contrastVal]));
     end
 end
 
@@ -5156,4 +5160,36 @@ function overlay_slider_contrast1_CreateFcn(hObject, eventdata, handles)
 % Hint: slider controls usually have a light gray background.
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+% --- Executes on button press in overlay_button_colourTint2.
+function overlay_button_colourTint2_Callback(hObject, eventdata, handles)
+% hObject    handle to overlay_button_colourTint2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% Pick colour to tint image
+colour = uisetcolor('Select Image 2 Tint Colour');
+if numel(colour) == 3
+    % Store colour in handles
+    handles.overlayImage2Colour = colour;
+    guidata(hObject,handles);
+    % Update image
+    overlay_updateImage_Callback(2, handles)
+end
+
+
+% --- Executes on button press in overlay_button_colourTint1.
+function overlay_button_colourTint1_Callback(hObject, eventdata, handles)
+% hObject    handle to overlay_button_colourTint1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% Pick colour to tint image
+colour = uisetcolor('Select Image 1 Tint Colour');
+if numel(colour) == 3
+    % Store colour in handles
+    handles.overlayImage1Colour = colour;
+    guidata(hObject,handles);
+    % Update image
+    overlay_updateImage_Callback(1, handles)
 end
