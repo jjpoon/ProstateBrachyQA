@@ -92,6 +92,21 @@ for ws = 150:-10:70
             radius = radii(circleInd);
         end
         
+        % Check for false detection by making sure average intensity within
+        % circle is higher than average intensity of pixels outside circle.
+        if ~isempty(center)
+            insideMask = circleFinal;
+            insideCircle = im_tight.*uint8(insideMask);
+            outsideMask = imdilate(circleFinal,strel('disk',20)) - circleFinal;
+            outsideCircle = im_tight.*uint8(outsideMask);
+            meanInside = mean(insideCircle(insideCircle>0));
+            meanOutside = mean(outsideCircle(outsideCircle>0));
+            if meanInside - meanOutside < 10
+                center = [];
+                radius = [];
+            end
+        end
+        
         if ~isempty(center)
             break
         end

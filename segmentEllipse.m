@@ -31,8 +31,8 @@ for ws = 150:-10:70
     for s = 1:2
         circle = adaptivethreshold(im_tight,ws,0.001);
         % Morphological operations to improve visibility of circle
-        circle = imopen(circle,strel('disk',2));
-        circle = imclose(circle,strel('disk',2));
+        circle = imopen(circle,strel('disk',s));
+        circle = imclose(circle,strel('disk',s));
         circle = bwareaopen(circle,1000);
         
         % Fill holes
@@ -73,6 +73,7 @@ for ws = 150:-10:70
         if isempty(circleRegion)
             center = [];
             ellipseLength = [];
+            lengthPoints = [];
         else
             % Centroid of ellipse
             center = circleRegion.Centroid;
@@ -91,6 +92,22 @@ for ws = 150:-10:70
             % Points for showing lateral resolution
             lengthPoints(1,:) = center + (ellipseLength/2)*v';
             lengthPoints(2,:) = center - (ellipseLength/2)*v';
+        end
+        
+        % Check for false detection by making sure average intensity within
+        % ellipse is higher than average intensity of pixels outside ellipse.
+        if ~isempty(center)
+            insideMask = circleFinal;
+            insideCircle = im_tight.*uint8(insideMask);
+            outsideMask = imdilate(circleFinal,strel('disk',20)) - circleFinal;
+            outsideCircle = im_tight.*uint8(outsideMask);
+            meanInside = mean(insideCircle(insideCircle>0));
+            meanOutside = mean(outsideCircle(outsideCircle>0));
+            if meanInside - meanOutside < 10
+                center = [];
+                ellipseLength = [];
+                lengthPoints = [];
+            end
         end
         
         % If center was found, continue
