@@ -67,7 +67,7 @@ for i = 1:size(im_cropped,1)
     % Loop through the pixels of each row
     for n = 1:size(im_cropped,2)
         % If pixel is not black and the next pixel has the same intensity value
-        if (im_cropped(i,n)>0) && (im_cropped(i,n+1) - im_cropped(i,n) == 0)
+        if (im_cropped(i,n)>0) && (double(im_cropped(i,n+1)) - double(im_cropped(i,n)) == 0)
             % Store the index of the leftmost part of gradient bar
             if isempty(ind)
                 ind = n;
@@ -76,7 +76,7 @@ for i = 1:size(im_cropped,1)
             length = length + 1;
         else
             % Pixel is black or next pixel has different intensity
-            if length < 15
+            if length < 13
                 % If length of repeating values was less than 15, this is
                 % not part of the gradient bar. Reset ind and length
                 % variables and continue the loop.
@@ -87,7 +87,7 @@ for i = 1:size(im_cropped,1)
     end
     % If a section of repeating values was found, set those pixel values to
     % 1
-    if ~isempty(ind) && length>=15
+    if ~isempty(ind) && length>=13
         bar(i,ind:ind+length) = 1;
     end
 end
