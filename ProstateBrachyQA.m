@@ -2443,7 +2443,7 @@ else
     fields = fields(cellfun(@ischar,fields));
     % If sheet is empty (no field names), use default field 'Weight'
     if isempty(fields)
-        fields = {'Weight'};
+        fields = {'Weight (g)'};
     end
 end
 
