@@ -51,7 +51,7 @@ end
 if isempty(baselineVals)
     % Show warning if no baseline value found for this frequency
     warndlg('Baseline value not found for this frequency.','Warning','modal');
-    baselineVal = [];
+    baselineVal = nan;
 else
     % Check what plane (axial or longitudinal) image was taken in and choose
     % the corresponding baseline value
@@ -164,7 +164,7 @@ disp(['New value: ' sprintf('%.2f',newVals) ' mm']);
 % Change in max depth (in cm)
 change = abs(newVals - baselineVal)/10;
 % Check if max depth has changed by more than 1 cm
-if isempty(change)
+if isnan(change)
     result = [];
 elseif change > 1
     % Fail

@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 06-Aug-2015 15:22:45
+% Last Modified by GUIDE v2.5 10-Aug-2015 15:57:42
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -709,7 +709,7 @@ function depth_table_CreateFcn(hObject, eventdata, handles)
 data = cell(1,3);
 set(hObject,'Data',data);
 set(hObject,'RowName',{'Depth'});
-set(hObject,'ColumnName',{'Freq (MHz)','Baseline (mm)','Current (mm)','Result'});
+set(hObject,'ColumnName',{'Baseline (mm)','Current (mm)','Result'});
 set(hObject,'ColumnEditable',false(size(data)));
 
 
@@ -759,29 +759,33 @@ try
             baselineValText = sprintf('%.2f',baselineVal);
             newValText = sprintf('%.2f',newVal);
             
-            % Modify table data
+            % Modify results data
             if strcmp(handles.depth_plane,'axial')
                 table = handles.depth_table_axial;
+                freqText = handles.depth_text_freqAxial;
             elseif strcmp(handles.depth_plane,'longitudinal')
                 table = handles.depth_table_long;
+                freqText = handles.depth_text_freqLong;
             end
+            
             data = get(table,'Data');
-            % Show frequency
-            data{1,1} = num2str(freq);
             % Set baseline value table cell
-            data{1,2} = baselineValText;
+            data{1,1} = baselineValText;
             % Set new value table cell
-            data{1,3} = newValText;
+            data{1,2} = newValText;
             % Set test result table cell
             if isempty(result)
-                data{1,4} = [];
+                data{1,3} = [];
             elseif result == 1
-                data{1,4} = '<html><font color="green">PASS';
+                data{1,3} = '<html><font color="green">PASS';
             else
-                data{1,4} = '<html><font color="red">FAIL';
+                data{1,3} = '<html><font color="red">FAIL';
             end
             % Set table data
             set(table,'Data',data);
+            
+            % Show frequency
+            set(freqText,'String',num2str(freq));
             
             % Enable Set Baseline button
             set(handles.depth_button_setBaseline,'Enable','on');
@@ -897,27 +901,30 @@ try
             % Check if scale readings were set manually
             if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
                 % Scale readings were inputted
-                [result,baselineVals,newVals] = axialResolutionTestAuto(handles.images{testNum}{:},...
+                [result,baselineVals,newVals,freq] = axialResolutionTestAuto(handles.images{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
                     'AxesHandle',axesHandle);
             else
                 % Read scale automatically from image
-                [result,baselineVals,newVals] = axialResolutionTestAuto(handles.images{testNum}{:},'AxesHandle',axesHandle);
+                [result,baselineVals,newVals,freq] = axialResolutionTestAuto(handles.images{testNum}{:},'AxesHandle',axesHandle);
             end
             
             % Get updated handles
             handles = guidata(hObject);
             
-            % Get table data
+            % Get results data
             if strcmp(handles.axialResolution_plane,'axial')
                 baselines = baselineVals(1:4);
                 table = handles.axialResolution_table_axial;
+                freqText = handles.axialResolution_text_freqAxial;
             elseif strcmp(handles.axialResolution_plane,'longitudinal')
                 baselines = baselineVals(5:6);
                 table = handles.axialResolution_table_long;
+                freqText = handles.axialResolution_text_freqLong;
             end
-            data = get(table,'Data');
+            
             % Modify table data
+            data = get(table,'Data');
             for n = 1:numel(newVals)
                 data{n,1} = sprintf('%.2f',baselines(n));
                 data{n,2} = sprintf('%.2f',newVals(n));
@@ -929,7 +936,9 @@ try
                 percentDiff = absDiff/avg*100;
                 data{n,4} = sprintf('%.2f',percentDiff);
                 % Result
-                if result(n) == 1
+                if isempty(result)
+                    data{n,5} = [];
+                elseif result(n) == 1
                     data{n,5} = '<html><font color="green">PASS';
                 else
                     data{n,5} = '<html><font color="red">FAIL';
@@ -937,6 +946,9 @@ try
             end
             % Set table data
             set(table,'Data',data);
+            
+            % Show frequency
+            set(freqText,'String',num2str(freq));
             
             % Enable Set Baseline button
             set(handles.axialResolution_button_setBaseline,'Enable','on')
@@ -2926,6 +2938,8 @@ colHeaders = get(handles.depth_table_axial,'ColumnName');
 colHeaders = [colHeaders; 'Image'];
 tableDataAxial = get(handles.depth_table_axial,'Data');
 tableDataLong = get(handles.depth_table_long,'Data');
+freqAxial = get(handles.depth_text_freqAxial,'String');
+freqLong = get(handles.depth_text_freqLong,'String');
 exportDate = datestr(clock,'yyyymmdd_HHMMSS');
 exportFolder = fullfile(pwd,'Log\Images',date);
 if ~exist(exportFolder,'dir')
@@ -2973,17 +2987,21 @@ try
             % Colour first cell yellow
             Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
             % Axial plane headers
-            titleAxial = Sheet.get('Range',Sheet.get('Cells',1,2),Sheet.get('Cells',1,numel(colHeaders)+1));
+            titleAxial = Sheet.get('Range',Sheet.get('Cells',1,2),Sheet.get('Cells',1,numel(colHeaders)+2));
             titleAxial.MergeCells = 1;
             titleAxial.Value = 'Axial Plane';
-            headersAxial = Sheet.get('Range',Sheet.get('Cells',2,2),Sheet.get('Cells',2,numel(colHeaders)+1));
+            freqHeaderAxial = Sheet.get('Cells',2,2);
+            freqHeaderAxial.Value = 'Freq (MHz)';
+            headersAxial = Sheet.get('Range',Sheet.get('Cells',2,3),Sheet.get('Cells',2,numel(colHeaders)+2));
             headersAxial.Value = colHeaders';
             % Longitudinal plane headers
             longCol = headersAxial.End('xlToRight').Column + 1;
-            titleLong = Sheet.get('Range',Sheet.get('Cells',1,longCol),Sheet.get('Cells',1,longCol+numel(colHeaders)-1));
+            titleLong = Sheet.get('Range',Sheet.get('Cells',1,longCol),Sheet.get('Cells',1,longCol+numel(colHeaders)));
             titleLong.MergeCells = 1;
             titleLong.Value = 'Longitudinal Plane';
-            headersAxial = Sheet.get('Range',Sheet.get('Cells',2,longCol),Sheet.get('Cells',2,longCol+numel(colHeaders)-1));
+            freqHeaderLong = Sheet.get('Cells',2,longCol);
+            freqHeaderLong.Value = 'Freq (MHz)';
+            headersAxial = Sheet.get('Range',Sheet.get('Cells',2,longCol+1),Sheet.get('Cells',2,longCol+numel(colHeaders)));
             headersAxial.Value = colHeaders';
             numRows = 2;
             % Set first 2 rows to bold
@@ -3003,8 +3021,12 @@ try
         dateCell = Sheet.get('Cells',numRows,1);
         dateCell.Value = date;
         
-        % Write fields 
         % Axial plane
+        % Write frequency
+        [~,freqCol] = find(strcmp(xlData(2,:),'Freq (MHz)'),1);
+        freqCell = Sheet.get('Cells',numRows,freqCol);
+        freqCell.Value = freqAxial;
+        % Write fields 
         for n = 1:numel(colHeaders)-1
             field = colHeaders{n};
             val = tableDataAxial{n};
@@ -3034,6 +3056,10 @@ try
         imageCell.Comment.Shape.Height = size(imAxial,1)/2;
         
         % Longitudinal plane
+        % Write frequency
+        [~,freqCol] = find(strcmp(xlData(2,:),'Freq (MHz)'),1,'last');
+        freqCell = Sheet.get('Cells',numRows,freqCol);
+        freqCell.Value = freqLong;
         for n = 1:numel(colHeaders)-1
             field = colHeaders{n};
             val = tableDataLong{n};
@@ -3136,6 +3162,8 @@ colHeaders = get(handles.axialResolution_table_axial,'ColumnName');
 colHeaders = [colHeaders; 'Image'];
 tableDataAxial = get(handles.axialResolution_table_axial,'Data');
 tableDataLong = get(handles.axialResolution_table_long,'Data');
+freqAxial = get(handles.axialResolution_text_freqAxial,'String');
+freqLong = get(handles.axialResolution_text_freqLong,'String');
 exportDate = datestr(clock,'yyyymmdd_HHMMSS');
 exportFolder = fullfile(pwd,'Log\Images',date);
 if ~exist(exportFolder,'dir')
@@ -3186,14 +3214,18 @@ try
             titleAxial = Sheet.get('Range',Sheet.get('Cells',1,2),Sheet.get('Cells',1,numel(colHeaders)+2));
             titleAxial.MergeCells = 1;
             titleAxial.Value = 'Axial Plane';
-            headersAxial = Sheet.get('Range',Sheet.get('Cells',2,3),Sheet.get('Cells',2,numel(colHeaders)+2));
+            freqHeaderAxial = Sheet.get('Cells',2,2);
+            freqHeaderAxial.Value = 'Freq (MHz)';
+            headersAxial = Sheet.get('Range',Sheet.get('Cells',2,4),Sheet.get('Cells',2,numel(colHeaders)+3));
             headersAxial.Value = colHeaders';
             % Longitudinal plane headers
             longCol = headersAxial.End('xlToRight').Column + 1;
-            titleLong = Sheet.get('Range',Sheet.get('Cells',1,longCol),Sheet.get('Cells',1,longCol+numel(colHeaders)-1));
+            titleLong = Sheet.get('Range',Sheet.get('Cells',1,longCol),Sheet.get('Cells',1,longCol+numel(colHeaders)));
             titleLong.MergeCells = 1;
             titleLong.Value = 'Longitudinal Plane';
-            headersLong = Sheet.get('Range',Sheet.get('Cells',2,longCol+1),Sheet.get('Cells',2,longCol+numel(colHeaders)));
+            freqHeaderLong = Sheet.get('Cells',2,longCol);
+            freqHeaderLong.Value = 'Freq (MHz)';
+            headersLong = Sheet.get('Range',Sheet.get('Cells',2,longCol+2),Sheet.get('Cells',2,longCol+numel(colHeaders)+1));
             headersLong.Value = colHeaders';
             numRows = 2;
             % Set first 2 rows to bold
@@ -3220,8 +3252,12 @@ try
         dateCell.Value = date;
         
         % Axial plane
+        % Write frequency
+        [~,freqCol] = find(strcmp(xlData(2,:),'Freq (MHz)'),1);
+        freqCell = Sheet.get('Cells',dateCell.Row,freqCol);
+        freqCell.Value = freqAxial;
         % Write row headers
-        rowHeaderRange = Sheet.get('Range',Sheet.get('Cells',dateCell.Row,2),Sheet.get('Cells',dateCell.Row+numel(rowHeadersAxial)-1,2));
+        rowHeaderRange = Sheet.get('Range',Sheet.get('Cells',dateCell.Row,freqCell.Column+1),Sheet.get('Cells',dateCell.Row+numel(rowHeadersAxial)-1,freqCell.Column+1));
         rowHeaderRange.Value = rowHeadersAxial;
         rowHeaderRange.Font.Bold = 1;
         % Write values
@@ -3257,9 +3293,13 @@ try
         imageCell.Comment.Shape.Height = size(imAxial,1)/2;
         
         % Longitudinal plane
-        longCol = numel(colHeaders)+3;
+        longCol = numel(colHeaders)+4;
+        % Write frequency
+        [~,freqCol] = find(strcmp(xlData(2,:),'Freq (MHz)'),1,'last');
+        freqCell = Sheet.get('Cells',dateCell.Row,freqCol);
+        freqCell.Value = freqLong;
         % Write row headers
-        rowHeaderRange = Sheet.get('Range',Sheet.get('Cells',dateCell.Row,longCol),Sheet.get('Cells',dateCell.Row+numel(rowHeadersLong)-1,longCol));
+        rowHeaderRange = Sheet.get('Range',Sheet.get('Cells',dateCell.Row,longCol+1),Sheet.get('Cells',dateCell.Row+numel(rowHeadersLong)-1,longCol+1));
         rowHeaderRange.Value = rowHeadersLong;
         rowHeaderRange.Font.Bold = 1;
         % Write values
@@ -3300,95 +3340,161 @@ try
         % Autofit columns
         Sheet.UsedRange.Columns.AutoFit;
         
-        % Create/modify chart
-        if Sheet.ChartObjects.Count == 0
-            % If no chart exists, create them
-            for n = 1:2
-                chartShape = Sheet.Shapes.AddChart;
-                chartShape.Select;
-                Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
-                Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
-                % Clear default data
-                Workbook.ActiveChart.ChartArea.ClearContents;
-            end
+        % Delete existing charts
+        if Sheet.ChartObjects.Count > 0
+            Sheet.ChartObjects.Delete;
         end
         
         % Number of rows between measurements of different dates
         interval = 5;
         
-        % Axial chart
-        axialCol = 2;
-        chartShape1 = Sheet.ChartObjects.Item(1);
-        chartShape1.Select;
-        % Set/update chart data
-        seriesCollection = Workbook.ActiveChart.SeriesCollection;
-        if seriesCollection.Count == 0
-            % Create series
+        % Axial charts
+        axialCol = 3;
+        freqColumn = Sheet.get('Range',Sheet.get('Cells',3,2),Sheet.get('Cells',dateCell.Row,2));
+        if numel(freqColumn.Value) == 1
+            axialFreqs = freqColumn.Value;
+        else
+            axialFreqs = unique([freqColumn.Value{:}]);
+        end
+        axialFreqs = axialFreqs(~isnan(axialFreqs));
+        chartShape = cell(1,numel(axialFreqs));
+        % Add separate chart for each frequency
+        for f = 1:numel(axialFreqs)
+            freq = axialFreqs(f);
+            % Create chart
+            chartShape{f} = Sheet.Shapes.AddChart;
+            chartShape{f}.Select;
+            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
+            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
+            % Clear default data
+            Workbook.ActiveChart.ChartArea.ClearContents;
+            % Get first row for this frequency
+            if iscell(freqColumn.Value)
+                [~,firstRow] = find([freqColumn.Value{:}]==freq,1);
+            else
+                [~,firstRow] = find([freqColumn.Value]==freq,1);
+            end
+            % Get chart shape
+            chartShape{f} = Sheet.ChartObjects.Item(f);
+            chartShape{f}.Select;
+            % Set/update chart data
+            seriesCollection = Workbook.ActiveChart.SeriesCollection;
+            if seriesCollection.Count == 0
+                % Create series
+                for s = 1:numel(rowHeadersAxial)
+                    seriesCollection.NewSeries;
+                end
+            end
             for s = 1:numel(rowHeadersAxial)
-                seriesCollection.NewSeries;
+                series = seriesCollection.Item(s);
+                series.Name = rowHeadersAxial{s};
+                % X Data
+                dateColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,1),Sheet.get('Cells',dateCell.Row,1));
+                dateRange = dateColumn.Cells.Item(1);
+                for n = firstRow+interval:interval:dateColumn.Cells.Count;
+                    % Only add data for current frequency
+                    if freqColumn.Cells.Item(n).Value == freq
+                        dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
+                    end
+                end
+                series.XValues = dateRange;
+                % Y Data
+                valColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,axialCol+2),...
+                    Sheet.get('Cells',dateCell.Row+numel(rowHeadersAxial)-1,axialCol+2));
+                valRange = valColumn.Cells.Item(s);
+                for n = s+interval:interval:valColumn.Cells.Count;
+                    % Only add data for current frequency
+                    if freqColumn.Cells.Item(n-s+1).Value == freq
+                        valRange = Excel.Union(valRange,valColumn.Cells.Item(n));
+                    end
+                end
+                series.Values = valRange;
             end
+            Workbook.ActiveChart.HasTitle = 1;
+            Workbook.ActiveChart.ChartTitle.Text = [num2str(freq) ' MHz Axial Resolution (Axial)'];
+            % Set/update chart position
+            if f == 1
+                chartCell = Sheet.get('Cells',numRows+2,1);
+            else
+                chartCell = Sheet.get('Cells',chartShape{1}.BottomRightCell.Row+1,1);
+            end
+            chartShape{f}.Top = chartCell.Top;
+            chartShape{f}.Left = chartCell.Left+10;
         end
-        for s = 1:numel(rowHeadersAxial)
-            series = seriesCollection.Item(s);
-            series.Name = rowHeadersAxial{s};
-            % X Data
-            dateColumn = Sheet.get('Range',Sheet.get('Cells',3,1),Sheet.get('Cells',dateCell.Row,1));
-            dateRange = dateColumn.Cells.Item(1);
-            for n = 1+interval:interval:dateColumn.Cells.Count;
-                dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
-            end
-            series.XValues = dateRange;
-            % Y Data
-            valColumn = Sheet.get('Range',Sheet.get('Cells',3,axialCol+2),...
-                Sheet.get('Cells',dateCell.Row+numel(rowHeadersAxial)-1,axialCol+2));
-            valRange = valColumn.Cells.Item(s);
-            for n = s+interval:interval:valColumn.Cells.Count;
-                valRange = Excel.Union(valRange,valColumn.Cells.Item(n));
-            end
-            series.Values = valRange;
-        end
-        Workbook.ActiveChart.HasTitle = 1;
-        Workbook.ActiveChart.ChartTitle.Text = 'Axial Resolution (Axial)';
-        % Set/update chart position
-        chartShape1.Top = Sheet.get('Cells',numRows+2,1).Top;
-        chartShape1.Left = Sheet.get('Cells',numRows+2,1).Left+10;
         
         % Longitudinal chart
-        longCol = numel(colHeaders)+3;
-        chartShape2 = Sheet.ChartObjects.Item(2);
-        chartShape2.Select;
-        % Set/update chart data
-        seriesCollection = Workbook.ActiveChart.SeriesCollection;
-        if seriesCollection.Count == 0
-            % Create series
+        longCol = numel(colHeaders)+4;
+        freqColumn = Sheet.get('Range',Sheet.get('Cells',3,longCol),Sheet.get('Cells',dateCell.Row,longCol));
+        if numel(freqColumn.Value) == 1
+            longFreqs = freqColumn.Value;
+        else
+            longFreqs = unique([freqColumn.Value{:}]);
+        end
+        longFreqs = longFreqs(~isnan(longFreqs));
+        % Add separate chart for each frequency
+        for g = 1:numel(longFreqs)
+            freq = longFreqs(g);
+            chartNum = numel(axialFreqs)+g;
+            % Create chart
+            chartShape{chartNum} = Sheet.Shapes.AddChart;
+            chartShape{chartNum}.Select;
+            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
+            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
+            % Clear default data
+            Workbook.ActiveChart.ChartArea.ClearContents;
+            % Get first row for this frequency
+            if iscell(freqColumn.Value)
+                [~,firstRow] = find([freqColumn.Value{:}]==freq,1);
+            else
+                [~,firstRow] = find([freqColumn.Value]==freq,1);
+            end
+            % Get chart shape
+            chartShape{chartNum} = Sheet.ChartObjects.Item(chartNum);
+            chartShape{chartNum}.Select;
+            % Set/update chart data
+            seriesCollection = Workbook.ActiveChart.SeriesCollection;
+            if seriesCollection.Count == 0
+                % Create series
+                for s = 1:numel(rowHeadersLong)
+                    seriesCollection.NewSeries;
+                end
+            end
             for s = 1:numel(rowHeadersLong)
-                seriesCollection.NewSeries;
+                series = seriesCollection.Item(s);
+                series.Name = rowHeadersLong{s};
+                % X Data
+                dateColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,1),Sheet.get('Cells',dateCell.Row,1));
+                dateRange = dateColumn.Cells.Item(1);
+                for n = firstRow+interval:interval:dateColumn.Cells.Count;
+                    % Only add data for current frequency
+                    if freqColumn.Cells.Item(n).Value == freq
+                        dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
+                    end
+                end
+                series.XValues = dateRange;
+                % Y Data
+                valColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,longCol+3),...
+                    Sheet.get('Cells',dateCell.Row+numel(rowHeadersLong)-1,longCol+3));
+                valRange = valColumn.Cells.Item(s);
+                for n = s+interval:interval:valColumn.Cells.Count;
+                    % Only add data for current frequency
+                    if freqColumn.Cells.Item(n-s+1).Value == freq
+                        valRange = Excel.Union(valRange,valColumn.Cells.Item(n));
+                    end
+                end
+                series.Values = valRange;
             end
+            Workbook.ActiveChart.HasTitle = 1;
+            Workbook.ActiveChart.ChartTitle.Text = [num2str(freq) ' MHz Axial Resolution (Longitudinal)'];
+            % Set/update chart position
+            if g == 1
+                chartCell = Sheet.get('Cells',numRows+2,chartShape{1}.BottomRightCell.Column+1);
+            else
+                chartCell = Sheet.get('Cells',chartShape{chartNum-1}.BottomRightCell.Row+1,chartShape{1}.BottomRightCell.Column+1);
+            end
+            chartShape{chartNum}.Top = chartCell.Top;
+            chartShape{chartNum}.Left = chartCell.Left+10;
         end
-        for s = 1:numel(rowHeadersLong)
-            series = seriesCollection.Item(s);
-            series.Name = rowHeadersLong{s};
-            % X Data
-            dateColumn = Sheet.get('Range',Sheet.get('Cells',3,1),Sheet.get('Cells',dateCell.Row,1));
-            dateRange = dateColumn.Cells.Item(1);
-            for n = 1+interval:interval:dateColumn.Cells.Count;
-                dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
-            end
-            series.XValues = dateRange;
-            % Y Data
-            valColumn = Sheet.get('Range',Sheet.get('Cells',3,longCol+2),...
-                Sheet.get('Cells',dateCell.Row+numel(rowHeadersLong)-1,longCol+2));
-            valRange = valColumn.Cells.Item(s);
-            for n = s+interval:interval:valColumn.Cells.Count;
-                valRange = Excel.Union(valRange,valColumn.Cells.Item(n));
-            end
-            series.Values = valRange;
-        end
-        Workbook.ActiveChart.HasTitle = 1;
-        Workbook.ActiveChart.ChartTitle.Text = 'Axial Resolution (Longitudinal)';
-        % Set/update chart position
-        chartShape2.Top = Sheet.get('Cells',numRows+2,chartShape1.BottomRightCell.Column+1).Top;
-        chartShape2.Left = Sheet.get('Cells',numRows+2,chartShape1.BottomRightCell.Column+1).Left+10;
         
         % Save the workbook
         invoke(Workbook, 'Save');

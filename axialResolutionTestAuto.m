@@ -1,4 +1,4 @@
-function [result,baselineVals,newVals] = axialResolutionTestAuto(imageFile,varargin)
+function [result,baselineVals,newVals,freq] = axialResolutionTestAuto(imageFile,varargin)
 % AXIALRESOLUTIONTEST is for the axial resolution quality control test.
 % The function checks if the axial resolution has changed by
 % more than 1 mm from the baseline value.
@@ -25,6 +25,9 @@ else
     pixelScale = getPixelScale(imageFile);
 end
 
+% Read frequency
+freq = readFrequency(imageFile);
+
 % Get baseline values
 if ~exist('Baseline.mat','file')
     % Read xls file if mat file not created yet
@@ -35,10 +38,18 @@ else
 end
 
 % Get baseline values for this test
+baselineVals = [];
 for i = 1:size(baselineFile,1)
-    if ~isempty(strfind(baselineFile{i,1},'Axial resolution'))
+    if ~isempty(strfind(baselineFile{i,1},['Axial resolution (' num2str(freq) ' MHz)']))
         baselineVals = [baselineFile{i,2:7}];
+        break
     end
+end
+
+if isempty(baselineVals)
+     % Show warning if no baseline value found for this frequency
+    warndlg('Baseline value not found for this frequency.','Warning','modal');
+    baselineVals = nan(1,6);
 end
 
 % Crop to ultrasound image
@@ -335,14 +346,20 @@ else
     change = abs(newVals - baselineVals(5:6));
 end
 % Get results (0 or 1 if fail or pass requirement)
-result = change<=1;
-% Check if axial resolution has changed by more than 1 mm
-if any(change > 1)
-    % Fail
-    disp('Axial resolution test: failed');
+if isnan(change)
+    result = [];
 else
-    % Pass
-    disp('Axial resolution test: passed');
+    result = change<=1;
+end
+% Check if axial resolution has changed by more than 1 mm
+if ~isnan(change)
+    if any(change > 1)
+        % Fail
+        disp('Axial resolution test: failed');
+    else
+        % Pass
+        disp('Axial resolution test: passed');
+    end
 end
 
 end
