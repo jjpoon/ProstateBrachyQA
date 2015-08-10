@@ -1,4 +1,4 @@
-function [result,baselineVal,newVals] = depthTestAuto(imageFile,varargin)
+function [result,baselineVal,newVals,freq] = depthTestAuto(imageFile,varargin)
 % DEPTHTEST is for the depth of penetration quality control test.
 % The function checks if the maximum depth of pentration has changed by
 % more than 1 cm from the baseline value.
@@ -27,6 +27,9 @@ else
     pixelScale = getPixelScale(imageFile);
 end
 
+% Read frequency
+freq = readFrequency(imageFile);
+
 % Get baseline values
 if ~exist('Baseline.mat','file')
     % Read xls file if mat file not created yet
@@ -37,17 +40,26 @@ else
 end
 
 % Get baseline value for this test
+baselineVals = [];
 for i = 1:size(baselineFile,1)
-    if ~isempty(strfind(baselineFile{i,1},'Depth of penetration'))
+    if ~isempty(strfind(baselineFile{i,1},['Depth of penetration (' num2str(freq) ' MHz)']))
         baselineVals = [baselineFile{i,2:3}];
+        break
     end
 end
-% Check what plane (axial or longitudinal) image was taken in and choose
-% the corresponding baseline value
-if strcmpi(plane,'longitudinal')
-    baselineVal = baselineVals(2);
+
+if isempty(baselineVals)
+    % Show warning if no baseline value found for this frequency
+    warndlg('Baseline value not found for this frequency.','Warning','modal');
+    baselineVal = [];
 else
-    baselineVal = baselineVals(1);
+    % Check what plane (axial or longitudinal) image was taken in and choose
+    % the corresponding baseline value
+    if strcmpi(plane,'longitudinal')
+        baselineVal = baselineVals(2);
+    else
+        baselineVal = baselineVals(1);
+    end
 end
 
 % Measure depth penetration
@@ -152,7 +164,9 @@ disp(['New value: ' sprintf('%.2f',newVals) ' mm']);
 % Change in max depth (in cm)
 change = abs(newVals - baselineVal)/10;
 % Check if max depth has changed by more than 1 cm
-if change > 1
+if isempty(change)
+    result = [];
+elseif change > 1
     % Fail
     result = 0;
     disp('Depth of penetration test: failed');

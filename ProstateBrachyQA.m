@@ -709,7 +709,7 @@ function depth_table_CreateFcn(hObject, eventdata, handles)
 data = cell(1,3);
 set(hObject,'Data',data);
 set(hObject,'RowName',{'Depth'});
-set(hObject,'ColumnName',{'Baseline (mm)','Current (mm)','Result'});
+set(hObject,'ColumnName',{'Freq (MHz)','Baseline (mm)','Current (mm)','Result'});
 set(hObject,'ColumnEditable',false(size(data)));
 
 
@@ -743,12 +743,12 @@ try
             % Check if scale readings were set manually
             if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
                 % Scale readings were inputted
-                [result,baselineVal,newVal] = depthTestAuto(handles.images{testNum}{:},...
+                [result,baselineVal,newVal,freq] = depthTestAuto(handles.images{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
                     'AxesHandle',axesHandle,'Plane',handles.depth_plane);
             else
                 % Read scale automatically from image
-                [result,baselineVal,newVal] = depthTestAuto(handles.images{testNum}{:},...
+                [result,baselineVal,newVal,freq] = depthTestAuto(handles.images{testNum}{:},...
                     'AxesHandle',axesHandle,'Plane',handles.depth_plane);
             end
             
@@ -766,15 +766,19 @@ try
                 table = handles.depth_table_long;
             end
             data = get(table,'Data');
+            % Show frequency
+            data{1,1} = num2str(freq);
             % Set baseline value table cell
-            data{1,1} = baselineValText;
+            data{1,2} = baselineValText;
             % Set new value table cell
-            data{1,2} = newValText;
+            data{1,3} = newValText;
             % Set test result table cell
-            if result == 1
-                data{1,3} = '<html><font color="green">PASS';
+            if isempty(result)
+                data{1,4} = [];
+            elseif result == 1
+                data{1,4} = '<html><font color="green">PASS';
             else
-                data{1,3} = '<html><font color="red">FAIL';
+                data{1,4} = '<html><font color="red">FAIL';
             end
             % Set table data
             set(table,'Data',data);
@@ -2965,7 +2969,7 @@ try
         else
             % No data, initialize headers
             % Put test title in first cell
-            Sheet.get('Cells',1,1).Value = 'Gradient Length';
+            Sheet.get('Cells',1,1).Value = 'Depth';
             % Colour first cell yellow
             Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
             % Axial plane headers
@@ -3078,7 +3082,7 @@ try
         chartShape1.Select;
         % Set/update chart data
         rangeDate = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',numRows,1));
-        rangeAxial = Sheet.get('Range',Sheet.get('Cells',2,axialCol+1),Sheet.get('Cells',numRows,axialCol+1));
+        rangeAxial = Sheet.get('Range',Sheet.get('Cells',2,axialCol+2),Sheet.get('Cells',numRows,axialCol+2));
         range = Excel.Union(rangeDate,rangeAxial);
         Workbook.ActiveChart.SetSourceData(range)
         Workbook.ActiveChart.PlotBy = 'xlColumns';
@@ -3094,7 +3098,7 @@ try
         chartShape2.Select;
         % Set/update chart data
         rangeDate = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',numRows,1));
-        rangeLong = Sheet.get('Range',Sheet.get('Cells',2,longCol+1),Sheet.get('Cells',numRows,longCol+1));
+        rangeLong = Sheet.get('Range',Sheet.get('Cells',2,longCol+2),Sheet.get('Cells',numRows,longCol+2));
         range = Excel.Union(rangeDate,rangeLong);
         Workbook.ActiveChart.SetSourceData(range)
         Workbook.ActiveChart.PlotBy = 'xlColumns';
