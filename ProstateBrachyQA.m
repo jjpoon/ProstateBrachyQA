@@ -3091,48 +3091,144 @@ try
         % Autofit columns
         Sheet.UsedRange.Columns.AutoFit;
         
-        % Create/modify chart
-        if Sheet.ChartObjects.Count == 0
-            % If no chart exists, create them
-            for n = 1:2
-                chartShape = Sheet.Shapes.AddChart;
-                chartShape.Select;
-                Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
-                Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
-            end
+        % Delete existing charts
+        if Sheet.ChartObjects.Count > 0
+            Sheet.ChartObjects.Delete;
         end
         
         % Axial chart
         axialCol = 2;
-        chartShape1 = Sheet.ChartObjects.Item(1);
-        chartShape1.Select;
-        % Set/update chart data
-        rangeDate = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',numRows,1));
-        rangeAxial = Sheet.get('Range',Sheet.get('Cells',2,axialCol+2),Sheet.get('Cells',numRows,axialCol+2));
-        range = Excel.Union(rangeDate,rangeAxial);
-        Workbook.ActiveChart.SetSourceData(range)
-        Workbook.ActiveChart.PlotBy = 'xlColumns';
-        Workbook.ActiveChart.HasTitle = 1;
-        Workbook.ActiveChart.ChartTitle.Text = 'Depth (Axial)';
-        % Set/update chart position
-        chartShape1.Top = Sheet.get('Cells',numRows+2,1).Top;
-        chartShape1.Left = Sheet.get('Cells',numRows+2,1).Left+10;
+        freqColumn = Sheet.get('Range',Sheet.get('Cells',3,2),Sheet.get('Cells',dateCell.Row,2));
+        if numel(freqColumn.Value) == 1
+            axialFreqs = freqColumn.Value;
+        else
+            axialFreqs = unique([freqColumn.Value{:}]);
+        end
+        axialFreqs = axialFreqs(~isnan(axialFreqs));
+        chartShape = cell(1,numel(axialFreqs));
+        % Add separate chart for each frequency
+        for f = 1:numel(axialFreqs)
+            freq = axialFreqs(f);
+            % Create chart
+            chartShape{f} = Sheet.Shapes.AddChart;
+            chartShape{f}.Select;
+            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
+            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
+            % Clear default data
+            Workbook.ActiveChart.ChartArea.ClearContents;
+            % Get first row for this frequency
+            if iscell(freqColumn.Value)
+                [~,firstRow] = find([freqColumn.Value{:}]==freq,1);
+            else
+                [~,firstRow] = find([freqColumn.Value]==freq,1);
+            end
+            % Get chart shape
+            chartShape{f} = Sheet.ChartObjects.Item(f);
+            chartShape{f}.Select;
+            % Set/update chart data
+            % Create series
+            seriesCollection = Workbook.ActiveChart.SeriesCollection;
+            series = seriesCollection.NewSeries;
+            series.Name = 'Depth (mm)';
+            % X Data
+            dateColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,1),Sheet.get('Cells',dateCell.Row,1));
+            dateRange = dateColumn.Cells.Item(1);
+            for n = firstRow+1:dateColumn.Cells.Count;
+                % Only add data for current frequency
+                if freqColumn.Cells.Item(n).Value == freq
+                    dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
+                end
+            end
+            series.XValues = dateRange;
+            % Y Data
+            valColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,axialCol+2),...
+                Sheet.get('Cells',dateCell.Row,axialCol+2));
+            valRange = valColumn.Cells.Item(1);
+            for n = firstRow+1:valColumn.Cells.Count;
+                % Only add data for current frequency
+                if freqColumn.Cells.Item(n).Value == freq
+                    valRange = Excel.Union(valRange,valColumn.Cells.Item(n));
+                end
+            end
+            series.Values = valRange;
+            Workbook.ActiveChart.HasTitle = 1;
+            Workbook.ActiveChart.ChartTitle.Text = [num2str(freq) ' MHz Depth (Axial)'];
+            % Set/update chart position
+            if f == 1
+                chartCell = Sheet.get('Cells',numRows+2,1);
+            else
+                chartCell = Sheet.get('Cells',chartShape{f-1}.BottomRightCell.Row+1,1);
+            end
+            chartShape{f}.Top = chartCell.Top;
+            chartShape{f}.Left = chartCell.Left+10;
+        end
         
         % Longitudinal chart
-        longCol = numel(colHeaders)+2;
-        chartShape2 = Sheet.ChartObjects.Item(2);
-        chartShape2.Select;
-        % Set/update chart data
-        rangeDate = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',numRows,1));
-        rangeLong = Sheet.get('Range',Sheet.get('Cells',2,longCol+2),Sheet.get('Cells',numRows,longCol+2));
-        range = Excel.Union(rangeDate,rangeLong);
-        Workbook.ActiveChart.SetSourceData(range)
-        Workbook.ActiveChart.PlotBy = 'xlColumns';
-        Workbook.ActiveChart.HasTitle = 1;
-        Workbook.ActiveChart.ChartTitle.Text = 'Depth (Longitudinal)';
-        % Set/update chart position
-        chartShape2.Top = Sheet.get('Cells',numRows+2,chartShape1.BottomRightCell.Column+1).Top;
-        chartShape2.Left = Sheet.get('Cells',numRows+2,chartShape1.BottomRightCell.Column+1).Left+10;
+        longCol = numel(colHeaders)+3;
+        freqColumn = Sheet.get('Range',Sheet.get('Cells',3,longCol),Sheet.get('Cells',dateCell.Row,longCol));
+        if numel(freqColumn.Value) == 1
+            longFreqs = freqColumn.Value;
+        else
+            longFreqs = unique([freqColumn.Value{:}]);
+        end
+        longFreqs = longFreqs(~isnan(longFreqs));
+        % Add separate chart for each frequency
+        for g = 1:numel(longFreqs)
+            freq = longFreqs(g);
+            chartNum = numel(axialFreqs)+g;
+            % Create chart
+            chartShape{chartNum} = Sheet.Shapes.AddChart;
+            chartShape{chartNum}.Select;
+            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
+            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
+            % Clear default data
+            Workbook.ActiveChart.ChartArea.ClearContents;
+            % Get first row for this frequency
+            if iscell(freqColumn.Value)
+                [~,firstRow] = find([freqColumn.Value{:}]==freq,1);
+            else
+                [~,firstRow] = find([freqColumn.Value]==freq,1);
+            end
+            % Get chart shape
+            chartShape{chartNum} = Sheet.ChartObjects.Item(chartNum);
+            chartShape{chartNum}.Select;
+            % Set/update chart data
+            % Create series
+            seriesCollection = Workbook.ActiveChart.SeriesCollection;
+            series = seriesCollection.NewSeries;
+            series.Name = 'Depth (mm)';
+            % X Data
+            dateColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,1),Sheet.get('Cells',dateCell.Row,1));
+            dateRange = dateColumn.Cells.Item(1);
+            for n = firstRow+1:dateColumn.Cells.Count;
+                % Only add data for current frequency
+                if freqColumn.Cells.Item(n).Value == freq
+                    dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
+                end
+            end
+            series.XValues = dateRange;
+            % Y Data
+            valColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,longCol+2),...
+                Sheet.get('Cells',dateCell.Row,longCol+2));
+            valRange = valColumn.Cells.Item(1);
+            for n = firstRow+1:valColumn.Cells.Count;
+                % Only add data for current frequency
+                if freqColumn.Cells.Item(n).Value == freq
+                    valRange = Excel.Union(valRange,valColumn.Cells.Item(n));
+                end
+            end
+            series.Values = valRange;
+            Workbook.ActiveChart.HasTitle = 1;
+            Workbook.ActiveChart.ChartTitle.Text = [num2str(freq) ' MHz Depth (Longitudinal)'];
+            % Set/update chart position
+            if g == 1
+                chartCell = Sheet.get('Cells',numRows+2,chartShape{1}.BottomRightCell.Column+1);
+            else
+                chartCell = Sheet.get('Cells',chartShape{chartNum-1}.BottomRightCell.Row+1,chartShape{1}.BottomRightCell.Column+1);
+            end
+            chartShape{chartNum}.Top = chartCell.Top;
+            chartShape{chartNum}.Left = chartCell.Left+10;
+        end
         
         % Save the workbook
         invoke(Workbook, 'Save');
@@ -3416,7 +3512,7 @@ try
             if f == 1
                 chartCell = Sheet.get('Cells',numRows+2,1);
             else
-                chartCell = Sheet.get('Cells',chartShape{1}.BottomRightCell.Row+1,1);
+                chartCell = Sheet.get('Cells',chartShape{f-1}.BottomRightCell.Row+1,1);
             end
             chartShape{f}.Top = chartCell.Top;
             chartShape{f}.Left = chartCell.Left+10;
