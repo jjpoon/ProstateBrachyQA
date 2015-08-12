@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 10-Aug-2015 15:57:42
+% Last Modified by GUIDE v2.5 11-Aug-2015 17:40:48
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -63,7 +63,6 @@ handles.upperScaleReading{10} = cell(1,2);
 handles.lowerScaleReading{10} = cell(1,2);
 
 % Set up tabs
-warning off MATLAB:uitabgroup:OldVersion
 % Create tab group
 handles.tabgroup = uitabgroup(hObject,'Position',[0 0 1 1]);
 % Create tabs
@@ -80,18 +79,18 @@ tab10 = uitab(handles.tabgroup,'Title','Volume (Formula)');
 tab11 = uitab(handles.tabgroup,'Title','Grid Alignment');
 tab12 = uitab(handles.tabgroup,'Title','Overlay Images');
 % Set tabs as parents of appropriate test panels
-set(handles.phantom_panel_parent,'Parent',tab1);
-set(handles.grayscale_panel_parent,'Parent',tab2);
-set(handles.depth_panel_parent,'Parent',tab3);
-set(handles.axialResolution_panel_parent,'Parent',tab4);
-set(handles.lateralResolution_panel_parent,'Parent',tab5);
-set(handles.axialDistance_panel_parent,'Parent',tab6);
-set(handles.lateralDistance_panel_parent,'Parent',tab7);
-set(handles.area_panel_parent,'Parent',tab8);
-set(handles.volume_panel_parent,'Parent',tab9);
-set(handles.volumeFormula_panel_parent,'Parent',tab10);
-set(handles.gridAlignment_panel_parent,'Parent',tab11);
-set(handles.overlay_panel_parent,'Parent',tab12);
+set(handles.phantom_panel_parent,'Parent',tab1,'Position',[0 0 1 0.99]);
+set(handles.grayscale_panel_parent,'Parent',tab2,'Position',[0 0 1 0.99]);
+set(handles.depth_panel_parent,'Parent',tab3,'Position',[0 0 1 0.99]);
+set(handles.axialResolution_panel_parent,'Parent',tab4,'Position',[0 0 1 0.99]);
+set(handles.lateralResolution_panel_parent,'Parent',tab5,'Position',[0 0 1 0.99]);
+set(handles.axialDistance_panel_parent,'Parent',tab6,'Position',[0 0 1 0.99]);
+set(handles.lateralDistance_panel_parent,'Parent',tab7,'Position',[0 0 1 0.99]);
+set(handles.area_panel_parent,'Parent',tab8,'Position',[0 0 1 0.99]);
+set(handles.volume_panel_parent,'Parent',tab9,'Position',[0 0 1 0.99]);
+set(handles.volumeFormula_panel_parent,'Parent',tab10,'Position',[0 0 1 0.99]);
+set(handles.gridAlignment_panel_parent,'Parent',tab11,'Position',[0 0 1 0.99]);
+set(handles.overlay_panel_parent,'Parent',tab12,'Position',[0 0 1 0.99]);
 
 % Initialize images
 handles.images = cell(11,1);
@@ -148,7 +147,7 @@ handles.overlayImage1Colour = [1 1 1];
 handles.overlayImage2Colour = [1 1 1];
 
 % Add listener for selected tab index
-addlistener(handles.tabgroup,'SelectedIndex','PostSet',@(obj,eventdata)onSelectedTabChanged(hObject));
+set(handles.tabgroup,'SelectionChangedFcn',@(obj,eventdata)onSelectedTabChanged(hObject));
 
 % Update handles structure
 guidata(hObject, handles);
@@ -177,33 +176,46 @@ function onSelectedTabChanged(hObject)
 handles = guidata(hObject);
 
 % Get test name (test function called and gui handles depend on this name)
-handles.testNum = get(handles.tabgroup,'SelectedIndex');
-switch handles.testNum
-    case 1
+tab = get(handles.tabgroup,'SelectedTab');
+switch tab.Title
+    case 'Phantom'
+        testNum = 1;
         testName = 'phantom';
-    case 2
+    case 'Grayscale'
+        testNum = 2;
         testName = 'grayscale';
-    case 3
+    case 'Depth'
+        testNum = 3;
         testName = 'depth';
-    case 4
+    case 'Axial Resolution'
+        testNum = 4;
         testName = 'axialResolution';
-    case 5
+    case 'Lateral Resolution'
+        testNum = 5;
         testName = 'lateralResolution';
-    case 6
+    case 'Axial Distance'
+        testNum = 6;
         testName = 'axialDistance';
-    case 7
+    case 'Lateral Distance'
+        testNum = 7;
         testName = 'lateralDistance';
-    case 8
+    case 'Area'
+        testNum = 8;
         testName = 'area';
-    case 9
+    case 'Volume (Planimetric)',
+        testNum = 9;
         testName = 'volume';
-    case 10
+    case 'Volume (Formula)'
+        testNum = 10;
         testName = 'volumeFormula';
-    case 11
+    case 'Grid Alignment'
+        testNum = 11;
         testName = 'gridAlignment';
-    case 12
+    case 'Overlay Images'
+        testNum = 12;
         testName = 'overlay';
 end
+handles.testNum = testNum;
 handles.testName = testName;
 % Update handles
 guidata(hObject,handles);
