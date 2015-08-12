@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 11-Aug-2015 17:40:48
+% Last Modified by GUIDE v2.5 12-Aug-2015 18:12:05
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -826,16 +826,8 @@ set(handles.figure1,'pointer',oldpointer);
 guidata(hObject,handles);
 
 
-% --- Executes during object creation, after setting all properties.
-function buttongroup_result_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to axialResolution_buttongroup_result (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-set(hObject,'SelectionChangeFcn',@(obj,eventdata)buttongroup_result_SelectionChangeFcn(hObject,eventdata,handles));
-
-
 % --- Executes when selected object is changed in depth_buttongroup_result.
-function buttongroup_result_SelectionChangeFcn(hObject, eventdata, handles)
+function buttongroup_result_SelectionChangedFcn(hObject, eventdata, handles)
 % hObject    handle to the selected object in depth_buttongroup_result 
 % eventdata  structure with the following fields (see UIBUTTONGROUP)
 %	EventName: string 'SelectionChanged' (read only)
@@ -844,7 +836,7 @@ function buttongroup_result_SelectionChangeFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Get updated handles
-handles = guidata(hObject);
+% handles = guidata(hObject);
 testName = handles.testName;
 
 selection = get(eventdata.NewValue,'Tag');
