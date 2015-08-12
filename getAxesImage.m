@@ -18,7 +18,7 @@ else
     % Create new figure
     fig = figure('Units','normalized','Position',[0.1 0.1 0.8 0.8],'Visible','off');
 end
-copiedAxes = copyobj(axesHandle,fig);
+copiedAxes = copyobj(axesHandle,fig, 'legacy');
 plots = get(copiedAxes,'Children');
 set(plots,'Visible','on');
 set(copiedAxes,'Units','normalized','Position',[0 0 1 1]);
@@ -58,9 +58,6 @@ if ~isempty(leg)
         end
         % Create legend
         l = legend(markers,labels,'Location','southeast','Orientation','horizontal');
-        % Decrease legend marker size
-        markerObjs = findobj(get(l,'children'), 'type', 'line');
-        set(markerObjs, 'Markersize', 12);
         % Change legend text and background colour
         set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
     end

@@ -313,7 +313,7 @@ if ~any(cellfun(@isnumeric,filenames))
         axesHandles(1) = axesHandle;
         for n = 2:numel(handles.images{testNum})
             % Create copies of existing testName_axes
-            axesHandles(n) = copyobj(axesHandle,handles.([testName '_panel']));
+            axesHandles(n) = copyobj(axesHandle,handles.([testName '_panel']), 'legacy');
         end
         % Store axes handles list
         handles.([testName '_axes_list']) = axesHandles;

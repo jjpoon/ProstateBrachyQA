@@ -1,6 +1,7 @@
 # Files
 *.asv
 *.bmp
+*.zip
 out.txt
 plotEllipsoid.m
 imageExcelTest.m

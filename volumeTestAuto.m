@@ -156,9 +156,6 @@ for i = 1:numel(imageInputs)
         if ~isempty(c1)
             l = legend(c1,['Area: ' sprintf('%.2f',areas(i)) ' cm^2'],...
                 'Location','southeast','Orientation','horizontal');
-            % Decrease legend marker size
-            markerObjs = findobj(get(l,'children'), 'type', 'line');
-            set(markerObjs, 'Markersize', 12);
             % Change legend text and background colour
             set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
             % Add image index to UserData, used for finding legend

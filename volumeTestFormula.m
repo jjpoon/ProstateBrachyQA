@@ -113,9 +113,6 @@ for ii = 1:2
         ['Width: ' sprintf('%.2f',width_mm) ' mm'],...
         ['Height: ' sprintf('%.2f',height_mm) ' mm'],...
         'Location','southeast','Orientation','vertical');
-    % Decrease legend marker size
-    markerObjs = findobj(get(l,'children'), 'type', 'line');
-    set(markerObjs, 'Markersize', 12);
     % Change legend text and background colour
     set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
     % Increase spacing between legend entries
@@ -189,9 +186,6 @@ for ii = 1:2
     % Legend
     l = legend(lengthMarkers,['Length: ' sprintf('%.2f',length_mm) ' mm'],...
         'Location','southeast','Orientation','horizontal');
-    % Decrease legend marker size
-    markerObjs = findobj(get(l,'children'), 'type', 'line');
-    set(markerObjs, 'Markersize', 12);
     % Change legend text and background colour
     set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
     % Add image index to UserData, used for finding legend

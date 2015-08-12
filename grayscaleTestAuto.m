@@ -150,9 +150,6 @@ line1 = line([get(m1,'XData'),get(m2,'XData')],[get(m1,'YData'),get(m2,'YData')]
 % t = title(['Gradient bar length = ' sprintf('%.2f',newVal) ' mm']);
 % Legend
 l = legend(m1,['Dist: ' sprintf('%.2f',newVal) ' mm'],'Location','southeast');
-% Decrease legend marker size
-markerObjs = findobj(get(l,'children'), 'type', 'line');
-set(markerObjs, 'Markersize', 12);
 % Change legend text and background colour
 set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
 

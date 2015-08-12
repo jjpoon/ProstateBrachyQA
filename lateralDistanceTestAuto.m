@@ -279,9 +279,6 @@ elseif strcmp(view,'sagittal')
     l = legend(m1,['Dist: ' sprintf('%.2f',lateralDist_mm) ' mm'],...
         'Location','southeast','Orientation','horizontal');
 end
-% Decrease legend marker size
-markerObjs = findobj(get(l,'children'), 'type', 'line');
-set(markerObjs, 'Markersize', 12);
 % Change legend text and background colour
 set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
 

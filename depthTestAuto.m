@@ -149,9 +149,6 @@ m1 = plot(xOffset+boundingBox(1)+boundingBox(3)/2,yOffset+boundingBox(2),...
 % title(['Depth = ' sprintf('%.2f',newVal) ' mm']);
 % Legend
 l = legend(m1,['Depth: ' sprintf('%.2f',newVals) ' mm'],'Location','southeast');
-% Decrease legend marker size
-markerObjs = findobj(get(l,'children'), 'type', 'line');
-set(markerObjs, 'Markersize', 12);
 % Change legend text and background colour
 set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
 

@@ -8,7 +8,7 @@ switch get(gui,'SelectionType')
 %         disp('double click')
         % Create new figure
         fig = figure('Units','normalized','Position',[0.1 0.1 0.8 0.8]);
-        copiedAxes = copyobj(parent,fig);
+        copiedAxes = copyobj(parent,fig, 'legacy');
         % Remove button down function for copied plot
         plots = get(copiedAxes,'Children');
         im = findobj(plots,'Type','image');
@@ -36,9 +36,6 @@ switch get(gui,'SelectionType')
             end
             % Create legend
             l = legend(markers,labels,'Location','southeast','Orientation','horizontal');
-            % Decrease legend marker size
-            markerObjs = findobj(get(l,'children'), 'type', 'line');
-            set(markerObjs, 'Markersize', 12);
             % Change legend text and background colour
             set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
         end
