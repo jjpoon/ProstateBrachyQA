@@ -284,7 +284,7 @@ if ~any(cellfun(@isnumeric,filenames))
         cla(axesHandle);
         % Remove old legends
         parentPanel = get(axesHandle,'Parent');
-        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        legends = findobj(get(parentPanel,'Children'),'Type','legend');
         delete(legends);
         
         im = imread(fullfile(pathname,filenames{1}));
@@ -305,7 +305,7 @@ if ~any(cellfun(@isnumeric,filenames))
         end
         % Remove old legends
         parentPanel = get(axesHandle,'Parent');
-        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        legends = findobj(get(parentPanel,'Children'),'Type','legend');
         delete(legends);
         
         % Create separate axes for each image
@@ -435,11 +435,11 @@ end
 
 % Hide all single view axes plots
 if isfield(handles,[testName '_axes_list'])
-    plots = get(handles.([testName '_axes_list']),'Children');
-    set(cell2mat(plots),'Visible','off');
+    plots = findall(handles.([testName '_axes_list']));
+    set(plots,'Visible','off');
     % Hide all associated legends
     testPanelChildren = get(handles.([testName '_panel']),'Children');
-    legends = findobj(testPanelChildren,'flat','Type','axes','Tag','legend');
+    legends = findobj(testPanelChildren,'flat','Type','legend');
     set(legends,'Visible','off');
 end
 % Show grid view panel
@@ -481,7 +481,7 @@ if isfield(handles,[testName '_axes_list'])
     set(plots,'Visible','on');
     % Show legend associated with current image
     testPanelChildren = get(handles.([testName '_panel']),'Children');
-    legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+    legends = findobj(testPanelChildren,'Type','legend');
     for n = 1:numel(legends)
         leg = legends(n);
         userData = get(leg,'UserData');
@@ -520,11 +520,11 @@ handles.([testName '_imageIndex']) = imageIndex;
 
 % Hide currently shown axes
 if isfield(handles,[testName '_axes_list'])
-    plots = get(handles.([testName '_axes_list']),'Children');
-    set(cell2mat(plots),'Visible','off');
+    plots = findall(handles.([testName '_axes_list']));
+    set(plots,'Visible','off');
     % Hide all associated legends
     testPanelChildren = get(handles.([testName '_panel']),'Children');
-    legends = findobj(testPanelChildren,'flat','Type','axes','Tag','legend');
+    legends = findobj(testPanelChildren,'flat','Type','legend');
     set(legends,'Visible','off');
 end
 % Show previous image plots
@@ -533,7 +533,7 @@ plots = get(ax,'Children');
 set(plots,'Visible','on');
 % Show legend associated with previous image
 testPanelChildren = get(handles.([testName '_panel']),'Children');
-legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+legends = findobj(testPanelChildren,'Type','legend');
 for n = 1:numel(legends)
     leg = legends(n);
     userData = get(leg,'UserData');
@@ -566,11 +566,11 @@ handles.([testName '_imageIndex']) = imageIndex;
 
 % Hide currently shown axes
 if isfield(handles,[testName '_axes_list'])
-    plots = get(handles.([testName '_axes_list']),'Children');
-    set(cell2mat(plots),'Visible','off');
+    plots = findall(handles.([testName '_axes_list']));
+    set(plots,'Visible','off');
     % Hide all associated legends
     testPanelChildren = get(handles.([testName '_panel']),'Children');
-    legends = findobj(testPanelChildren,'flat','Type','axes','Tag','legend');
+    legends = findobj(testPanelChildren,'flat','Type','legend');
     set(legends,'Visible','off');
 end
 % Show next image axes
@@ -579,7 +579,7 @@ plots = get(ax,'Children');
 set(plots,'Visible','on');
 % Show legend associated with next image
 testPanelChildren = get(handles.([testName '_panel']),'Children');
-legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+legends = findobj(testPanelChildren,'Type','legend');
 for n = 1:numel(legends)
     leg = legends(n);
     userData = get(leg,'UserData');
@@ -651,7 +651,7 @@ try
             cla(axesHandle);
             % Remove old legends
             parentPanel = get(axesHandle,'Parent');
-            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            legends = findobj(get(parentPanel,'Children'),'Type','legend');
             delete(legends);
             
             % Run test, plot on given axes
@@ -748,7 +748,7 @@ try
             cla(axesHandle);
             % Remove old legends
             parentPanel = get(axesHandle,'Parent');
-            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            legends = findobj(get(parentPanel,'Children'),'Type','legend');
             delete(legends);
             
             % Run test, plot on given axes
@@ -906,7 +906,7 @@ try
             cla(axesHandle);
             % Remove old legends
             parentPanel = get(axesHandle,'Parent');
-            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            legends = findobj(get(parentPanel,'Children'),'Type','legend');
             delete(legends);
             
             % Run test, plot on given axes
@@ -1036,7 +1036,7 @@ try
             cla(axesHandle);
             % Remove old legends
             parentPanel = get(axesHandle,'Parent');
-            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            legends = findobj(get(parentPanel,'Children'),'Type','legend');
             delete(legends);
             
             % Run test, plot on given axes
@@ -1147,7 +1147,7 @@ try
             cla(axesHandle);
             % Remove old legends
             parentPanel = get(axesHandle,'Parent');
-            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            legends = findobj(get(parentPanel,'Children'),'Type','legend');
             delete(legends);
             
             % Run test, plot on given axes
@@ -1258,7 +1258,7 @@ try
             cla(axesHandle);
             % Remove old legends
             parentPanel = get(axesHandle,'Parent');
-            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            legends = findobj(get(parentPanel,'Children'),'Type','legend');
             delete(legends);
             
             % Run test, plot on given axes
@@ -1365,7 +1365,7 @@ try
             cla(axesHandle);
             % Remove old legends
             parentPanel = get(axesHandle,'Parent');
-            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            legends = findobj(get(parentPanel,'Children'),'Type','legend');
             delete(legends);
             
             % Run test, plot on given axes
@@ -1541,7 +1541,7 @@ try
             end
             % Remove old legends
             parentPanel = get(axesHandles(1),'Parent');
-            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            legends = findobj(get(parentPanel,'Children'),'Type','legend');
             delete(legends);
             % Clear 3D view axes
             cla(handles.volume_axes_interpView);
@@ -1600,7 +1600,7 @@ try
                 set(plots,'Visible','on');
                 % Show legend associated with current image
                 testPanelChildren = get(handles.volume_panel,'Children');
-                legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+                legends = findobj(testPanelChildren,'Type','legend');
                 for n = 1:numel(legends)
                     leg = legends(n);
                     userData = get(leg,'UserData');
@@ -1688,7 +1688,7 @@ try
                 end
                 % Remove old legends
                 parentPanel = get(axesHandles(1),'Parent');
-                legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+                legends = findobj(get(parentPanel,'Children'),'Type','legend');
                 delete(legends);
                 % Bring panel_figure back on top
                 uistack(panelHandle,'top');
@@ -1744,7 +1744,7 @@ try
                     set(plots,'Visible','on');
                     % Show legend associated with current image
                     testPanelChildren = get(handles.gridAlignment_panel,'Children');
-                    legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+                    legends = findobj(testPanelChildren,'Type','legend');
                     for n = 1:numel(legends)
                         leg = legends(n);
                         userData = get(leg,'UserData');
@@ -1945,7 +1945,7 @@ if ~isempty(handles.images{testNum})
         delete(otherPlots);
         % Remove old legends
         parentPanel = get(axesHandle,'Parent');
-        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        legends = findobj(get(parentPanel,'Children'),'Type','legend');
         delete(legends);
         
         % Update image 
@@ -1956,7 +1956,7 @@ if ~isempty(handles.images{testNum})
         % Delete plots and legends other than axes and images on grid view
         gridPanel = handles.([testName '_panel_figure']);
         otherGrid = findobj(get(gridPanel,'Children'),'-not','Type','axes',...
-            '-not','Type','image','-or','Tag','legend');
+            '-not','Type','image');
         delete(otherGrid);
         % Delete other plots on single view axes
         for n = 1:numel(handles.([testName '_axes_list']))
@@ -1967,7 +1967,7 @@ if ~isempty(handles.images{testNum})
         % Delete single view legends
         ax = handles.([testName '_axes_list'])(1);
         parent = get(ax,'Parent');
-        legends = findobj(get(parent,'Children'),'Tag','legend');
+        legends = findobj(get(parent,'Children'),'Type','legend');
         delete(legends);
         
         if get(handles.([testName '_button_gridView']),'Value') == 1
@@ -2032,7 +2032,7 @@ if ~isempty(handles.images{testNum})
         delete(otherPlots);
         % Remove old legends
         parentPanel = get(axesHandle,'Parent');
-        legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+        legends = findobj(get(parentPanel,'Children'),'Type','legend');
         delete(legends);
         
         % Update image 
@@ -2043,7 +2043,7 @@ if ~isempty(handles.images{testNum})
         % Delete plots and legends other than axes and images on grid view
         gridPanel = handles.([testName '_panel_figure']);
         otherGrid = findobj(get(gridPanel,'Children'),'-not','Type','axes',...
-            '-not','Type','image','-or','Tag','legend');
+            '-not','Type','image');
         delete(otherGrid);
         % Delete other plots on single view axes
         for n = 1:numel(handles.([testName '_axes_list']))
@@ -2054,7 +2054,7 @@ if ~isempty(handles.images{testNum})
         % Delete single view legends
         ax = handles.([testName '_axes_list'])(1);
         parent = get(ax,'Parent');
-        legends = findobj(get(parent,'Children'),'Tag','legend');
+        legends = findobj(get(parent,'Children'),'Type','legend');
         delete(legends);
         
         if get(handles.([testName '_button_gridView']),'Value') == 1
@@ -2242,7 +2242,7 @@ try
             end
             % Remove old legends
             parentPanel = get(axesHandles(1),'Parent');
-            legends = findobj(get(parentPanel,'Children'),'Tag','legend');
+            legends = findobj(get(parentPanel,'Children'),'Type','legend');
             delete(legends);
             % Clear 3D view axes
             cla(handles.volumeFormula_axes_ellipsoidView);
@@ -2301,7 +2301,7 @@ try
                 set(plots,'Visible','on');
                 % Show legend associated with current image
                 testPanelChildren = get(handles.volumeFormula_panel,'Children');
-                legends = findobj(testPanelChildren,'Type','axes','Tag','legend');
+                legends = findobj(testPanelChildren,'Type','legend');
                 for n = 1:numel(legends)
                     leg = legends(n);
                     userData = get(leg,'UserData');
