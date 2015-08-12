@@ -205,9 +205,9 @@ for i = 1:numel(imageInputs)
         set(parent,'NextPlot','add');
         % Plot markers
         gridMarker = plot(gridPoint(1),gridPoint(2),'+','MarkerSize',10,...
-            'LineWidth',2,'Color','r','Parent',parent);
+            'LineWidth',1.5,'Color','r','Parent',parent);
         needleMarker = plot(needlePoint(1),needlePoint(2),'+','MarkerSize',10,...
-            'LineWidth',2,'Color','c','Parent',parent);
+            'LineWidth',1.5,'Color','c','Parent',parent);
         % Plot distance line
         line1 = line([gridPoint(1),needlePoint(1)],[gridPoint(2),needlePoint(2)],...
             'LineStyle','--','Parent',parent);

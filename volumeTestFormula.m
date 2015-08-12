@@ -100,11 +100,11 @@ for ii = 1:2
     set(parent,'NextPlot','add');
     % Plot markers
     widthMarkers = plot(widthPoints(:,1),widthPoints(:,2),...
-        '+','MarkerSize',10,'Linewidth',2,'Color','r','Parent',parent);
+        '+','MarkerSize',10,'Linewidth',1.5,'Color','r','Parent',parent);
     widthLine = line(widthPoints(1:2,1),widthPoints(1:2,2),'LineStyle',':',...
         'Color','w','Parent',parent);
     heightMarkers = plot(heightPoints(:,1),heightPoints(:,2),...
-        '+','MarkerSize',10,'Linewidth',2,'Color','g','Parent',parent);
+        '+','MarkerSize',10,'Linewidth',1.5,'Color','g','Parent',parent);
     heightLine = line(heightPoints(1:2,1),heightPoints(1:2,2),'LineStyle',':',...
         'Color','w','Parent',parent);
     
@@ -179,7 +179,7 @@ for ii = 1:2
     set(parent,'NextPlot','add');
     % Plot markers
     lengthMarkers = plot(lengthPoints(:,1),lengthPoints(:,2),...
-        '+','MarkerSize',10,'Linewidth',2,'Color','c','Parent',parent);
+        '+','MarkerSize',10,'Linewidth',1.5,'Color','c','Parent',parent);
     lengthLine = line(lengthPoints(1:2,1),lengthPoints(1:2,2),...
         'LineStyle',':','Color','w','Parent',parent);
     

@@ -138,10 +138,10 @@ im = imshow(im_orig,'Parent',parent);
 set(parent,'NextPlot','add');
 % Plot top marker
 m1 = plot(xOffset+boundingBox(1)+boundingBox(3)/2,yOffset+boundingBox(2),...
-    '+','MarkerSize',15,'Linewidth',2,'Color','c','Parent',parent);
+    '+','MarkerSize',15,'Linewidth',1.5,'Color','c','Parent',parent);
 % Plot bottom marker
 m2 = plot(xOffset+boundingBox(1)+boundingBox(3)/2,yOffset+boundingBox(2) + dist_pixels,...
-    '+','MarkerSize',15,'Linewidth',2,'Color','c','Parent',parent);
+    '+','MarkerSize',15,'Linewidth',1.5,'Color','c','Parent',parent);
 % Plot line between markers
 line1 = line([get(m1,'XData'),get(m2,'XData')],[get(m1,'YData'),get(m2,'YData')],...
     'LineStyle',':','Color','w','Parent',parent);

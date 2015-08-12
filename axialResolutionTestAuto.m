@@ -275,14 +275,14 @@ im = imshow(im_orig,'Parent',parent);
 set(parent,'NextPlot','add');
 % Plot markers
 m1 = plot(xOffset+points(1:2,1),yOffset+points(1:2,2),...
-    '+','MarkerSize',5,'Linewidth',2,'Color','r','Parent',parent);
+    '+','MarkerSize',7,'LineWidth',1.5,'Color','r','Parent',parent);
 m2 = plot(xOffset+points(3:4,1),yOffset+points(3:4,2),...
-    '+','MarkerSize',5,'Linewidth',2,'Color','g','Parent',parent);
+    '+','MarkerSize',7,'LineWidth',1.5,'Color','g','Parent',parent);
 if strcmp(view,'axial')
     m3 = plot(xOffset+points(5:6,1),yOffset+points(5:6,2),...
-        '+','MarkerSize',5,'Linewidth',2,'Color','c','Parent',parent);
+        '+','MarkerSize',7,'LineWidth',1.5,'Color','c','Parent',parent);
     m4 = plot(xOffset+points(7:8,1),yOffset+points(7:8,2),...
-        '+','MarkerSize',5,'Linewidth',2,'Color','y','Parent',parent);
+        '+','MarkerSize',7,'LineWidth',1.5,'Color','y','Parent',parent);
 end
 % -------------------------------------------------------------------------
 

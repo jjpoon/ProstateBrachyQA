@@ -244,11 +244,11 @@ markers = [xOffset+points(:,1),yOffset+points(:,2)];
 % Plot lateral distance lines and markers
 line1 = line(markers(1:2,1),markers(1:2,2),'LineStyle',':','Color','w','Parent',parent);
 m1 = plot(markers(1:2,1),markers(1:2,2),...
-    '+','MarkerSize',10,'Linewidth',2,'Color','r','Parent',parent);
+    '+','MarkerSize',10,'Linewidth',1.5,'Color','r','Parent',parent);
 if strcmp(view,'axial')
     line2 = line(markers(3:4,1),markers(3:4,2),'LineStyle',':','Color','w','Parent',parent);
     m2 = plot(markers(3:4,1),markers(3:4,2),...
-        '+','MarkerSize',10,'Linewidth',2,'Color','g','Parent',parent);
+        '+','MarkerSize',10,'Linewidth',1.5,'Color','g','Parent',parent);
 end
 % -------------------------------------------------------------------------
 
