@@ -477,7 +477,7 @@ set(handles.([testName '_panel_figure']),'Visible','off');
 % Show single view axes for current image
 if isfield(handles,[testName '_axes_list'])
     currImageAxes = handles.([testName '_axes_list'])(imageIndex);
-    plots = get(currImageAxes,'Children');
+    plots = findall(currImageAxes,'-not','Type','axes');
     set(plots,'Visible','on');
     % Show legend associated with current image
     testPanelChildren = get(handles.([testName '_panel']),'Children');
@@ -529,7 +529,7 @@ if isfield(handles,[testName '_axes_list'])
 end
 % Show previous image plots
 ax = handles.([testName '_axes_list'])(imageIndex);
-plots = get(ax,'Children');
+plots = findall(ax,'-not','Type','axes');
 set(plots,'Visible','on');
 % Show legend associated with previous image
 testPanelChildren = get(handles.([testName '_panel']),'Children');
@@ -575,7 +575,7 @@ if isfield(handles,[testName '_axes_list'])
 end
 % Show next image axes
 ax = handles.([testName '_axes_list'])(imageIndex);
-plots = get(ax,'Children');
+plots = findall(ax,'-not','Type','axes');
 set(plots,'Visible','on');
 % Show legend associated with next image
 testPanelChildren = get(handles.([testName '_panel']),'Children');
