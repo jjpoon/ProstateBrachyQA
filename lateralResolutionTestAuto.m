@@ -1,4 +1,4 @@
-function [result,baselineVals,newVals] = lateralResolutionTestAuto(imageFile,varargin)
+function [result,baselineVals,newVals,freq] = lateralResolutionTestAuto(imageFile,varargin)
 % LATERALRESOLUTIONTEST is for the lateral resolution quality control test.
 % The function checks if the lateral resolution has changed by
 % more than 1 mm from the baseline value.
@@ -25,6 +25,9 @@ else
     pixelScale = getPixelScale(imageFile);
 end
 
+% Read frequency
+freq = readFrequency(imageFile);
+
 % Get baseline values
 if ~exist('Baseline.mat','file')
     % Read xls file if mat file not created yet
@@ -36,7 +39,7 @@ end
 
 % Get baseline values for this test
 for i = 1:size(baselineFile,1)
-    if ~isempty(strfind(baselineFile{i,1},'Lateral resolution'))
+    if ~isempty(strfind(baselineFile{i,1},['Lateral resolution (' num2str(freq) ' MHz)']))
         baselineVals = [baselineFile{i,2:7}];
     end
 end
