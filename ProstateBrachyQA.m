@@ -601,18 +601,18 @@ function figure1_ResizeFcn(hObject, eventdata, handles)
 % Set all units to normalized
 set(findobj(hObject,'-property','Units'),'Units','normalized');
 
-for str = {'volume','gridAlignment'}
-    testName = str{1};
-    % Get previous button position
-    prevPos = get(handles.([testName '_button_prev']),'Position');
-    % Get axes position
-    axesPos = get(handles.([testName '_axes']),'Position');
-    % Set new button positions to bottom center of axes
-    newPrevPos = [0.5-prevPos(3), axesPos(2)+0.01, prevPos(3), prevPos(4)];
-    newNextPos = [0.5, axesPos(2)+0.01, prevPos(3), prevPos(4)];
-    set(handles.([testName '_button_prev']),'Position',newPrevPos);
-    set(handles.([testName '_button_next']),'Position',newNextPos);
-end
+% for str = {'volume','gridAlignment'}
+%     testName = str{1};
+%     % Get previous button position
+%     prevPos = get(handles.([testName '_button_prev']),'Position');
+%     % Get axes position
+%     axesPos = get(handles.([testName '_axes']),'Position');
+%     % Set new button positions to bottom center of axes
+%     newPrevPos = [0.5-prevPos(3), axesPos(2)+0.01, prevPos(3), prevPos(4)];
+%     newNextPos = [0.5, axesPos(2)+0.01, prevPos(3), prevPos(4)];
+%     set(handles.([testName '_button_prev']),'Position',newPrevPos);
+%     set(handles.([testName '_button_next']),'Position',newNextPos);
+% end
 
 
 % --- Executes during object creation, after setting all properties.

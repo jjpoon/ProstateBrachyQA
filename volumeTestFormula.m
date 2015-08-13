@@ -115,9 +115,6 @@ for ii = 1:2
         'Location','southeast','Orientation','vertical');
     % Change legend text and background colour
     set(l,'TextColor','w','Color',[0.2 0.2 0.2]);
-    % Increase spacing between legend entries
-    pos = get(l,'Position');
-    set(l,'Position',[pos(1) pos(2) pos(3) 1.2*pos(4)]);
     % Add image index to UserData, used for finding legend
     % associated with image
     userData = get(l,'UserData');
