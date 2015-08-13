@@ -1756,6 +1756,15 @@ function button_setBaseline_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 testName = handles.testName;
+% Get axial frequency
+if isfield(handles,[testName '_text_freqAxial'])
+    freqAxial = handles.([testName '_text_freqAxial']).String;
+end
+% Get longitudinal frequency
+if isfield(handles,[testName '_text_freqLong'])
+    freqLong = handles.([testName '_text_freqLong']).String;
+end
+
 msg = '';
 
 switch testName
@@ -1764,7 +1773,7 @@ switch testName
         baselineText = 'Grayscale';
     case 'depth'
         str = 'depth';
-        baselineText = 'Depth';
+        baselineText = 'Depth of penetration';
     case 'axialResolution'
         str = 'axial resolution';
         baselineText = 'Axial resolution';
@@ -1783,7 +1792,7 @@ if ~strcmp(testName,'grayscale')
         for n = 1:numel(strVals_axial)
             if ~isempty(strVals_axial{n})
                 rowName = get(table_axial,'RowName');
-                msg = sprintf([msg '\n' rowName{n} ' (axial plane): ' strVals_axial{n}]);
+                msg = sprintf([msg '\n' rowName{n} ' (axial plane, ' freqAxial ' MHz): ' strVals_axial{n}]);
                 % Convert values to double format before writing to file
                 currVals_axial{n} = str2num(strVals_axial{n});
             end
@@ -1798,14 +1807,12 @@ if ~strcmp(testName,'grayscale')
         for n = 1:numel(strVals_long)
             if ~isempty(strVals_long{n})
                 rowName = get(table_long,'RowName');
-                msg = sprintf([msg '\n' rowName{n} ' (longitudinal plane): ' strVals_long{n}]);
+                msg = sprintf([msg '\n' rowName{n} ' (longitudinal plane, ' freqLong ' MHz): ' strVals_long{n}]);
                 % Convert values to double format before writing to file
                 currVals_long{n} = str2num(strVals_long{n});
             end
         end
     end
-    % Combine data
-    currVals = [currVals_axial;currVals_long]';
 else
     % Grayscale test doesnt have separate axial and longitudinal tables
     table = handles.([testName '_table']);
@@ -1825,7 +1832,7 @@ else
 end
 
 % Confirm overwrite of baseline value
-choice = questdlg(sprintf(['Overwrite baseline values with the current measurements? '...
+choice = questdlg(sprintf(['Overwrite ' str ' baseline values with the current measurements? '...
     '\n' 'The following values will be written to the baseline file:'...
     '\n' msg]), ...
     'Confirm Baseline Overwrite', ...
@@ -1834,15 +1841,42 @@ choice = questdlg(sprintf(['Overwrite baseline values with the current measureme
 if strcmp(choice,'Yes')
     % Save to baseline file
     [num,txt,baselineFile] = xlsread('Baseline.xls');
-    for i = 1:size(baselineFile,1)
-        if ~isempty(strfind(baselineFile{i,1},baselineText))
-            for n = 1:numel(currVals)
-                % Only write new value if not empty
-                if ~isempty(currVals{n})
-                    baselineFile{i,1+n} = currVals{n};
+    if ~strcmp(testName,'grayscale')
+        % If not grayscale test, need to write baseline for specified
+        % frequency
+        % Write axial baseline values
+        for i = 1:size(baselineFile,1)
+            if ~isempty(strfind(baselineFile{i,1},[baselineText ' (' freqAxial ' MHz)']))
+                for n = 1:numel(currVals_axial)
+                    % Only write new value if not empty
+                    if ~isempty(currVals_axial{n})
+                        baselineFile{i,1+n} = currVals_axial{n};
+                    end
                 end
             end
-            %             baselineFile(i,2:numel(currVals)+1) = currVals;
+        end
+        % Write longitudinal baseline values
+        for i = 1:size(baselineFile,1)
+            if ~isempty(strfind(baselineFile{i,1},[baselineText ' (' freqLong ' MHz)']))
+                for n = 1:numel(currVals_long)
+                    % Only write new value if not empty
+                    if ~isempty(currVals_long{n})
+                        baselineFile{i,5+n} = currVals_long{n};
+                    end
+                end
+            end
+        end
+    else
+        % Write grayscale baseline values, no need to check frequency
+        for i = 1:size(baselineFile,1)
+            if ~isempty(strfind(baselineFile{i,1},baselineText))
+                for n = 1:numel(currVals)
+                    % Only write new value if not empty
+                    if ~isempty(currVals{n})
+                        baselineFile{i,1+n} = currVals{n};
+                    end
+                end
+            end
         end
     end
     try
