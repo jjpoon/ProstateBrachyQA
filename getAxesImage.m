@@ -19,7 +19,7 @@ else
     fig = figure('Units','normalized','Position',[0.1 0.1 0.8 0.8],'Visible','off');
 end
 copiedAxes = copyobj(axesHandle,fig, 'legacy');
-plots = get(copiedAxes,'Children');
+plots = findall(copiedAxes,'-not','Type','axes');
 set(plots,'Visible','on');
 set(copiedAxes,'Units','normalized','Position',[0 0 1 1]);
 
