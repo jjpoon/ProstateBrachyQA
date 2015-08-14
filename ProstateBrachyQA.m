@@ -2728,12 +2728,19 @@ try
         % Have write access to excel file
         % Get a handle to Sheets and select Sheet 1
         Sheets = Excel.ActiveWorkBook.Sheets;
-        if Sheets.Count < 1
-            Sheet = Sheets.Add([],get(Sheets,'Item',Sheets.Count));
-        else
-            Sheet = get(Sheets, 'Item', 1);
+        Sheet = [];
+        for sheetNum = 1:Sheets.Count
+            % Get existing Phantom sheet
+            if strcmp(Sheets.Item(sheetNum).Name,'Phantom')
+                Sheet = get(Sheets, 'Item', sheetNum);
+                break
+            end
         end
-        Sheet.Name = 'Phantom';
+        if isempty(Sheet)
+            % Create new sheet if doesn't exist
+            Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
+            Sheet.Name = 'Phantom';
+        end
         Sheet.Activate;
         % Get number of last used row
         lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
@@ -2859,10 +2866,10 @@ try
             end
         end
         if isempty(Sheet)
-            % Create new sheet after 1st sheet
-            Sheet = Sheets.Add([],Sheets.Item(1));
+            % Create new sheet if doesn't exist
+            Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
+            Sheet.Name = 'Grayscale';
         end
-        Sheet.Name = 'Grayscale';
         Sheet.Activate;
         % Get number of last used row
         lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
@@ -3014,14 +3021,10 @@ try
             end
         end
         if isempty(Sheet)
-            % Create new sheet after 2nd sheet or last sheet
-            if Sheets.Count >= 2
-                Sheet = Sheets.Add([],Sheets.Item(2));
-            else
-                Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
-            end
+            % Create new sheet if doesn't exist
+            Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
+            Sheet.Name = 'Depth';
         end
-        Sheet.Name = 'Depth';
         Sheet.Activate;
         % Get number of last used row
         lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
@@ -3334,14 +3337,10 @@ try
             end
         end
         if isempty(Sheet)
-            % Create new sheet after 3rd sheet or last sheet
-            if Sheets.Count >= 3
-                Sheet = Sheets.Add([],Sheets.Item(3));
-            else
-                Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
-            end
+            % Create new sheet if doesn't exist
+            Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
+            Sheet.Name = 'Axial Resolution';
         end
-        Sheet.Name = 'Axial Resolution';
         Sheet.Activate;
         % Get number of last used row
         lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
@@ -3695,14 +3694,10 @@ try
             end
         end
         if isempty(Sheet)
-            % Create new sheet after 4th sheet or last sheet
-            if Sheets.Count >= 4
-                Sheet = Sheets.Add([],Sheets.Item(4));
-            else
-                Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
-            end
+            % Create new sheet if doesn't exist
+            Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
+            Sheet.Name = 'Lateral Resolution';
         end
-        Sheet.Name = 'Lateral Resolution';
         Sheet.Activate;
         % Get number of last used row
         lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
@@ -5358,14 +5353,10 @@ try
             end
         end
         if isempty(Sheet)
-            % Create new sheet after 8th sheet or last sheet
-            if Sheets.Count >= 9
-                Sheet = Sheets.Add([],Sheets.Item(9));
-            else
-                Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
-            end
+            % Create new sheet if doesn't exist
+            Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
+            Sheet.Name = 'Grid Alignment';
         end
-        Sheet.Name = 'Grid Alignment';
         Sheet.Activate;
         % Get number of last used row
         lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
