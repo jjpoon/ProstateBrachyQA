@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 13-Aug-2015 17:32:09
+% Last Modified by GUIDE v2.5 14-Aug-2015 10:38:38
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1138,12 +1138,12 @@ try
             % Check if scale readings were set manually
             if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
                 % Scale readings were inputted
-                [result,knownVal,measuredVals] = axialDistanceTestAuto(handles.images{testNum}{:},...
+                [result,knownVal,measuredVals,freq] = axialDistanceTestAuto(handles.images{testNum}{:},...
                     'UpperScale',handles.upperScaleReading{testNum},'LowerScale',handles.lowerScaleReading{testNum},...
                     'AxesHandle',axesHandle);
             else
                 % Read scale automatically from image
-                [result,knownVal,measuredVals] = axialDistanceTestAuto(handles.images{testNum}{:},'AxesHandle',axesHandle);
+                [result,knownVal,measuredVals,freq] = axialDistanceTestAuto(handles.images{testNum}{:},'AxesHandle',axesHandle);
             end
             
             % Get updated handles
@@ -1174,6 +1174,9 @@ try
             end
             % Set table data
             set(table,'Data',data);
+            
+            % Show frequency
+            set(handles.axialDistance_text_freq,'String',num2str(freq));
             
             % Show scale warning if needed
             showScaleWarning(hObject,handles);
@@ -4009,6 +4012,7 @@ rowHeaders = get(handles.axialDistance_table,'RowName');
 colHeaders = get(handles.axialDistance_table,'ColumnName');
 colHeaders = [colHeaders; 'Image'];
 tableData = get(handles.axialDistance_table,'Data');
+freqVal = get(handles.axialDistance_text_freq,'String');
 exportDate = datestr(clock,'yyyymmdd_HHMMSS');
 exportFolder = fullfile(pwd,'Log\Images',date);
 if ~exist(exportFolder,'dir')
@@ -4036,14 +4040,10 @@ try
             end
         end
         if isempty(Sheet)
-            % Create new sheet after 5th sheet or last sheet
-            if Sheets.Count >= 5
-                Sheet = Sheets.Add([],Sheets.Item(5));
-            else
-                Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
-            end
+            % Create new sheet if doesn't exist
+            Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
+            Sheet.Name = 'Axial Distance';
         end
-        Sheet.Name = 'Axial Distance';
         Sheet.Activate;
         % Get number of last used row
         lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
@@ -4055,8 +4055,11 @@ try
             Sheet.get('Cells',1,1).Value = 'Axial Distance';
             % Colour first cell yellow
             Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
+            % Frequency header
+            freqHeaderAxial = Sheet.get('Cells',1,2);
+            freqHeaderAxial.Value = 'Freq (MHz)';
             % Column headers
-            headers = Sheet.get('Range',Sheet.get('Cells',1,3),Sheet.get('Cells',1,numel(colHeaders)+2));
+            headers = Sheet.get('Range',Sheet.get('Cells',1,4),Sheet.get('Cells',1,numel(colHeaders)+3));
             headers.Value = colHeaders';
             numRows = 1;
             % Set first row to bold
@@ -4082,8 +4085,13 @@ try
         dateCell = Sheet.get('Cells',numRows,1);
         dateCell.Value = date;
         
+        % Write frequency
+        [~,freqCol] = find(strcmp(xlData(1,:),'Freq (MHz)'),1);
+        freqCell = Sheet.get('Cells',dateCell.Row,freqCol);
+        freqCell.Value = freqVal;
+        
         % Write row headers
-        rowHeaderRange = Sheet.get('Range',Sheet.get('Cells',dateCell.Row,2),Sheet.get('Cells',dateCell.Row+numel(rowHeaders)-1,2));
+        rowHeaderRange = Sheet.get('Range',Sheet.get('Cells',dateCell.Row,3),Sheet.get('Cells',dateCell.Row+numel(rowHeaders)-1,3));
         rowHeaderRange.Value = rowHeaders;
         rowHeaderRange.Font.Bold = 1;
         % Write values
@@ -4124,54 +4132,81 @@ try
         % Autofit columns
         Sheet.UsedRange.Columns.AutoFit;
         
-        % Create/modify chart
-        if Sheet.ChartObjects.Count == 0
-            % If no chart exists, create one
-            chartShape = Sheet.Shapes.AddChart;
-            chartShape.Select;
-            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
-            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
-            % Clear default data
-            Workbook.ActiveChart.ChartArea.ClearContents;
+        % Delete existing charts
+        if Sheet.ChartObjects.Count > 0
+            Sheet.ChartObjects.Delete;
         end
         
         % Number of rows between measurements of different dates
         interval = 3;
         
-        chartShape1 = Sheet.ChartObjects.Item(1);
-        chartShape1.Select;
-        % Set/update chart data
-        seriesCollection = Workbook.ActiveChart.SeriesCollection;
-        if seriesCollection.Count == 0
+        % Create charts
+        freqColumn = Sheet.get('Range',Sheet.get('Cells',2,2),Sheet.get('Cells',dateCell.Row,2));
+        if numel(freqColumn.Value) == 1
+            freqs = freqColumn.Value;
+        else
+            freqs = unique([freqColumn.Value{:}]);
+        end
+        freqs = freqs(~isnan(freqs));
+        chartShape = cell(1,numel(freqs));
+        % Add separate chart for each frequency
+        for f = 1:numel(freqs)
+            freq = freqs(f);
+            % Create chart
+            chartShape{f} = Sheet.Shapes.AddChart;
+            chartShape{f}.Select;
+            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
+            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
+            % Clear default data
+            Workbook.ActiveChart.ChartArea.ClearContents;
+            % Get first row for this frequency
+            if iscell(freqColumn.Value)
+                [~,firstRow] = find([freqColumn.Value{:}]==freq,1);
+            else
+                [~,firstRow] = find([freqColumn.Value]==freq,1);
+            end
+            % Get chart shape
+            chartShape{f} = Sheet.ChartObjects.Item(f);
+            chartShape{f}.Select;
+            % Set/update chart data
+            seriesCollection = Workbook.ActiveChart.SeriesCollection;
             % Create series
             for s = 1:numel(rowHeaders)
-                seriesCollection.NewSeries;
+                series = seriesCollection.NewSeries;
+                series.Name = rowHeaders{s};
+                % X Data
+                dateColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+1,1),Sheet.get('Cells',dateCell.Row,1));
+                dateRange = dateColumn.Cells.Item(1);
+                for n = firstRow+interval:interval:dateColumn.Cells.Count;
+                    % Only add data for current frequency
+                    if freqColumn.Cells.Item(n).Value == freq
+                        dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
+                    end
+                end
+                series.XValues = dateRange;
+                % Y Data
+                valColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+1,5),...
+                    Sheet.get('Cells',dateCell.Row+numel(rowHeaders)-1,5));
+                valRange = valColumn.Cells.Item(s);
+                for n = s+interval:interval:valColumn.Cells.Count;
+                    % Only add data for current frequency
+                    if freqColumn.Cells.Item(n-s+1).Value == freq
+                        valRange = Excel.Union(valRange,valColumn.Cells.Item(n));
+                    end
+                end
+                series.Values = valRange;
             end
+            Workbook.ActiveChart.HasTitle = 1;
+            Workbook.ActiveChart.ChartTitle.Text = [num2str(freq) ' MHz Axial Distance'];
+            % Set/update chart position
+            if f == 1
+                chartCell = Sheet.get('Cells',numRows+2,1);
+            else
+                chartCell = Sheet.get('Cells',chartShape{f-1}.BottomRightCell.Row+1,1);
+            end
+            chartShape{f}.Top = chartCell.Top;
+            chartShape{f}.Left = chartCell.Left+10;
         end
-        for s = 1:numel(rowHeaders)
-            series = seriesCollection.Item(s);
-            series.Name = rowHeaders{s};
-            % X Data
-            dateColumn = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',dateCell.Row,1));
-            dateRange = dateColumn.Cells.Item(1);
-            for n = 1+interval:interval:dateColumn.Cells.Count;
-                dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
-            end
-            series.XValues = dateRange;
-            % Y Data
-            valColumn = Sheet.get('Range',Sheet.get('Cells',2,4),...
-                Sheet.get('Cells',dateCell.Row+numel(rowHeaders)-1,4));
-            valRange = valColumn.Cells.Item(s);
-            for n = s+interval:interval:valColumn.Cells.Count;
-                valRange = Excel.Union(valRange,valColumn.Cells.Item(n));
-            end
-            series.Values = valRange;
-        end
-        Workbook.ActiveChart.HasTitle = 1;
-        Workbook.ActiveChart.ChartTitle.Text = 'Axial Distance';
-        % Set/update chart position
-        chartShape1.Top = Sheet.get('Cells',numRows+2,1).Top;
-        chartShape1.Left = Sheet.get('Cells',numRows+2,1).Left+10;
         
         % Save the workbook
         invoke(Workbook, 'Save');
@@ -5539,50 +5574,4 @@ if numel(colour) == 3
     guidata(hObject,handles);
     % Update image
     overlay_updateImage_Callback(1, handles)
-end
-
-
-
-function lateralResolution_text_freqAxial_Callback(hObject, eventdata, handles)
-% hObject    handle to lateralResolution_text_freqAxial (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of lateralResolution_text_freqAxial as text
-%        str2double(get(hObject,'String')) returns contents of lateralResolution_text_freqAxial as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function lateralResolution_text_freqAxial_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to lateralResolution_text_freqAxial (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function lateralResolution_text_freqLong_Callback(hObject, eventdata, handles)
-% hObject    handle to lateralResolution_text_freqLong (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of lateralResolution_text_freqLong as text
-%        str2double(get(hObject,'String')) returns contents of lateralResolution_text_freqLong as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function lateralResolution_text_freqLong_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to lateralResolution_text_freqLong (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
 end

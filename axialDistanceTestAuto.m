@@ -1,4 +1,4 @@
-function [result,knownVal,measuredVals] = axialDistanceTestAuto(imageFile,varargin)
+function [result,knownVal,measuredVals,freq] = axialDistanceTestAuto(imageFile,varargin)
 % AXIALDISTANCETEST is for the axial distance measurement accuracy quality control test.
 % The function compares the axial distance measurement with the known
 % value and checks if the error is larger than 2 mm (absolute) or 2% (relative). 
@@ -24,6 +24,9 @@ else
     % labels from the image
     pixelScale = getPixelScale(imageFile);
 end
+
+% Read frequency
+freq = readFrequency(imageFile);
 
 % Get baseline values
 if ~exist('Baseline.mat','file')
