@@ -1,4 +1,4 @@
-function [result,knownVal,measuredVal] = areaTestAuto(imageFile,varargin)
+function [result,knownVal,measuredVal,freq] = areaTestAuto(imageFile,varargin)
 % AREATEST is for the area measurement accuracy quality control test.
 % The function checks if the calculated area is within 5% of the actual
 % area value.
@@ -24,6 +24,9 @@ else
     % labels from the image
     pixelScale = getPixelScale(imageFile);
 end
+
+% Read frequency
+freq = readFrequency(imageFile);
 
 % Get baseline values
 if ~exist('Baseline.mat','file')
