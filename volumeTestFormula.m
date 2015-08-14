@@ -1,4 +1,4 @@
-function [result,knownVal,measuredVal] = volumeTestFormula(axialImage,sagittalImage,varargin)
+function [result,knownVal,measuredVal,freq] = volumeTestFormula(axialImage,sagittalImage,varargin)
 % VOLUMETEST is for the volume measurement accuracy quality control test.
 % The function checks if the calculated volume is within 5% of the actual
 % volume.
@@ -27,6 +27,9 @@ lowerSagittal = p.Results.LowerScaleSagittal;
 panelHandle = p.Results.PanelHandle;
 axesHandles = p.Results.AxesHandle;
 ellipsoidAxes = p.Results.EllipsoidAxes;
+
+% Read frequency
+freq = readFrequency(axialImage);
 
 % Get baseline values
 if ~exist('Baseline.mat','file')

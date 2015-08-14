@@ -2285,14 +2285,14 @@ try
             % Check if scale readings were set manually
             if ~isempty(handles.upperScaleReading{testNum}) && ~isempty(handles.lowerScaleReading{testNum})
                 % Scale readings were inputted
-                [result,knownVal,measuredVal] = volumeTestFormula(handles.images{testNum}{:},...
+                [result,knownVal,measuredVal,freq] = volumeTestFormula(handles.images{testNum}{:},...
                     'UpperScaleAxial',handles.upperScaleReading{testNum}{1},'LowerScaleAxial',handles.lowerScaleReading{testNum}{1},...
                     'UpperScaleSagittal',handles.upperScaleReading{testNum}{2},'LowerScaleSagittal',handles.lowerScaleReading{testNum}{2},...
                     'PanelHandle',panelHandle,'AxesHandle',axesHandles,...
                     'EllipsoidAxes',handles.volumeFormula_axes_ellipsoidView);
             else
                 % Read scale automatically from image
-                [result,knownVal,measuredVal] = volumeTestFormula(handles.images{testNum}{:},...
+                [result,knownVal,measuredVal,freq] = volumeTestFormula(handles.images{testNum}{:},...
                     'PanelHandle',panelHandle,'AxesHandle',axesHandles,...
                     'EllipsoidAxes',handles.volumeFormula_axes_ellipsoidView);
             end
@@ -2321,6 +2321,9 @@ try
             end
             % Set table data
             set(table,'Data',data);
+            
+            % Show frequency
+            set(handles.volumeFormula_text_freq,'String',num2str(freq));
             
             % If in single view mode, hide the grid panel and show current axes
             if get(handles.volumeFormula_button_singleView,'Value') == 1
@@ -5084,6 +5087,7 @@ rowHeaders = get(handles.volumeFormula_table,'RowName');
 colHeaders = get(handles.volumeFormula_table,'ColumnName');
 colHeaders = [colHeaders; 'Images'];
 tableData = get(handles.volumeFormula_table,'Data');
+freqVal = get(handles.volumeFormula_text_freq,'String');
 exportDate = datestr(clock,'yyyymmdd_HHMMSS');
 exportFolder = fullfile(pwd,'Log\Images',date);
 if ~exist(exportFolder,'dir')
@@ -5119,14 +5123,10 @@ try
             end
         end
         if isempty(Sheet)
-            % Create new sheet after 8th sheet or last sheet
-            if Sheets.Count >= 8
-                Sheet = Sheets.Add([],Sheets.Item(8));
-            else
-                Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
-            end
+            % Create new sheet if doesn't exist
+            Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
+            Sheet.Name = 'Volume';
         end
-        Sheet.Name = 'Volume';
         Sheet.Activate;
         % Get number of last used row
         lastRow = Sheet.get('Cells').Find('*',Sheet.get('Cells',1,1),[],[],1,2);
@@ -5138,8 +5138,11 @@ try
             Sheet.get('Cells',1,1).Value = 'Volume';
             % Colour first cell yellow
             Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
+            % Frequency header
+            freqHeader = Sheet.get('Cells',1,2);
+            freqHeader.Value = 'Freq (MHz)';
             % Column headers
-            headers = Sheet.get('Range',Sheet.get('Cells',1,2),Sheet.get('Cells',1,numel(colHeaders)+1));
+            headers = Sheet.get('Range',Sheet.get('Cells',1,3),Sheet.get('Cells',1,numel(colHeaders)+2));
             headers.Value = colHeaders';
             numRows = 1;
             % Set first row to bold
@@ -5158,19 +5161,21 @@ try
         dateCell = Sheet.get('Cells',numRows,1);
         dateCell.Value = date;
         
+        % Write frequency
+        [~,freqCol] = find(strcmp(xlData(1,:),'Freq (MHz)'),1);
+        freqCell = Sheet.get('Cells',dateCell.Row,freqCol);
+        freqCell.Value = freqVal;
+        
         % Write values
-        for m = 1:numel(rowHeaders)
-            rowNum = dateCell.Row + m - 1;
-            for n = 1:numel(colHeaders)-1
-                field = colHeaders{n};
-                val = tableData{m,n};
-                % Remove any html formatting
-                val = regexprep(val, '<.*?>','');
-                [~,fieldCol] = find(strcmp(xlData(1,:),field),1);
-                if ~isempty(fieldCol)
-                    % Column exists, write the value in new row
-                    Sheet.get('Cells',rowNum,fieldCol).Value = val;
-                end
+        for n = 1:numel(colHeaders)-1
+            field = colHeaders{n};
+            val = tableData{n};
+            % Remove any html formatting
+            val = regexprep(val, '<.*?>','');
+            [~,fieldCol] = find(strcmp(xlData(1,:),field),1);
+            if ~isempty(fieldCol)
+                % Column exists, write the value in new row
+                Sheet.get('Cells',dateCell.Row,fieldCol).Value = val;
             end
         end
         % Save images and add to excel sheet
@@ -5179,7 +5184,7 @@ try
         for imNum = 1:numel(handles.volumeFormula_axes_list)
             im = getAxesImage(handles.volumeFormula_axes_list(imNum),fig);
             handles.exportImages{handles.testNum}{imNum} = im;
-            filename = fullfile(exportFolder,[exportDate '_Volume_' num2str(imNum) '.bmp']);
+            filename = fullfile(exportFolder,[exportDate '_VolumeFormula_' num2str(imNum) '.bmp']);
             imwrite(im,filename);
             [~,imageCol] = find(strcmp(xlData(1,:),'Images'),1);
             imageCell = Sheet.get('Cells',dateCell.Row,imageCol+imNum-1);
@@ -5200,55 +5205,102 @@ try
         % Autofit columns
         Sheet.UsedRange.Columns.AutoFit;
         
-        % Create/modify chart
-        if Sheet.ChartObjects.Count == 0
-            % If no chart exists, create one
-            chartShape = Sheet.Shapes.AddChart;
-            chartShape.Select;
-            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
-            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
-        else
-            % Select existing chart
-            chartShape = Sheet.ChartObjects.Item(1);
-            chartShape.Select;
+        % Delete existing charts
+        if Sheet.ChartObjects.Count > 0
+            Sheet.ChartObjects.Delete;
         end
-        % Set/update chart data
-        knownValsCol = Sheet.get('Range',Sheet.get('Cells',2,2),Sheet.get('Cells',numRows,2)).Value;
+        
+        % Create charts
+        knownValsCol = Sheet.get('Range',Sheet.get('Cells',2,3),Sheet.get('Cells',numRows,3)).Value;
         if iscell(knownValsCol)
             knownValsCol = cell2mat(knownValsCol);
         end
         knownVals = unique(knownValsCol);
-        seriesCollection = Workbook.ActiveChart.SeriesCollection;
-        for s = 1:numel(knownVals)
-            if seriesCollection.Count < s
-                % Create series
-                seriesCollection.NewSeries;
-            end
-            series = seriesCollection.Item(s);
-            series.Name = ['Known Value: ' num2str(knownVals(s))];
-            % Get row numbers for this known value
-            rowNums = find(knownValsCol==knownVals(s));
-            % X Data
-            % Get test dates for this known value
-            dateColumn = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',numRows,1));
-            dateRange = dateColumn.Cells.Item(rowNums(1));
-            for n = 2:numel(rowNums)
-                dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(rowNums(n)));
-            end
-            series.XValues = dateRange;
-            % Y Data
-            valColumn = Sheet.get('Range',Sheet.get('Cells',2,3),Sheet.get('Cells',numRows,3));
-            valRange = valColumn.Cells.Item(rowNums(1));
-            for n = 2:numel(rowNums)
-                valRange = Excel.Union(valRange,valColumn.Cells.Item(rowNums(n)));
-            end
-            series.Values = valRange;
+        freqColumn = Sheet.get('Range',Sheet.get('Cells',2,2),Sheet.get('Cells',dateCell.Row,2));
+        if numel(freqColumn.Value) == 1
+            freqs = freqColumn.Value;
+        else
+            freqs = unique([freqColumn.Value{:}]);
         end
-        Workbook.ActiveChart.HasTitle = 1;
-        Workbook.ActiveChart.ChartTitle.Text = 'Volume';
-        % Set/update chart position
-        chartShape.Top = Sheet.get('Cells',numRows+2,1).Top;
-        chartShape.Left = Sheet.get('Cells',numRows+2,1).Left+10;
+        freqs = freqs(~isnan(freqs));
+        chartShape = cell(1,numel(freqs));
+        % Add separate chart for each frequency
+        for f = 1:numel(freqs)
+            freq = freqs(f);
+            % Create chart
+            chartShape{f} = Sheet.Shapes.AddChart;
+            chartShape{f}.Select;
+            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
+            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
+            % Clear default data
+            Workbook.ActiveChart.ChartArea.ClearContents;
+            % Get row numbers for this frequency
+            if iscell(freqColumn.Value)
+                [~,freqRows] = find([freqColumn.Value{:}]==freq);
+            else
+                [~,freqRows] = find([freqColumn.Value]==freq);
+            end
+            % Get chart shape
+            chartShape{f} = Sheet.ChartObjects.Item(f);
+            chartShape{f}.Select;
+            % Set/update chart data
+            seriesCollection = Workbook.ActiveChart.SeriesCollection;
+            % Create series
+            for s = 1:numel(knownVals)
+                % Get row numbers for this known value
+                rowNums = find(knownValsCol==knownVals(s));
+                % Check if this known val exists for this frequency before
+                % creating new series
+                if ~isempty(intersect(rowNums,freqRows))
+                    if seriesCollection.Count < s
+                        % Create series
+                        seriesCollection.NewSeries;
+                    end
+                    series = seriesCollection.Item(s);
+                    series.Name = ['Known Value: ' num2str(knownVals(s))];
+                    
+                    % X Data
+                    % Get test dates for this known value
+                    dateColumn = Sheet.get('Range',Sheet.get('Cells',2,1),Sheet.get('Cells',numRows,1));
+                    dateRange = [];
+                    for n = 1:numel(rowNums)
+                        % Only add data for current frequency
+                        if freqColumn.Cells.Item(rowNums(n)).Value == freq
+                            if isempty(dateRange)
+                                dateRange = dateColumn.Cells.Item(rowNums(n));
+                            else
+                                dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(rowNums(n)));
+                            end
+                        end
+                    end
+                    series.XValues = dateRange;
+                    % Y Data
+                    valColumn = Sheet.get('Range',Sheet.get('Cells',2,4),Sheet.get('Cells',numRows,4));
+                    valRange = [];
+                    for n = 1:numel(rowNums)
+                        % Only add data for current frequency
+                        if freqColumn.Cells.Item(rowNums(n)).Value == freq
+                            if isempty(valRange)
+                                valRange = valColumn.Cells.Item(rowNums(n));
+                            else
+                                valRange = Excel.Union(valRange,valColumn.Cells.Item(rowNums(n)));
+                            end
+                        end
+                    end
+                    series.Values = valRange;
+                end
+            end
+            Workbook.ActiveChart.HasTitle = 1;
+            Workbook.ActiveChart.ChartTitle.Text = [num2str(freq) ' MHz Volume'];
+            % Set/update chart position
+            if f == 1
+                chartCell = Sheet.get('Cells',numRows+2,1);
+            else
+                chartCell = Sheet.get('Cells',chartShape{f-1}.BottomRightCell.Row+1,1);
+            end
+            chartShape{f}.Top = chartCell.Top;
+            chartShape{f}.Left = chartCell.Left+10;
+        end
         
         % Save the workbook
         invoke(Workbook, 'Save');
