@@ -1,4 +1,4 @@
-function [result,knownVal,measuredVal] = volumeTestAuto(imageFile1,varargin)
+function [result,knownVal,measuredVal,freq] = volumeTestAuto(imageFile1,varargin)
 % VOLUMETEST is for the volume measurement accuracy quality control test.
 % The function checks if the calculated volume is within 5% of the actual
 % volume.
@@ -39,6 +39,9 @@ panelHandle = p.Results.PanelHandle;
 axesHandles = p.Results.AxesHandle;
 slicesAxes = p.Results.SlicesAxes;
 interpAxes = p.Results.InterpAxes;
+
+% Read frequency
+freq = readFrequency(imageFile1);
 
 % Get baseline values
 if ~exist('Baseline.mat','file')
