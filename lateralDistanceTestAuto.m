@@ -1,4 +1,4 @@
-function [result,knownVal,measuredVals] = lateralDistanceTestAuto(imageFile,varargin)
+function [result,knownVal,measuredVals,freq] = lateralDistanceTestAuto(imageFile,varargin)
 % LATERALDISTANCETEST is for the lateral distance measurement accuracy quality control test.
 % The function compares the lateral distance measurement with the known
 % value and checks if the error is larger than 3 mm (absolute) or 3% (relative).
@@ -24,6 +24,9 @@ else
     % labels from the image
     pixelScale = getPixelScale(imageFile);
 end
+
+% Read frequency
+freq = readFrequency(imageFile);
 
 % Get baseline values
 if ~exist('Baseline.mat','file')
