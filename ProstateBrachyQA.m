@@ -682,8 +682,8 @@ try
             handles = guidata(hObject);
             
             % Store image for export
-            im = getframe(handles.grayscale_axes);
-            handles.exportImages{testNum}{1} = im.cdata;
+            im = getAxesImage(handles.grayscale_axes);
+            handles.exportImages{testNum}{1} = im;
         end
     end
 catch exception
@@ -792,11 +792,11 @@ try
             handles = guidata(hObject);
             
             % Store image for export
-            im = getframe(handles.depth_axes);
+            im = getAxesImage(handles.depth_axes);
             if strcmp(handles.depth_plane,'axial')
-                handles.exportImages{testNum}{1} = im.cdata;
+                handles.exportImages{testNum}{1} = im;
             elseif strcmp(handles.depth_plane,'longitudinal')
-                handles.exportImages{testNum}{2} = im.cdata;
+                handles.exportImages{testNum}{2} = im;
             end
         end
     end
@@ -947,11 +947,11 @@ try
             handles = guidata(hObject);
             
             % Store image for export
-            im = getframe(handles.axialResolution_axes);
+            im = getAxesImage(handles.axialResolution_axes);
             if strcmp(handles.axialResolution_plane,'axial')
-                handles.exportImages{testNum}{1} = im.cdata;
+                handles.exportImages{testNum}{1} = im;
             elseif strcmp(handles.axialResolution_plane,'longitudinal')
-                handles.exportImages{testNum}{2} = im.cdata;
+                handles.exportImages{testNum}{2} = im;
             end
         end
     end
@@ -1077,11 +1077,11 @@ try
             handles = guidata(hObject);
             
             % Store image for export
-            im = getframe(handles.lateralResolution_axes);
+            im = getAxesImage(handles.lateralResolution_axes);
             if strcmp(handles.lateralResolution_plane,'axial')
-                handles.exportImages{testNum}{1} = im.cdata;
+                handles.exportImages{testNum}{1} = im;
             elseif strcmp(handles.lateralResolution_plane,'longitudinal')
-                handles.exportImages{testNum}{2} = im.cdata;
+                handles.exportImages{testNum}{2} = im;
             end
         end
     end
@@ -1184,8 +1184,8 @@ try
             handles = guidata(hObject);
             
             % Store image for export
-            im = getframe(handles.axialDistance_axes);
-            handles.exportImages{testNum}{1} = im.cdata;
+            im = getAxesImage(handles.axialDistance_axes);
+            handles.exportImages{testNum}{1} = im;
         end
     end
 catch exception
@@ -1304,11 +1304,11 @@ try
             handles = guidata(hObject);
             
             % Store image for export
-            im = getframe(handles.lateralDistance_axes);
+            im = getAxesImage(handles.lateralDistance_axes);
             if strcmp(handles.lateralDistance_plane,'axial')
-                handles.exportImages{testNum}{1} = im.cdata;
+                handles.exportImages{testNum}{1} = im;
             elseif strcmp(handles.lateralDistance_plane,'longitudinal')
-                handles.exportImages{testNum}{2} = im.cdata;
+                handles.exportImages{testNum}{2} = im;
             end
         end
     end
@@ -1406,8 +1406,8 @@ try
             handles = guidata(hObject);
             
             % Store image for export
-            im = getframe(handles.area_axes);
-            handles.exportImages{testNum}{1} = im.cdata;
+            im = getAxesImage(handles.area_axes);
+            handles.exportImages{testNum}{1} = im;
         end
     end
 catch exception
@@ -3169,9 +3169,9 @@ try
             freq = axialFreqs(f);
             % Create chart
             if any(strcmp(methods(Sheet.Shapes),'AddChart'))
-                chartShape = Sheet.Shapes.AddChart;
+                chartShape{f} = Sheet.Shapes.AddChart;
             else
-                chartShape = Sheet.Shapes.AddChart2;
+                chartShape{f} = Sheet.Shapes.AddChart2;
             end
             chartShape{f}.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';

@@ -29,11 +29,17 @@ im = findobj(plots,'Type','image');
 imIndex = get(im,'UserData');
 parentPanel = get(axesHandle,'Parent');
 legends = findobj(get(parentPanel,'Children'),'Tag','legend');
-for l = 1:numel(legends)
-    userData = get(legends(l),'UserData');
-    if userData.ImageIndex == imIndex
-        leg = legends(l);
-        break
+if numel(legends) == 1
+    if isempty(legends(1).UserData)
+        leg = legends(1);
+    end
+else
+    for l = 1:numel(legends)
+        userData = get(legends(l),'UserData');
+        if userData.ImageIndex == imIndex
+            leg = legends(l);
+            break
+        end
     end
 end
 
@@ -63,10 +69,12 @@ if ~isempty(leg)
     end
 end
 
-% print(fig,'AxesImage','-dpng','-r300');
-% img = imread('AxesImage.png');
-% delete('AxesImage.png');
-frame = getframe(get(fig,'CurrentAxes'));
+% Get pixel position of actual plot
+axesPos = plotboxpos(copiedAxes);
+% Make figure tight around plot
+setpixelposition(fig,axesPos);
+% Capture plot
+frame = getframe(copiedAxes);
 img = frame.cdata;
 
 % If figure was given as input, don't delete
