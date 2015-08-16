@@ -2796,7 +2796,11 @@ try
         % Create/modify chart
         if Sheet.ChartObjects.Count == 0
             % If no chart exists, create one
-            chartShape = Sheet.Shapes.AddChart;
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape = Sheet.Shapes.AddChart;
+            else
+                chartShape = Sheet.Shapes.AddChart2;
+            end
             chartShape.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
             Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
@@ -2944,7 +2948,11 @@ try
         % Create/modify chart
         if Sheet.ChartObjects.Count == 0
             % If no chart exists, create one
-            chartShape = Sheet.Shapes.AddChart;
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape = Sheet.Shapes.AddChart;
+            else
+                chartShape = Sheet.Shapes.AddChart2;
+            end
             chartShape.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
             Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
@@ -3160,7 +3168,11 @@ try
         for f = 1:numel(axialFreqs)
             freq = axialFreqs(f);
             % Create chart
-            chartShape{f} = Sheet.Shapes.AddChart;
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape = Sheet.Shapes.AddChart;
+            else
+                chartShape = Sheet.Shapes.AddChart2;
+            end
             chartShape{f}.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
             Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
@@ -3227,7 +3239,11 @@ try
             freq = longFreqs(g);
             chartNum = numel(axialFreqs)+g;
             % Create chart
-            chartShape{chartNum} = Sheet.Shapes.AddChart;
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape{chartNum} = Sheet.Shapes.AddChart;
+            else
+                chartShape{chartNum} = Sheet.Shapes.AddChart2;
+            end
             chartShape{chartNum}.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
             Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
@@ -3504,7 +3520,11 @@ try
         for f = 1:numel(axialFreqs)
             freq = axialFreqs(f);
             % Create chart
-            chartShape{f} = Sheet.Shapes.AddChart;
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape{f} = Sheet.Shapes.AddChart;
+            else
+                chartShape{f} = Sheet.Shapes.AddChart2;
+            end
             chartShape{f}.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
             Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
@@ -3578,7 +3598,11 @@ try
             freq = longFreqs(g);
             chartNum = numel(axialFreqs)+g;
             % Create chart
-            chartShape{chartNum} = Sheet.Shapes.AddChart;
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape{chartNum} = Sheet.Shapes.AddChart;
+            else
+                chartShape{chartNum} = Sheet.Shapes.AddChart2;
+            end
             chartShape{chartNum}.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
             Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
@@ -3861,7 +3885,11 @@ try
         for f = 1:numel(axialFreqs)
             freq = axialFreqs(f);
             % Create chart
-            chartShape{f} = Sheet.Shapes.AddChart;
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape{f} = Sheet.Shapes.AddChart;
+            else
+                chartShape{f} = Sheet.Shapes.AddChart2;
+            end
             chartShape{f}.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
             Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
@@ -3935,7 +3963,11 @@ try
             freq = longFreqs(g);
             chartNum = numel(axialFreqs)+g;
             % Create chart
-            chartShape{chartNum} = Sheet.Shapes.AddChart;
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape{chartNum} = Sheet.Shapes.AddChart;
+            else
+                chartShape{chartNum} = Sheet.Shapes.AddChart2;
+            end
             chartShape{chartNum}.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
             Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
@@ -4162,7 +4194,11 @@ try
         for f = 1:numel(freqs)
             freq = freqs(f);
             % Create chart
-            chartShape{f} = Sheet.Shapes.AddChart;
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape{f} = Sheet.Shapes.AddChart;
+            else
+                chartShape{f} = Sheet.Shapes.AddChart2;
+            end
             chartShape{f}.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
             Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
@@ -4441,7 +4477,11 @@ try
         for f = 1:numel(axialFreqs)
             freq = axialFreqs(f);
             % Create chart
-            chartShape{f} = Sheet.Shapes.AddChart;
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape{f} = Sheet.Shapes.AddChart;
+            else
+                chartShape{f} = Sheet.Shapes.AddChart2;
+            end
             chartShape{f}.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
             Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
@@ -4515,7 +4555,11 @@ try
             freq = longFreqs(g);
             chartNum = numel(axialFreqs)+g;
             % Create chart
-            chartShape{chartNum} = Sheet.Shapes.AddChart;
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape{chartNum} = Sheet.Shapes.AddChart;
+            else
+                chartShape{chartNum} = Sheet.Shapes.AddChart2;
+            end
             chartShape{chartNum}.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
             Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
@@ -4741,7 +4785,11 @@ try
         for f = 1:numel(freqs)
             freq = freqs(f);
             % Create chart
-            chartShape{f} = Sheet.Shapes.AddChart;
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape{f} = Sheet.Shapes.AddChart;
+            else
+                chartShape{f} = Sheet.Shapes.AddChart2;
+            end
             chartShape{f}.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
             Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
@@ -4982,7 +5030,11 @@ try
         for f = 1:numel(freqs)
             freq = freqs(f);
             % Create chart
-            chartShape{f} = Sheet.Shapes.AddChart;
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape{f} = Sheet.Shapes.AddChart;
+            else
+                chartShape{f} = Sheet.Shapes.AddChart2;
+            end
             chartShape{f}.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
             Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
@@ -5223,7 +5275,11 @@ try
         for f = 1:numel(freqs)
             freq = freqs(f);
             % Create chart
-            chartShape{f} = Sheet.Shapes.AddChart;
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape{f} = Sheet.Shapes.AddChart;
+            else
+                chartShape{f} = Sheet.Shapes.AddChart2;
+            end
             chartShape{f}.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
             Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
@@ -5468,7 +5524,11 @@ try
         % Create/modify chart
         if Sheet.ChartObjects.Count == 0
             % If no chart exists, create one
-            chartShape = Sheet.Shapes.AddChart;
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape = Sheet.Shapes.AddChart;
+            else
+                chartShape = Sheet.Shapes.AddChart2;
+            end
             chartShape.Select;
             Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
             Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
