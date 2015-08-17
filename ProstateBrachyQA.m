@@ -2139,6 +2139,14 @@ testName = handles.testName;
 switch testName
     case 'volume'
         axes3D = handles.volume_axes_slicesView;
+        % Check which view is shown to link properly
+        if strcmp(handles.volume_3DView,'interp')
+            axesHandles = [handles.volume_axes_interpView;handles.volume_axes_slicesView];
+        elseif strcmp(handles.volume_3DView,'slices')
+            axesHandles = [handles.volume_axes_slicesView;handles.volume_axes_interpView];
+        end
+        % Link interp and slices views for simultaneous rotation
+        linkprop(axesHandles,'CameraPosition');
     case 'volumeFormula'
         axes3D = handles.volumeFormula_axes_ellipsoidView;
     otherwise
