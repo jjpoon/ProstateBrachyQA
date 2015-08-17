@@ -27,7 +27,7 @@ yOffset = cropY + min(row) - 2;
 
 % Use adaptive thresholding to create binary image showing the circle
 % Use decreasing window size if no ellipse was found.
-for ws = 170:-10:70
+for ws = 70:10:170
     for s = 1:2
         circle = adaptivethreshold(im_tight,ws,0.001);
         % Morphological operations to improve visibility of circle
@@ -49,8 +49,8 @@ for ws = 170:-10:70
         circle = imdilate(circle,strel('disk',6));
         
         % Get regions from black and white image
-        regions = regionprops(circle,'MajorAxisLength','Orientation','EquivDiameter',...
-            'Centroid','BoundingBox','Area','Perimeter','Solidity');
+        regions = regionprops(circle,'MajorAxisLength','MinorAxisLength',...
+            'Orientation','Centroid','BoundingBox','Area','Solidity');
         
         % Keep only regions with > 0.9 solidity (circle will have high solidity)
         circleLabel = bwlabel(circle);
@@ -63,11 +63,14 @@ for ws = 170:-10:70
             elseif regions(circleInd).MajorAxisLength > 0.9*max(size(im_tight))
                % Keep region if not unrealistically large
                circleInd = [];
+            elseif regions(circleInd).MinorAxisLength < 0.1*max(size(im_tight))
+               % Keep region if not unrealistically large
+               circleInd = [];
             else
                 % Keep region if in reasonable position
                 xPos = regions(circleInd).Centroid(1)/size(im_tight,2);
                 yPos = regions(circleInd).Centroid(2)/size(im_tight,1);
-                if xPos > 0.9 || xPos < 0.1 || yPos > 0.75 || yPos < 0.25
+                if xPos > 0.85 || xPos < 0.15 || yPos > 0.75 || yPos < 0.25
                     circleInd = [];
                 end
             end

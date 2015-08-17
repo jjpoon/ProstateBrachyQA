@@ -27,7 +27,7 @@ yOffset = cropY + min(row) - 2;
 
 % Use adaptive thresholding to create binary image showing the circle
 % Use decreasing window size if no circle was found.
-for ws = 170:-10:70
+for ws = 70:10:170
     for s = 1:2
         circle = adaptivethreshold(im_tight,ws,0.001);
         % Morphological operations to improve visibility of circle
@@ -63,6 +63,9 @@ for ws = 170:-10:70
                 circleInd = [];
             elseif regions(circleInd).MajorAxisLength > 1.5*regions(circleInd).MinorAxisLength
                 % Keep region only if major and minor axis length are similar enough
+                circleInd = [];
+            elseif regions(circleInd).Area < 2600
+                % Keep region if large enough
                 circleInd = [];
             else
                 % Keep region if in reasonable position
