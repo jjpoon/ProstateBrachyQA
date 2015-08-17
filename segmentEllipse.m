@@ -27,7 +27,7 @@ yOffset = cropY + min(row) - 2;
 
 % Use adaptive thresholding to create binary image showing the circle
 % Use decreasing window size if no ellipse was found.
-for ws = 150:-10:70
+for ws = 170:-10:70
     for s = 1:2
         circle = adaptivethreshold(im_tight,ws,0.001);
         % Morphological operations to improve visibility of circle
@@ -57,13 +57,19 @@ for ws = 150:-10:70
         % Find region with highest solidity
         [~,circleInd] = max([regions.Solidity]);
         if ~isempty(circleInd)
-            % Keep region only if solidity is 0.9 or greater
             if regions(circleInd).Solidity < 0.9
+                % Keep region only if solidity is 0.9 or greater
                 circleInd = [];
+            elseif regions(circleInd).MajorAxisLength > 0.9*max(size(im_tight))
+               % Keep region if not unrealistically large
+               circleInd = [];
+            else
                 % Keep region if in reasonable position
-            elseif abs(regions(circleInd).Centroid(2)/size(im_tight,1) - 0.5) > 0.25 || ...
-                    abs(regions(circleInd).Centroid(1)/size(im_tight,2) - 0.5) > 0.25
-                circleInd = [];
+                xPos = regions(circleInd).Centroid(1)/size(im_tight,2);
+                yPos = regions(circleInd).Centroid(2)/size(im_tight,1);
+                if xPos > 0.9 || xPos < 0.1 || yPos > 0.75 || yPos < 0.25
+                    circleInd = [];
+                end
             end
         end
         circleFinal = ismember(circleLabel,circleInd);
