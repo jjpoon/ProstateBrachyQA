@@ -2713,6 +2713,11 @@ function phantom_button_export_Callback(hObject, eventdata, handles)
 % hObject    handle to phantom_button_export (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
+
 fields = get(handles.phantom_table,'RowName');
 tableData = get(handles.phantom_table,'Data');
 
@@ -2833,6 +2838,8 @@ catch exception
     invoke(Excel, 'Quit');
 end
 
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
 
 % --- Executes on button press in grayscale_button_export.
 function grayscale_button_export_Callback(hObject, eventdata, handles)
@@ -2995,6 +3002,11 @@ function depth_button_export_Callback(hObject, eventdata, handles)
 % hObject    handle to depth_button_export (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
+
 rowHeaders = get(handles.depth_table_axial,'RowName');
 colHeaders = get(handles.depth_table_axial,'ColumnName');
 colHeaders = [colHeaders; 'Image'];
@@ -3312,12 +3324,20 @@ catch exception
     invoke(Excel, 'Quit');
 end
 
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 
 % --- Executes on button press in axialResolution_button_export.
 function axialResolution_button_export_Callback(hObject, eventdata, handles)
 % hObject    handle to axialResolution_button_export (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
+
 rowHeadersAxial = get(handles.axialResolution_table_axial,'RowName');
 rowHeadersLong = get(handles.axialResolution_table_long,'RowName');
 colHeaders = get(handles.axialResolution_table_axial,'ColumnName');
@@ -3678,11 +3698,19 @@ catch exception
     invoke(Excel, 'Quit');
 end
 
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 % --- Executes on button press in lateralResolution_button_export.
 function lateralResolution_button_export_Callback(hObject, eventdata, handles)
 % hObject    handle to axialResolution_button_export (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
+
 rowHeadersAxial = get(handles.lateralResolution_table_axial,'RowName');
 rowHeadersLong = get(handles.lateralResolution_table_long,'RowName');
 colHeaders = get(handles.lateralResolution_table_axial,'ColumnName');
@@ -4043,12 +4071,20 @@ catch exception
     invoke(Excel, 'Quit');
 end
 
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 
 % --- Executes on button press in axialDistance_button_export.
 function axialDistance_button_export_Callback(hObject, eventdata, handles)
 % hObject    handle to axialResolution_button_export (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
+
 rowHeaders = get(handles.axialDistance_table,'RowName');
 colHeaders = get(handles.axialDistance_table,'ColumnName');
 colHeaders = [colHeaders; 'Image'];
@@ -4269,12 +4305,20 @@ catch exception
     invoke(Excel, 'Quit');
 end
 
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 
 % --- Executes on button press in lateralDistance_button_export.
 function lateralDistance_button_export_Callback(hObject, eventdata, handles)
 % hObject    handle to axialResolution_button_export (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
+
 rowHeadersAxial = get(handles.lateralDistance_table_axial,'RowName');
 rowHeadersLong = get(handles.lateralDistance_table_long,'RowName');
 colHeaders = get(handles.lateralDistance_table_axial,'ColumnName');
@@ -4635,12 +4679,20 @@ catch exception
     invoke(Excel, 'Quit');
 end
 
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 
 % --- Executes on button press in area_button_export.
 function area_button_export_Callback(hObject, eventdata, handles)
 % hObject    handle to axialResolution_button_export (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
+
 rowHeaders = get(handles.area_table,'RowName');
 colHeaders = get(handles.area_table,'ColumnName');
 colHeaders = [colHeaders; 'Image'];
@@ -4879,12 +4931,20 @@ catch exception
     invoke(Excel, 'Quit');
 end
 
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 
 % --- Executes on button press in volume_button_export.
 function volume_button_export_Callback(hObject, eventdata, handles)
 % hObject    handle to volume_button_export (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
+
 rowHeaders = get(handles.volume_table,'RowName');
 colHeaders = get(handles.volume_table,'ColumnName');
 colHeaders = [colHeaders; 'Images'];
@@ -5124,12 +5184,20 @@ catch exception
     invoke(Excel, 'Quit');
 end
 
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 
 % --- Executes on button press in volumeFormula_button_export.
 function volumeFormula_button_export_Callback(hObject, eventdata, handles)
 % hObject    handle to volumeFormula_button_export (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
+
 rowHeaders = get(handles.volumeFormula_table,'RowName');
 colHeaders = get(handles.volumeFormula_table,'ColumnName');
 colHeaders = [colHeaders; 'Images'];
@@ -5369,12 +5437,20 @@ catch exception
     invoke(Excel, 'Quit');
 end
 
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
+
 
 % --- Executes on button press in gridAlignment_button_export.
 function gridAlignment_button_export_Callback(hObject, eventdata, handles)
 % hObject    handle to gridAlignment_button_export (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+% Show loading cursor
+oldpointer = get(handles.figure1,'pointer');
+set(handles.figure1,'pointer','watch') 
+drawnow;
+
 rowHeaders = get(handles.gridAlignment_table,'RowName');
 colHeaders = get(handles.gridAlignment_table,'ColumnName');
 colHeaders = [colHeaders; 'Image'];
@@ -5593,6 +5669,9 @@ catch exception
     % Make sure to close excel if error occurs
     invoke(Excel, 'Quit');
 end
+
+% Set cursor back to normal
+set(handles.figure1,'pointer',oldpointer);
 
 
 % --- Executes during object creation, after setting all properties.
