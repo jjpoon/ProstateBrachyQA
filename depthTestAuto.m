@@ -90,14 +90,8 @@ filt = imfilter(im_tight,fspecial('Prewitt'));
 med = medfilt2(filt);
 % Convert to black and white
 bw = im2bw(med,0.1);
-% Remove large regions
-bw = bw - bwareaopen(bw,30);
-% Dilate image to make large region
-bw = imdilate(bw,strel('disk',10));
-% Fill holes, then shrink back to normal size
-bw = imfill(bw,'holes');
-% bw = imerode(bw,strel('disk',10));
-bw = im2bw(bw);
+% Connect nearby regions, then use largest regions to measure depth
+bw = imclose(bw,strel('disk',10));
 % Get largest region in image
 regions = regionprops(bw);
 % Get areas and find the index of the largest region
@@ -110,7 +104,7 @@ topPoint = [round(size(bw,2)/2),boundingBox(2)];
 
 % Get bottom point to measure depth distance from (top of semi-circle)
 im_bw = im2bw(im_tight,0.01);
-im_bw = bwareaopen(im_bw,10000);
+im_bw = bwareaopen(im_bw,100);
 y = find(im_bw(:,round(size(im_bw,2)/2)),1,'last');
 bottomPoint = [size(im_bw,2)/2,y];
 
