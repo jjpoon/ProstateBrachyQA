@@ -65,23 +65,32 @@ im_tight = im_cropped(min(row):max(row),min(col):max(col));
 xOffset = cropX + min(col) - 2;
 yOffset = cropY + min(row) - 2;
 
-% Filter image using wiener2 (2-D adaptive noise-removal filtering)
-filt1 = wiener2(im_tight,[10 10]);
-% Filter again using 2D ‘Prewitt’ filter, emphasizing horizontal edges
-filt2 = imfilter(filt1,fspecial('prewitt'));
-% Convert to black and white
-bw = im2bw(filt2,0.15);
+% % Filter image using wiener2 (2-D adaptive noise-removal filtering)
+% filt1 = wiener2(im_tight,[10 10]);
+% % Filter again using 2D ‘Prewitt’ filter, emphasizing horizontal edges
+% filt2 = imfilter(filt1,fspecial('prewitt'));
+% % Convert to black and white
+% bw = im2bw(filt2,0.15);
+
+botfilt = imbothat(im_tight,strel('square',50));
+medfilt = medfilt2(botfilt,[1,5]);
+bw = im2bw(medfilt,0);
+bw = imcomplement(bw);
+
+% botfilt = imbothat(imcomplement(im_tight),strel('square',10));
+% bw = im2bw(botfilt,0.1);
+
 % Remove unwanted white areas from edges of image (scale tick markings, top
 % and bottom of ultrasound image)
-bw(:,1:30) = 0;         % Remove left edge
-bw(:,end-30:end) = 0;   % Remove right edge
-bw(1:80,:) = 0;         % Remove top edge
+bw(:,1:70) = 0;         % Remove left edge
+bw(:,end-70:end) = 0;   % Remove right edge
+bw(1:120,:) = 0;         % Remove top edge
 bw(end-120:end,:) = 0;   % Remove bottom edge
 
 % Remove large objects
-bw = bw - bwareaopen(bw,150);
+bw = bw - bwareaopen(bw,300);
 % Remove small objects
-bw = bwareaopen(bw,10);
+bw = bwareaopen(bw,22);
 
 % Get the filament region properties
 bwRegions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
@@ -92,6 +101,26 @@ filaments = find(lengths>8 & lengths<50);
 bw = ismember(bwlabel(bw),filaments);
 % Get the filament region properties
 regions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
+
+% Check for false detections by checking that mean intensity inside region
+% is greater than surrounding area
+filaments = [];
+for r = 1:numel(regions)
+    insideMask = ismember(bwlabel(bw),r);
+    insideReg = im_tight.*uint8(insideMask);
+    outsideMask = imdilate(insideMask,strel('disk',30)) - insideMask;
+    outsideReg = im_tight.*uint8(outsideMask);
+    meanInside = mean(insideReg(insideReg>0));
+    meanOutside = mean(outsideReg(outsideReg>0));
+    if meanInside/meanOutside > 1.3
+        filaments = [filaments; r];
+    end
+end
+bw = ismember(bwlabel(bw),filaments);
+% Get the updated filament region properties
+regions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
+
+figure;imshow(bw);
 
 % Get centroids of filament regions
 for n = 1:numel(regions)
@@ -245,7 +274,7 @@ end
 % Plot markers on figure to show points that were found
 % Subtract 2 from y offset because 'Prewitt' filter used above lowers image
 % by 2 pixels
-yOffset = yOffset - 2;
+% yOffset = yOffset - 2;
 % Create column vectors for offsets, used for plotting markers
 yOffset = repmat(yOffset,2,1);
 xOffset = repmat(xOffset,2,1);
