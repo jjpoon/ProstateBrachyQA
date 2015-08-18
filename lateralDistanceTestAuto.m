@@ -69,8 +69,8 @@ yOffset = cropY + min(row) - 2;
 filt1 = wiener2(im_tight,[10 10]);
 % Filter again using 2D ‘Prewitt’ filter, emphasizing horizontal edges
 filt2 = imfilter(filt1,fspecial('prewitt'));
-% Convert to black and white, 0.2 threshold best for segmenting filaments
-bw = im2bw(filt2,0.1);
+% Convert to black and white
+bw = im2bw(filt2,0.15);
 % Remove unwanted white areas from edges of image (scale tick markings, top
 % and bottom of ultrasound image)
 bw(:,1:30) = 0;         % Remove left edge
@@ -81,7 +81,7 @@ bw(end-120:end,:) = 0;   % Remove bottom edge
 % Remove large objects
 bw = bw - bwareaopen(bw,150);
 % Remove small objects
-bw = bwareaopen(bw,20);
+bw = bwareaopen(bw,10);
 
 % Get the filament region properties
 bwRegions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
@@ -109,7 +109,7 @@ for i = 1:numel(regions)
     % Get indices of regions with similar y coord
     similarY = find(yCoords>yCoords(i)-6 & yCoords<yCoords(i)+6);
     % Get indices of regions with similar length
-    similarLength = find(lengths>lengths(i)-4 & lengths<lengths(i)+4);
+    similarLength = find(lengths>lengths(i)-5 & lengths<lengths(i)+5);
     % Get indices of regions with similar y and length
     rowFilaments = intersect(similarY,similarLength);
     % Check left-to-right y difference for row filaments (look for outliers)
