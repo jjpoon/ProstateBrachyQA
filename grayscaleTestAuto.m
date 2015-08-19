@@ -26,13 +26,7 @@ else
 end
 
 % Get baseline values
-if ~exist('Baseline.mat','file')
-    % Read xls file if mat file not created yet
-    baselineFile = readBaselineFile('Baseline.xls');
-else
-    % Get baseline value from mat file (faster)
-    load('Baseline.mat');
-end
+baselineFile = readBaselineFile('Baseline.xls');
 
 % Get baseline value for this test
 for i = 1:size(baselineFile,1)
@@ -165,7 +159,6 @@ change = abs(newVal - baselineVal);
 if isnan(change)
     % Unable to calculate, display error message
     result = [];
-    disp('Unable to calculate new value, please input scale readings manually.');
 elseif change > 0.1*baselineVal
     % Fail
     result = 0;

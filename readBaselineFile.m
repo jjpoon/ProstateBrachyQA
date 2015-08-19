@@ -4,7 +4,6 @@ function baselineFile = readBaselineFile(fileName)
 % the Baseline.mat file with new values entered into Baseline.xls
 
 [num,txt,baselineFile] = xlsread(fileName);
-save('Baseline.mat','baselineFile');
 disp('Values from Baseline.xls successfully saved to Baseline.mat');
 
 end

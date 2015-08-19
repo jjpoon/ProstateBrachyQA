@@ -29,13 +29,7 @@ end
 freq = readFrequency(imageFile);
 
 % Get baseline values
-if ~exist('Baseline.mat','file')
-    % Read xls file if mat file not created yet
-    baselineFile = readBaselineFile('Baseline.xls');
-else
-    % Get baseline value from mat file (faster)
-    load('Baseline.mat');
-end
+baselineFile = readBaselineFile('Baseline.xls');
 
 % Get baseline values for this test
 baselineVals = [];

@@ -29,13 +29,7 @@ end
 freq = readFrequency(imageFile);
 
 % Get baseline values
-if ~exist('Baseline.mat','file')
-    % Read xls file if mat file not created yet
-    baselineFile = readBaselineFile('Baseline.xls');
-else
-    % Get baseline value from mat file (faster)
-    load('Baseline.mat');
-end
+baselineFile = readBaselineFile('Baseline.xls');
 
 % Get baseline value for this test
 for i = 1:size(baselineFile,1)
@@ -277,13 +271,13 @@ else
     disp(['Measured value: ' sprintf('%.2f',measuredVals)]);
 end
 
-if ~isempty(knownVal)
-    error = abs(measuredVals-repmat(knownVal,size(measuredVals)));
-else
-    error = [];
-end
+error = abs(measuredVals-repmat(knownVal,size(measuredVals)));
 % Check measured axial distance measurement errors
-result = error<=2 | error<=0.02*knownVal;
+if isnan(error)
+    result = [];
+else
+    result = error<=2 | error<=0.02*knownVal;
+end
 if isempty(result)
     disp('Missing information - could not complete test');
 elseif any(result == 0)

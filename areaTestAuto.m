@@ -29,13 +29,7 @@ end
 freq = readFrequency(imageFile);
 
 % Get baseline values
-if ~exist('Baseline.mat','file')
-    % Read xls file if mat file not created yet
-    baselineFile = readBaselineFile('Baseline.xls');
-else
-    % Get baseline value from mat file (faster)
-    load('Baseline.mat');
-end
+baselineFile = readBaselineFile('Baseline.xls');
 
 % Get baseline value for this test
 for i = 1:size(baselineFile,1)
@@ -97,7 +91,7 @@ disp(['Measured value: ' sprintf('%.2f',measuredVal) ' cm^2']);
 
 error = abs(measuredVal-knownVal);
 % Compare measured area and known area
-if isempty(error)
+if isnan(error)
     result = [];
     disp('Missing information - could not complete test');
 elseif error > 0.05*knownVal

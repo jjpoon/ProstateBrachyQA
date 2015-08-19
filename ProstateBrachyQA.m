@@ -665,7 +665,9 @@ try
             % Set new value table cell
             data{1,2} = newValText;
             % Set test result table cell
-            if result == 1
+            if isempty(result)
+                data{1,3} = [];
+            elseif result == 1
                 data{1,3} = '<html><font color="green">PASS';
             else
                 data{1,3} = '<html><font color="red">FAIL';
@@ -1164,12 +1166,12 @@ try
                 percentDiff = absDiff/avg*100;
                 data{n,4} = sprintf('%.2f',percentDiff);
                 % Result
-                if ~isempty(result)
-                    if result(n) == 1
-                        data{n,5} = '<html><font color="green">PASS';
-                    else
-                        data{n,5} = '<html><font color="red">FAIL';
-                    end
+                if isempty(result)
+                    data{n,5} = [];
+                elseif result(n) == 1
+                    data{n,5} = '<html><font color="green">PASS';
+                else
+                    data{n,5} = '<html><font color="red">FAIL';
                 end
             end
             % Set table data
@@ -1284,12 +1286,12 @@ try
                 percentDiff = absDiff/avg*100;
                 data{n,4} = sprintf('%.2f',percentDiff);
                 % Result
-                if ~isempty(result)
-                    if result(n) == 1
-                        data{n,5} = '<html><font color="green">PASS';
-                    else
-                        data{n,5} = '<html><font color="red">FAIL';
-                    end
+                if isempty(result)
+                    data{n,5} = [];
+                elseif result(n) == 1
+                    data{n,5} = '<html><font color="green">PASS';
+                else
+                    data{n,5} = '<html><font color="red">FAIL';
                 end
             end
             % Set table data
@@ -1389,9 +1391,11 @@ try
             percentDiff = absDiff/avg*100;
             data{1,4} = sprintf('%.2f',percentDiff);
             % Result
-            if result == 1
+            if isempty(result)
+                data{1,5} = [];
+            elseif result == 1
                 data{1,5} = '<html><font color="green">PASS';
-            elseif result == 0
+            else
                 data{1,5} = '<html><font color="red">FAIL';
             end
             % Set table data
@@ -1465,7 +1469,6 @@ if ~isempty(answer)
     end
     try
         xlswrite('Baseline.xls',baselineFile);
-        save('Baseline.mat','baselineFile');
         % Input in table
         if strcmp(testName,'lateralDistance')
             % If test is lateral distance, get axial or longitudinal table
@@ -1576,7 +1579,9 @@ try
             percentDiff = absDiff/avg*100;
             data{1,4} = sprintf('%.2f',percentDiff);
             % Result
-            if result == 1
+            if isempty(result)
+                data{1,5} = [];
+            elseif result == 1
                 data{1,5} = '<html><font color="green">PASS';
             elseif result == 0
                 data{1,5} = '<html><font color="red">FAIL';
@@ -1883,7 +1888,11 @@ if strcmp(choice,'Yes')
                 for n = 1:numel(currVals_long)
                     % Only write new value if not empty
                     if ~isempty(currVals_long{n})
-                        baselineFile{i,5+n} = currVals_long{n};
+                        if strcmp(testName,'depth')
+                            baselineFile{i,2+n} = currVals_long{n};
+                        else
+                            baselineFile{i,5+n} = currVals_long{n};
+                        end
                     end
                 end
             end
@@ -1903,7 +1912,6 @@ if strcmp(choice,'Yes')
     end
     try
         xlswrite('Baseline.xls',baselineFile);
-        save('Baseline.mat','baselineFile');
     catch
         errordlg('Unable to write to the baseline file. The file may be open in another application.',...
             'Error');
@@ -2322,7 +2330,9 @@ try
             percentDiff = absDiff/avg*100;
             data{1,4} = sprintf('%.2f',percentDiff);
             % Result
-            if result == 1
+            if isempty(result)
+                data{1,5} = [];
+            elseif result == 1
                 data{1,5} = '<html><font color="green">PASS';
             elseif result == 0
                 data{1,5} = '<html><font color="red">FAIL';
