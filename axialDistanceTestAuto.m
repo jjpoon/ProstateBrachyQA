@@ -65,32 +65,81 @@ im_tight = im_cropped(min(row):max(row),min(col):max(col));
 xOffset = cropX + min(col) - 2;
 yOffset = cropY + min(row) - 2;
 
-% Filter image using wiener2 (2-D adaptive noise-removal filtering)
-filt1 = wiener2(im_tight,[10 10]);
-% Filter again using 2D ‘Prewitt’ filter, emphasizing horizontal edges
-filt2 = imfilter(filt1,fspecial('prewitt'));
-% Convert to black and white
-bw = im2bw(filt2,0.15);
+% % Filter image using wiener2 (2-D adaptive noise-removal filtering)
+% filt1 = wiener2(im_tight,[10 10]);
+% % Filter again using 2D ‘Prewitt’ filter, emphasizing horizontal edges
+% filt2 = imfilter(filt1,fspecial('prewitt'));
+% % Convert to black and white
+% bw = im2bw(filt2,0.15);
+
+% Use bottom-hat filter to make bright filaments black
+botfilt = imbothat(im_tight,strel('disk',20));
+% Blur image to help reduce background noise
+medfilt = medfilt2(botfilt,[1,5]);
+% Convert to binary image where filaments are black
+bw = im2bw(medfilt,0);
+% Invert image so filaments are white on black background
+bw = imcomplement(bw);
+
 % Remove unwanted white areas from edges of image (scale tick markings, top
 % and bottom of ultrasound image)
-bw(:,1:30) = 0;         % Remove left edge
-bw(:,end-30:end) = 0;   % Remove right edge
-bw(1:80,:) = 0;         % Remove top edge
+bw(:,1:70) = 0;         % Remove left edge
+bw(:,end-70:end) = 0;   % Remove right edge
+bw(1:120,:) = 0;         % Remove top edge
 bw(end-120:end,:) = 0;   % Remove bottom edge
 
 % Remove large objects
-bw = bw - bwareaopen(bw,150);
+bw = bw - bwareaopen(bw,300);
 % Remove small objects
-bw = bwareaopen(bw,10);
+bw = bwareaopen(bw,20);
 
 % Get the filament region properties
-bwRegions = regionprops(bw,'Centroid','MajorAxisLength','Orientation');
+bwRegions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
 
-% Only keep regions with expected major axis length
-lengths = [bwRegions.MajorAxisLength]';
-filaments = find(lengths>8 & lengths<50);
+% Only keep regions with expected major and minor axis length
+majorAxisLength = [bwRegions.MajorAxisLength]';
+majorAxisInd = find(majorAxisLength>8 & majorAxisLength<60);
+minorAxisLength = [bwRegions.MinorAxisLength]';
+minorAxisInd = find(minorAxisLength>2.5);
+filaments = intersect(majorAxisInd,minorAxisInd);
 bw = ismember(bwlabel(bw),filaments);
 % Get the filament region properties
+regions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
+
+% Check for false detections by checking that mean intensity inside region
+% is greater than surrounding area
+filaments = [];
+for r = 1:numel(regions)
+    insideMask = ismember(bwlabel(bw),r);
+    insideReg = im_tight.*uint8(insideMask);
+    outsideMask = imdilate(insideMask,strel('disk',30)) - insideMask;
+    outsideReg = im_tight.*uint8(outsideMask);
+    meanInside = mean(insideReg(insideReg>0));
+    meanOutside = mean(outsideReg(outsideReg>0));
+    if meanInside/meanOutside > 1.4
+        filaments = [filaments; r];
+    end
+end
+bw = ismember(bwlabel(bw),filaments);
+% Get the updated filament region properties
+regions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
+
+% Only use the brightest 40% of each region
+for r = 1:numel(regions)
+    regBW = ismember(bwlabel(bw),r);
+    reg = im_tight.*uint8(regBW);
+    maxBright = max(reg(:));
+    % Remove pixels less than local brightness threshold
+    reg(reg<0.6*maxBright) = 0;
+    % Keep largest region
+    reg = im2bw(reg,0);
+    props = regionprops(reg,'Area');
+    [~,largest] = max([props.Area]);
+    reg = ismember(bwlabel(reg),largest);
+    newReg(:,:,r) = reg;
+end
+bw = im2bw(sum(newReg,3));
+% Get the updated filament region properties
 regions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
 
 % Get centroids of filament regions
@@ -163,7 +212,7 @@ end
 % Plot markers on figure to show points that were found
 % Subtract 2 from y offset because 'Prewitt' filter used above lowers image
 % by 2 pixels
-yOffset = yOffset - 2;
+% yOffset = yOffset - 2;
 % Create column vectors for offsets, used for plotting markers
 yOffset = repmat(yOffset,size(points,1),1);
 xOffset = repmat(xOffset,size(points,1),1);
