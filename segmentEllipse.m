@@ -112,7 +112,7 @@ for ws = 70:10:170
             outsideCircle = im_tight.*uint8(outsideMask);
             meanInside = mean(insideCircle(insideCircle>0));
             meanOutside = mean(outsideCircle(outsideCircle>0));
-            if meanInside - meanOutside < 10
+            if meanInside/meanOutside < 1.15
                 center = [];
                 ellipseLength = [];
                 lengthPoints = [];
