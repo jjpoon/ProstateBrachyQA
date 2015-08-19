@@ -3254,9 +3254,9 @@ try
                 % X Data
                 dateColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,1),Sheet.get('Cells',dateCell.Row,1));
                 dateRange = dateColumn.Cells.Item(1);
-                for n = firstRow+1:dateColumn.Cells.Count;
+                for n = 2:dateColumn.Cells.Count;
                     % Only add data for current frequency
-                    if freqColumn.Cells.Item(n).Value == freq
+                    if freqColumn.Cells.Item(firstRow+n-1).Value == freq
                         dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
                     end
                 end
@@ -3265,9 +3265,9 @@ try
                 valColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,axialCol+2),...
                     Sheet.get('Cells',dateCell.Row,axialCol+2));
                 valRange = valColumn.Cells.Item(1);
-                for n = firstRow+1:valColumn.Cells.Count;
+                for n = 2:valColumn.Cells.Count;
                     % Only add data for current frequency
-                    if freqColumn.Cells.Item(n).Value == freq
+                    if freqColumn.Cells.Item(firstRow+n-1).Value == freq
                         valRange = Excel.Union(valRange,valColumn.Cells.Item(n));
                     end
                 end
@@ -3325,9 +3325,9 @@ try
                 % X Data
                 dateColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,1),Sheet.get('Cells',dateCell.Row,1));
                 dateRange = dateColumn.Cells.Item(1);
-                for n = firstRow+1:dateColumn.Cells.Count;
+                for n = 2:dateColumn.Cells.Count;
                     % Only add data for current frequency
-                    if freqColumn.Cells.Item(n).Value == freq
+                    if freqColumn.Cells.Item(firstRow+n-1).Value == freq
                         dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
                     end
                 end
@@ -3336,9 +3336,9 @@ try
                 valColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,longCol+2),...
                     Sheet.get('Cells',dateCell.Row,longCol+2));
                 valRange = valColumn.Cells.Item(1);
-                for n = firstRow+1:valColumn.Cells.Count;
+                for n = 2:valColumn.Cells.Count;
                     % Only add data for current frequency
-                    if freqColumn.Cells.Item(n).Value == freq
+                    if freqColumn.Cells.Item(firstRow+n-1).Value == freq
                         valRange = Excel.Union(valRange,valColumn.Cells.Item(n));
                     end
                 end
@@ -3630,9 +3630,9 @@ try
                     % X Data
                     dateColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,1),Sheet.get('Cells',dateCell.Row,1));
                     dateRange = dateColumn.Cells.Item(1);
-                    for n = firstRow+interval:interval:dateColumn.Cells.Count;
+                    for n = 1+interval:interval:dateColumn.Cells.Count;
                         % Only add data for current frequency
-                        if freqColumn.Cells.Item(n).Value == freq
+                        if freqColumn.Cells.Item(firstRow+n-1).Value == freq
                             dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
                         end
                     end
@@ -3708,9 +3708,9 @@ try
                     % X Data
                     dateColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,1),Sheet.get('Cells',dateCell.Row,1));
                     dateRange = dateColumn.Cells.Item(1);
-                    for n = firstRow+interval:interval:dateColumn.Cells.Count;
+                    for n = 1+interval:interval:dateColumn.Cells.Count;
                         % Only add data for current frequency
-                        if freqColumn.Cells.Item(n).Value == freq
+                        if freqColumn.Cells.Item(firstRow+n-1).Value == freq
                             dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
                         end
                     end
@@ -4013,9 +4013,9 @@ try
                     % X Data
                     dateColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,1),Sheet.get('Cells',dateCell.Row,1));
                     dateRange = dateColumn.Cells.Item(1);
-                    for n = firstRow+interval:interval:dateColumn.Cells.Count;
+                    for n = 1+interval:interval:dateColumn.Cells.Count;
                         % Only add data for current frequency
-                        if freqColumn.Cells.Item(n).Value == freq
+                        if freqColumn.Cells.Item(firstRow+n-1).Value == freq
                             dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
                         end
                     end
@@ -4091,9 +4091,9 @@ try
                     % X Data
                     dateColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,1),Sheet.get('Cells',dateCell.Row,1));
                     dateRange = dateColumn.Cells.Item(1);
-                    for n = firstRow+interval:interval:dateColumn.Cells.Count;
+                    for n = 1+interval:interval:dateColumn.Cells.Count;
                         % Only add data for current frequency
-                        if freqColumn.Cells.Item(n).Value == freq
+                        if freqColumn.Cells.Item(firstRow+n-1).Value == freq
                             dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
                         end
                     end
@@ -4335,9 +4335,9 @@ try
                     % X Data
                     dateColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+1,1),Sheet.get('Cells',dateCell.Row,1));
                     dateRange = dateColumn.Cells.Item(1);
-                    for n = firstRow+interval:interval:dateColumn.Cells.Count;
+                    for n = 1+interval:interval:dateColumn.Cells.Count;
                         % Only add data for current frequency
-                        if freqColumn.Cells.Item(n).Value == freq
+                        if freqColumn.Cells.Item(firstRow+n-1).Value == freq
                             dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
                         end
                     end
@@ -4641,9 +4641,9 @@ try
                     % X Data
                     dateColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,1),Sheet.get('Cells',dateCell.Row,1));
                     dateRange = dateColumn.Cells.Item(1);
-                    for n = firstRow+interval:interval:dateColumn.Cells.Count;
+                    for n = 1+interval:interval:dateColumn.Cells.Count;
                         % Only add data for current frequency
-                        if freqColumn.Cells.Item(n).Value == freq
+                        if freqColumn.Cells.Item(firstRow+n-1).Value == freq
                             dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
                         end
                     end
@@ -4719,9 +4719,9 @@ try
                     % X Data
                     dateColumn = Sheet.get('Range',Sheet.get('Cells',firstRow+2,1),Sheet.get('Cells',dateCell.Row,1));
                     dateRange = dateColumn.Cells.Item(1);
-                    for n = firstRow+interval:interval:dateColumn.Cells.Count;
+                    for n = 1+interval:interval:dateColumn.Cells.Count;
                         % Only add data for current frequency
-                        if freqColumn.Cells.Item(n).Value == freq
+                        if freqColumn.Cells.Item(firstRow+n-1).Value == freq
                             dateRange = Excel.Union(dateRange,dateColumn.Cells.Item(n));
                         end
                     end
