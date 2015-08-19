@@ -2953,7 +2953,7 @@ try
                 field = colHeaders{n};
                 val = tableData{n};
                 % Remove any html formatting
-                val = regexprep(val, '<.*?>','');
+                val = regexprep(num2str(val), '<.*?>','');
                 [~,fieldCol] = find(strcmp(xlData(1,:),field));
                 if ~isempty(fieldCol)
                     % Column exists, write the value in new row
@@ -3148,7 +3148,7 @@ try
                 field = colHeaders{n};
                 val = tableDataAxial{n};
                 % Remove any html formatting
-                val = regexprep(val, '<.*?>','');
+                val = regexprep(num2str(val), '<.*?>','');
                 [~,fieldCol] = find(strcmp(xlData(2,:),field),1);
                 if ~isempty(fieldCol)
                     % Column exists, write the value in new row
@@ -3181,7 +3181,7 @@ try
                 field = colHeaders{n};
                 val = tableDataLong{n};
                 % Remove any html formatting
-                val = regexprep(val, '<.*?>','');
+                val = regexprep(num2str(val), '<.*?>','');
                 [~,fieldCol] = find(strcmp(xlData(2,:),field),1,'last');
                 if ~isempty(fieldCol)
                     % Column exists, write the value in new row
@@ -3502,7 +3502,7 @@ try
                     field = colHeaders{n};
                     val = tableDataAxial{m,n};
                     % Remove any html formatting
-                    val = regexprep(val, '<.*?>','');
+                    val = regexprep(num2str(val), '<.*?>','');
                     [~,fieldCol] = find(strcmp(xlData(2,:),field),1);
                     if ~isempty(fieldCol)
                         % Column exists, write the value in new row
@@ -3544,7 +3544,7 @@ try
                     field = colHeaders{n};
                     val = tableDataLong{m,n};
                     % Remove any html formatting
-                    val = regexprep(val, '<.*?>','');
+                    val = regexprep(num2str(val), '<.*?>','');
                     [~,fieldCol] = find(strcmp(xlData(2,:),field),1,'last');
                     if ~isempty(fieldCol)
                         % Column exists, write the value in new row
@@ -3885,7 +3885,7 @@ try
                     field = colHeaders{n};
                     val = tableDataAxial{m,n};
                     % Remove any html formatting
-                    val = regexprep(val, '<.*?>','');
+                    val = regexprep(num2str(val), '<.*?>','');
                     [~,fieldCol] = find(strcmp(xlData(2,:),field),1);
                     if ~isempty(fieldCol)
                         % Column exists, write the value in new row
@@ -3927,7 +3927,7 @@ try
                     field = colHeaders{n};
                     val = tableDataLong{m,n};
                     % Remove any html formatting
-                    val = regexprep(val, '<.*?>','');
+                    val = regexprep(num2str(val), '<.*?>','');
                     [~,fieldCol] = find(strcmp(xlData(2,:),field),1,'last');
                     if ~isempty(fieldCol)
                         % Column exists, write the value in new row
@@ -4255,7 +4255,7 @@ try
                     field = colHeaders{n};
                     val = tableData{m,n};
                     % Remove any html formatting
-                    val = regexprep(val, '<.*?>','');
+                    val = regexprep(num2str(val), '<.*?>','');
                     [~,fieldCol] = find(strcmp(xlData(1,:),field),1);
                     if ~isempty(fieldCol)
                         % Column exists, write the value in new row
@@ -4513,7 +4513,7 @@ try
                     field = colHeaders{n};
                     val = tableDataAxial{m,n};
                     % Remove any html formatting
-                    val = regexprep(val, '<.*?>','');
+                    val = regexprep(num2str(val), '<.*?>','');
                     [~,fieldCol] = find(strcmp(xlData(2,:),field),1);
                     if ~isempty(fieldCol)
                         % Column exists, write the value in new row
@@ -4555,7 +4555,7 @@ try
                     field = colHeaders{n};
                     val = tableDataLong{m,n};
                     % Remove any html formatting
-                    val = regexprep(val, '<.*?>','');
+                    val = regexprep(num2str(val), '<.*?>','');
                     [~,fieldCol] = find(strcmp(xlData(2,:),field),1,'last');
                     if ~isempty(fieldCol)
                         % Column exists, write the value in new row
@@ -4880,7 +4880,7 @@ try
                     field = colHeaders{n};
                     val = tableData{m,n};
                     % Remove any html formatting
-                    val = regexprep(val, '<.*?>','');
+                    val = regexprep(num2str(val), '<.*?>','');
                     [~,fieldCol] = find(strcmp(xlData(1,:),field),1);
                     if ~isempty(fieldCol)
                         % Column exists, write the value in new row
@@ -5141,7 +5141,7 @@ try
                 field = colHeaders{n};
                 val = tableData{n};
                 % Remove any html formatting
-                val = regexprep(val, '<.*?>','');
+                val = regexprep(num2str(val), '<.*?>','');
                 [~,fieldCol] = find(strcmp(xlData(1,:),field),1);
                 if ~isempty(fieldCol)
                     % Column exists, write the value in new row
@@ -5404,7 +5404,7 @@ try
                 field = colHeaders{n};
                 val = tableData{n};
                 % Remove any html formatting
-                val = regexprep(val, '<.*?>','');
+                val = regexprep(num2str(val), '<.*?>','');
                 [~,fieldCol] = find(strcmp(xlData(1,:),field),1);
                 if ~isempty(fieldCol)
                     % Column exists, write the value in new row
@@ -5673,7 +5673,7 @@ try
                     field = colHeaders{n};
                     val = tableData{m,n};
                     % Remove any html formatting
-                    val = regexprep(val, '<.*?>','');
+                    val = regexprep(num2str(val), '<.*?>','');
                     [~,fieldCol] = find(strcmp(xlData(1,:),field),1);
                     if ~isempty(fieldCol)
                         % Column exists, write the value in new row
@@ -5712,7 +5712,7 @@ try
             field = colHeaders2;
             val = tableData2{1};
             % Remove any html formatting
-            val = regexprep(val, '<.*?>','');
+            val = regexprep(num2str(val), '<.*?>','');
             [~,fieldCol] = find(strcmp(xlData(1,:),field),1);
             if ~isempty(fieldCol)
                 % Column exists, write the value in new row
