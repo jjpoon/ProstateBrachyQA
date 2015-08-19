@@ -65,13 +65,6 @@ im_tight = im_cropped(min(row):max(row),min(col):max(col));
 xOffset = cropX + min(col) - 2;
 yOffset = cropY + min(row) - 2;
 
-% % Filter image using wiener2 (2-D adaptive noise-removal filtering)
-% filt1 = wiener2(im_tight,[10 10]);
-% % Filter again using 2D ‘Prewitt’ filter, emphasizing horizontal edges
-% filt2 = imfilter(filt1,fspecial('prewitt'));
-% % Convert to black and white
-% bw = im2bw(filt2,0.15);
-
 % Use bottom-hat filter to make bright filaments black
 botfilt = imbothat(im_tight,strel('disk',20));
 % Blur image to help reduce background noise
@@ -292,9 +285,6 @@ end
 
 % -------------------------------------------------------------------------
 % Plot markers on figure to show points that were found
-% Subtract 2 from y offset because 'Prewitt' filter used above lowers image
-% by 2 pixels
-% yOffset = yOffset - 2;
 % Create column vectors for offsets, used for plotting markers
 yOffset = repmat(yOffset,2,1);
 xOffset = repmat(xOffset,2,1);
