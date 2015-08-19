@@ -72,13 +72,14 @@ yOffset = cropY + min(row) - 2;
 % % Convert to black and white
 % bw = im2bw(filt2,0.15);
 
-botfilt = imbothat(im_tight,strel('square',50));
+% Use bottom-hat filter to make bright filaments black
+botfilt = imbothat(im_tight,strel('disk',20));
+% Blur image to help reduce background noise
 medfilt = medfilt2(botfilt,[1,5]);
+% Convert to binary image where filaments are black
 bw = im2bw(medfilt,0);
+% Invert image so filaments are white on black background
 bw = imcomplement(bw);
-
-% botfilt = imbothat(imcomplement(im_tight),strel('square',10));
-% bw = im2bw(botfilt,0.1);
 
 % Remove unwanted white areas from edges of image (scale tick markings, top
 % and bottom of ultrasound image)
@@ -90,36 +91,20 @@ bw(end-120:end,:) = 0;   % Remove bottom edge
 % Remove large objects
 bw = bw - bwareaopen(bw,300);
 % Remove small objects
-bw = bwareaopen(bw,22);
+bw = bwareaopen(bw,20);
 
 % Get the filament region properties
 bwRegions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
 
-% Only keep regions with expected major axis length
-lengths = [bwRegions.MajorAxisLength]';
-filaments = find(lengths>8 & lengths<50);
+% Only keep regions with expected major and minor axis length
+majorAxisLength = [bwRegions.MajorAxisLength]';
+majorAxisInd = find(majorAxisLength>8 & majorAxisLength<60);
+minorAxisLength = [bwRegions.MinorAxisLength]';
+minorAxisInd = find(minorAxisLength>2.5);
+filaments = intersect(majorAxisInd,minorAxisInd);
 bw = ismember(bwlabel(bw),filaments);
 % Get the filament region properties
 regions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
-figure;imshow(bw);
-% % Check for false detections by checking that mean intensity inside region
-% % is greater than surrounding area
-% filaments = [];
-% for r = 1:numel(regions)
-%     insideMask = ismember(bwlabel(bw),r);
-%     insideReg = im_tight.*uint8(insideMask);
-%     outsideMask = imdilate(insideMask,strel('disk',20)) - insideMask;
-%     outsideReg = im_tight.*uint8(outsideMask);
-%     meanInside = mean(insideReg(insideReg>0));
-%     meanOutside = mean(outsideReg(outsideReg>0));
-%     meanInside/meanOutside
-%     if meanInside/meanOutside > 1.4
-%         filaments = [filaments; r];
-%     end
-% end
-% bw = ismember(bwlabel(bw),filaments);
-% % Get the updated filament region properties
-% regions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
 
 % Check for false detections by checking that mean intensity inside region
 % is greater than surrounding area
@@ -131,7 +116,7 @@ for r = 1:numel(regions)
     outsideReg = im_tight.*uint8(outsideMask);
     meanInside = mean(insideReg(insideReg>0));
     meanOutside = mean(outsideReg(outsideReg>0));
-    if meanInside/meanOutside > 1.3
+    if meanInside/meanOutside > 1.4
         filaments = [filaments; r];
     end
 end
@@ -139,7 +124,23 @@ bw = ismember(bwlabel(bw),filaments);
 % Get the updated filament region properties
 regions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
 
-figure;imshow(bw);
+% Only use the brightest 40% of each region
+for r = 1:numel(regions)
+    regBW = ismember(bwlabel(bw),r);
+    reg = im_tight.*uint8(regBW);
+    maxBright = max(reg(:));
+    % Remove pixels less than local brightness threshold
+    reg(reg<0.6*maxBright) = 0;
+    % Keep largest region
+    reg = im2bw(reg,0);
+    props = regionprops(reg,'Area');
+    [~,largest] = max([props.Area]);
+    reg = ismember(bwlabel(reg),largest);
+    newReg(:,:,r) = reg;
+end
+bw = im2bw(sum(newReg,3));
+% Get the updated filament region properties
+regions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
 
 % Get centroids of filament regions
 for n = 1:numel(regions)
@@ -147,7 +148,7 @@ for n = 1:numel(regions)
 end
 
 yCoords = centroids(:,2);
-lengths = [regions.MajorAxisLength]';
+majorAxisLength = [regions.MajorAxisLength]';
 
 % Assume image was taken in axial view at first
 view = 'axial';
@@ -157,7 +158,7 @@ for i = 1:numel(regions)
     % Get indices of regions with similar y coord
     similarY = find(yCoords>yCoords(i)-6 & yCoords<yCoords(i)+6);
     % Get indices of regions with similar length
-    similarLength = find(lengths>lengths(i)-5 & lengths<lengths(i)+5);
+    similarLength = find(majorAxisLength>majorAxisLength(i)-5 & majorAxisLength<majorAxisLength(i)+5);
     % Get indices of regions with similar y and length
     rowFilaments = intersect(similarY,similarLength);
     % Check left-to-right y difference for row filaments (look for outliers)
