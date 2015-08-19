@@ -38,10 +38,18 @@ else
 end
 
 % Get baseline values for this test
+baselineVals = [];
 for i = 1:size(baselineFile,1)
     if ~isempty(strfind(baselineFile{i,1},['Lateral resolution (' num2str(freq) ' MHz)']))
         baselineVals = [baselineFile{i,2:7}];
+        break
     end
+end
+
+if isempty(baselineVals)
+     % Show warning if no baseline value found for this frequency
+    warndlg('Baseline value not found for this frequency.','Warning','modal');
+    baselineVals = nan(1,6);
 end
 
 % Crop to ultrasound image
@@ -374,7 +382,11 @@ else
     change = abs(newVals - baselineVals(5:6));
 end
 % Get results (0 or 1 if fail or pass requirement)
-result = change<=1;
+if isnan(change)
+    result = [];
+else
+    result = change<=1;
+end
 % Check if lateral resolution has changed by more than 1 mm
 if any(change > 1)
     % Fail
