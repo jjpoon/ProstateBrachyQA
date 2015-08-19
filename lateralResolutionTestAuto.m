@@ -101,6 +101,25 @@ filaments = find(lengths>8 & lengths<50);
 bw = ismember(bwlabel(bw),filaments);
 % Get the filament region properties
 regions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
+figure;imshow(bw);
+% % Check for false detections by checking that mean intensity inside region
+% % is greater than surrounding area
+% filaments = [];
+% for r = 1:numel(regions)
+%     insideMask = ismember(bwlabel(bw),r);
+%     insideReg = im_tight.*uint8(insideMask);
+%     outsideMask = imdilate(insideMask,strel('disk',20)) - insideMask;
+%     outsideReg = im_tight.*uint8(outsideMask);
+%     meanInside = mean(insideReg(insideReg>0));
+%     meanOutside = mean(outsideReg(outsideReg>0));
+%     meanInside/meanOutside
+%     if meanInside/meanOutside > 1.4
+%         filaments = [filaments; r];
+%     end
+% end
+% bw = ismember(bwlabel(bw),filaments);
+% % Get the updated filament region properties
+% regions = regionprops(bw,'Centroid','MajorAxisLength','MinorAxisLength','Area','Orientation');
 
 % Check for false detections by checking that mean intensity inside region
 % is greater than surrounding area
