@@ -4453,7 +4453,7 @@ try
             else
                 % No data, initialize headers
                 % Put test title in first cell
-                Sheet.get('Cells',1,1).Value = 'Lateral Resolution';
+                Sheet.get('Cells',1,1).Value = 'Lateral Distance';
                 % Colour first cell yellow
                 Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
                 % Axial plane headers
