@@ -26,6 +26,7 @@ yOffset = cropY + min(row) - 2;
 
 % Use adaptive thresholding to create binary image showing the circle
 % Use decreasing window size if no circle was found.
+center = [];
 for ws = 70:10:170
     for s = 1:2
         circle = adaptivethreshold(im_tight,ws,0.001);
@@ -46,69 +47,76 @@ for ws = 70:10:170
         % Remove regions with area < 1000
         circle = bwareaopen(circle,1000);
         circle = imdilate(circle,strel('disk',6));
-        circle = imclose(circle,strel('disk',30));
         
-        % Get regions from black and white image
-        regions = regionprops(circle,'MajorAxisLength','MinorAxisLength','EquivDiameter',...
-            'Centroid','BoundingBox','Area','Perimeter','Solidity');
-        
-        % Keep only regions with > 0.9 solidity (circle will have high solidity)
-        circleLabel = bwlabel(circle);
-        % Find region with highest solidity
-        [~,circleInd] = max([regions.Solidity]);
-        if ~isempty(circleInd)
-            if regions(circleInd).Solidity < 0.9
-                % Keep region only if solidity is 0.9 or greater
-                circleInd = [];
-            elseif regions(circleInd).MajorAxisLength > 1.5*regions(circleInd).MinorAxisLength
-                % Keep region only if major and minor axis length are similar enough
-                circleInd = [];
-            elseif regions(circleInd).Area < 2600
-                % Keep region if large enough
-                circleInd = [];
-            else
-                % Keep region if in reasonable position
-                xPos = regions(circleInd).Centroid(1)/size(im_tight,2);
-                yPos = regions(circleInd).Centroid(2)/size(im_tight,1);
-                if xPos > 0.75 || xPos < 0.25 || yPos > 0.75 || yPos < 0.25
+        [regionLabels,numRegions] = bwlabel(circle);
+        for n = 1:numRegions
+            circleLabel = ismember(regionLabels,n);
+            circleLabel = imclose(circleLabel,strel('disk',30));
+            
+            % Get regions from black and white image
+            regions = regionprops(circleLabel,'MajorAxisLength','MinorAxisLength','EquivDiameter',...
+                'Centroid','BoundingBox','Area','Perimeter','Solidity');
+            
+            % Keep only regions with > 0.9 solidity (circle will have high solidity)
+            % Find region with highest solidity
+            [~,circleInd] = max([regions.Solidity]);
+            if ~isempty(circleInd)
+                if regions(circleInd).Solidity < 0.9
+                    % Keep region only if solidity is 0.9 or greater
                     circleInd = [];
+                elseif regions(circleInd).MajorAxisLength > 1.5*regions(circleInd).MinorAxisLength
+                    % Keep region only if major and minor axis length are similar enough
+                    circleInd = [];
+                elseif regions(circleInd).Area < 2600
+                    % Keep region if large enough
+                    circleInd = [];
+                else
+                    % Keep region if in reasonable position
+                    xPos = regions(circleInd).Centroid(1)/size(im_tight,2);
+                    yPos = regions(circleInd).Centroid(2)/size(im_tight,1);
+                    if xPos > 0.75 || xPos < 0.25 || yPos > 0.75 || yPos < 0.25
+                        circleInd = [];
+                    end
                 end
             end
-        end
-        circleFinal = ismember(circleLabel,circleInd);
-        
-        % Find circles using binary image
-        circleRegion = regionprops(circleFinal,'Centroid','MajorAxisLength');
-        if isempty(circleRegion)
-            center = [];
-            radius = [];
-        else
-            radius = circleRegion.MajorAxisLength/2;
-            radiusRange = [round(0.75*radius) round(1.25*radius)];
-            [centers,radii] = imfindcircles(circleFinal,radiusRange,'Sensitivity',0.99,...
-                'EdgeThreshold',0.04,'ObjectPolarity','bright');
-            % Get circle with center closest to region centroid with radius
-            % closest to region MajorAxisLength/2
-            centroid = repmat(circleRegion.Centroid,size(centers,1),1);
-            centerDiff = abs(sqrt((centers(:,1)-centroid(:,1)).^2 + (centers(:,2)-centroid(:,2)).^2));
-            radiusDiff = abs(radii - circleRegion.MajorAxisLength/2);
-            [~,circleInd] = min(centerDiff + radiusDiff);
-            center = centers(circleInd,:);
-            radius = radii(circleInd);
-        end
-        
-        % Check for false detection by making sure average intensity within
-        % circle is higher than average intensity of pixels outside circle.
-        if ~isempty(center)
-            insideMask = circleFinal;
-            insideCircle = im_tight.*uint8(insideMask);
-            outsideMask = imdilate(circleFinal,strel('disk',20)) - circleFinal;
-            outsideCircle = im_tight.*uint8(outsideMask);
-            meanInside = mean(insideCircle(insideCircle>0));
-            meanOutside = mean(outsideCircle(outsideCircle>0));
-            if meanInside/meanOutside < 1.15
+            circleFinal = ismember(circleLabel,circleInd);
+            
+            % Find circles using binary image
+            circleRegion = regionprops(circleFinal,'Centroid','MajorAxisLength');
+            if isempty(circleRegion)
                 center = [];
                 radius = [];
+            else
+                radius = circleRegion.MajorAxisLength/2;
+                radiusRange = [round(0.75*radius) round(1.25*radius)];
+                [centers,radii] = imfindcircles(circleFinal,radiusRange,'Sensitivity',0.99,...
+                    'EdgeThreshold',0.04,'ObjectPolarity','bright');
+                % Get circle with center closest to region centroid with radius
+                % closest to region MajorAxisLength/2
+                centroid = repmat(circleRegion.Centroid,size(centers,1),1);
+                centerDiff = abs(sqrt((centers(:,1)-centroid(:,1)).^2 + (centers(:,2)-centroid(:,2)).^2));
+                radiusDiff = abs(radii - circleRegion.MajorAxisLength/2);
+                [~,circleInd] = min(centerDiff + radiusDiff);
+                center = centers(circleInd,:);
+                radius = radii(circleInd);
+            end
+            
+            % Check for false detection by making sure average intensity within
+            % circle is higher than average intensity of pixels outside circle.
+            if ~isempty(center)
+                insideMask = circleFinal;
+                insideCircle = im_tight.*uint8(insideMask);
+                outsideMask = imdilate(circleFinal,strel('disk',20)) - circleFinal;
+                outsideCircle = im_tight.*uint8(outsideMask);
+                meanInside = mean(insideCircle(insideCircle>0));
+                meanOutside = mean(outsideCircle(outsideCircle>0));
+                if meanInside/meanOutside < 1.15
+                    center = [];
+                    radius = [];
+                end
+            end
+            if ~isempty(center)
+                break
             end
         end
         
