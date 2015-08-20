@@ -5087,7 +5087,7 @@ try
             Sheet = [];
             for sheetNum = 1:Sheets.Count
                 % Get existing Volume sheet
-                if strcmp(Sheets.Item(sheetNum).Name,'Volume')
+                if strcmp(Sheets.Item(sheetNum).Name,'Volume (Planimetric)')
                     Sheet = get(Sheets, 'Item', sheetNum);
                     break
                 end
@@ -5095,7 +5095,7 @@ try
             if isempty(Sheet)
                 % Create new sheet if doesn't exist
                 Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
-                Sheet.Name = 'Volume';
+                Sheet.Name = 'Volume (Planimetric)';
             end
             Sheet.Activate;
             % Get number of last used row
@@ -5105,7 +5105,7 @@ try
             else
                 % No data, initialize headers
                 % Put test title in first cell
-                Sheet.get('Cells',1,1).Value = 'Volume';
+                Sheet.get('Cells',1,1).Value = 'Volume (Planimetric)';
                 % Colour first cell yellow
                 Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
                 % Frequency header
@@ -5350,7 +5350,7 @@ try
             Sheet = [];
             for sheetNum = 1:Sheets.Count
                 % Get existing Volume sheet
-                if strcmp(Sheets.Item(sheetNum).Name,'Volume')
+                if strcmp(Sheets.Item(sheetNum).Name,'Volume (Formula)')
                     Sheet = get(Sheets, 'Item', sheetNum);
                     break
                 end
@@ -5358,7 +5358,7 @@ try
             if isempty(Sheet)
                 % Create new sheet if doesn't exist
                 Sheet = Sheets.Add([],Sheets.Item(Sheets.Count));
-                Sheet.Name = 'Volume';
+                Sheet.Name = 'Volume (Formula)';
             end
             Sheet.Activate;
             % Get number of last used row
@@ -5368,7 +5368,7 @@ try
             else
                 % No data, initialize headers
                 % Put test title in first cell
-                Sheet.get('Cells',1,1).Value = 'Volume';
+                Sheet.get('Cells',1,1).Value = 'Volume (Formula)';
                 % Colour first cell yellow
                 Sheet.get('Cells',1,1).Interior.ColorIndex = 6;
                 % Frequency header
