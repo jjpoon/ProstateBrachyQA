@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 14-Aug-2015 13:51:33
+% Last Modified by GUIDE v2.5 26-Aug-2015 11:32:54
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1106,7 +1106,7 @@ function axialDistance_table_CreateFcn(hObject, eventdata, handles)
 data = cell(2,5);
 set(hObject,'Data',data);
 set(hObject,'RowName',{'B1 - B5','F1 - F5'});
-set(hObject,'ColumnName',{'Known (mm)','Measured (mm)','Diff (abs)','Diff (%)','Result'});
+set(hObject,'ColumnName',{'Known (mm)','Measured (mm)','Error (abs)','Error (%)','Result'});
 set(hObject,'ColumnEditable',false(1,size(data,2)));
 
 
@@ -1158,13 +1158,12 @@ try
             for n = 1:numel(measuredVals)
                 data{n,1} = sprintf('%.2f',knownVal);
                 data{n,2} = sprintf('%.2f',measuredVals(n));
-                % Absolute difference
-                absDiff = abs(measuredVals(n)-knownVal);
-                data{n,3} = sprintf('%.2f',absDiff);
-                % Percent difference
-                avg = (knownVal+measuredVals(n))/2;
-                percentDiff = absDiff/avg*100;
-                data{n,4} = sprintf('%.2f',percentDiff);
+                % Absolute error
+                absErr = abs(measuredVals(n)-knownVal);
+                data{n,3} = sprintf('%.2f',absErr);
+                % Percent error
+                percentErr = absErr/knownVal*100;
+                data{n,4} = sprintf('%.2f',percentErr);
                 % Result
                 if isempty(result)
                     data{n,5} = [];
@@ -1208,7 +1207,7 @@ function lateralDistance_table_axial_CreateFcn(hObject, eventdata, handles)
 data = cell(2,5);
 set(hObject,'Data',data);
 set(hObject,'RowName',{'Proximal','Distal'});
-set(hObject,'ColumnName',{'Known (mm)','Measured (mm)','Diff (abs)','Diff (%)','Result'});
+set(hObject,'ColumnName',{'Known (mm)','Measured (mm)','Error (abs)','Error (%)','Result'});
 set(hObject,'ColumnEditable',false(1,size(data,2)));
 
 
@@ -1220,7 +1219,7 @@ function lateralDistance_table_long_CreateFcn(hObject, eventdata, handles)
 data = cell(1,5);
 set(hObject,'Data',data);
 set(hObject,'RowName',{'Distance'});
-set(hObject,'ColumnName',{'Known (mm)','Measured (mm)','Diff (abs)','Diff (%)','Result'});
+set(hObject,'ColumnName',{'Known (mm)','Measured (mm)','Error (abs)','Error (%)','Result'});
 set(hObject,'ColumnEditable',false(1,size(data,2)));
 
 
@@ -1278,13 +1277,12 @@ try
             for n = 1:numel(measuredVals)
                 data{n,1} = sprintf('%.2f',knownVal);
                 data{n,2} = sprintf('%.2f',measuredVals(n));
-                % Absolute difference
-                absDiff = abs(measuredVals(n)-knownVal);
-                data{n,3} = sprintf('%.2f',absDiff);
-                % Percent difference
-                avg = (knownVal+measuredVals(n))/2;
-                percentDiff = absDiff/avg*100;
-                data{n,4} = sprintf('%.2f',percentDiff);
+                % Absolute error
+                absErr = abs(measuredVals(n)-knownVal);
+                data{n,3} = sprintf('%.2f',absErr);
+                % Percent error
+                percentErr = absErr/knownVal*100;
+                data{n,4} = sprintf('%.2f',percentErr);
                 % Result
                 if isempty(result)
                     data{n,5} = [];
@@ -1333,7 +1331,7 @@ data = cell(1,5);
 set(hObject,'Data',data);
 set(hObject,'RowName',{'Area'});
 set(hObject,'ColumnName',{'<html>Known (cm<sup>2</sup>)</html>','<html>Measured (cm<sup>2</sup>)</html>',...
-    'Diff (abs)','Diff (%)','Result'});
+    'Error (abs)','Error (%)','Result'});
 set(hObject,'ColumnEditable',false(1,size(data,2)));
 
 % --- Executes on button press in area_button_runTest.
@@ -1383,13 +1381,12 @@ try
             % Modify table data
             data{1,1} = sprintf('%.2f',knownVal);
             data{1,2} = sprintf('%.2f',measuredVal);
-            % Absolute difference
-            absDiff = abs(measuredVal-knownVal);
-            data{1,3} = sprintf('%.2f',absDiff);
+            % Absolute error
+            absErr = abs(measuredVal-knownVal);
+            data{1,3} = sprintf('%.2f',absErr);
             % Percent difference
-            avg = (knownVal+measuredVal)/2;
-            percentDiff = absDiff/avg*100;
-            data{1,4} = sprintf('%.2f',percentDiff);
+            percentErr = absErr/knownVal*100;
+            data{1,4} = sprintf('%.2f',percentErr);
             % Result
             if isempty(result)
                 data{1,5} = [];
@@ -1507,7 +1504,7 @@ data = cell(1,5);
 set(hObject,'Data',data);
 set(hObject,'RowName',{'Volume'});
 set(hObject,'ColumnName',{'<html>Known (cm<sup>3</sup>)</html>','<html>Measured (cm<sup>3</sup>)</html>',...
-    'Diff (abs)','Diff (%)','Result'});
+    'Error (abs)','Error (%)','Result'});
 set(hObject,'ColumnEditable',false(1,size(data,2)));
 
 
@@ -1571,13 +1568,12 @@ try
             % Modify table data
             data{1,1} = sprintf('%.2f',knownVal);
             data{1,2} = sprintf('%.2f',measuredVal);
-            % Absolute difference
-            absDiff = abs(measuredVal-knownVal);
-            data{1,3} = sprintf('%.2f',absDiff);
-            % Percent difference
-            avg = (knownVal+measuredVal)/2;
-            percentDiff = absDiff/avg*100;
-            data{1,4} = sprintf('%.2f',percentDiff);
+            % Absolute error
+            absErr = abs(measuredVal-knownVal);
+            data{1,3} = sprintf('%.2f',absErr);
+            % Percent error
+            percentErr = absErr/knownVal*100;
+            data{1,4} = sprintf('%.2f',percentErr);
             % Result
             if isempty(result)
                 data{1,5} = [];
@@ -2322,13 +2318,12 @@ try
             % Modify table data
             data{1,1} = sprintf('%.2f',knownVal);
             data{1,2} = sprintf('%.2f',measuredVal);
-            % Absolute difference
-            absDiff = abs(measuredVal-knownVal);
-            data{1,3} = sprintf('%.2f',absDiff);
-            % Percent difference
-            avg = (knownVal+measuredVal)/2;
-            percentDiff = absDiff/avg*100;
-            data{1,4} = sprintf('%.2f',percentDiff);
+            % Absolute error
+            absErr = abs(measuredVal-knownVal);
+            data{1,3} = sprintf('%.2f',absErr);
+            % Percent error
+            percentErr = absErr/knownVal*100;
+            data{1,4} = sprintf('%.2f',percentErr);
             % Result
             if isempty(result)
                 data{1,5} = [];
@@ -6074,3 +6069,16 @@ if numel(colour) == 3
     % Update image
     overlay_updateImage_Callback(1, handles)
 end
+
+
+% --- Executes during object creation, after setting all properties.
+function volumeFormula_table_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to volumeFormula_table (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+data = cell(1,5);
+set(hObject,'Data',data);
+set(hObject,'RowName',{'Volume'});
+set(hObject,'ColumnName',{'<html>Known (cm<sup>3</sup>)</html>','<html>Measured (cm<sup>3</sup>)</html>',...
+    'Error (abs)','Error (%)','Result'});
+set(hObject,'ColumnEditable',false(1,size(data,2)));
