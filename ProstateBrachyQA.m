@@ -4966,7 +4966,7 @@ try
                         end
                         series.XValues = dateRange;
                         % Y Data
-                        valColumn = Sheet.get('Range',Sheet.get('Cells',2,objCol+1),Sheet.get('Cells',numRows,objCol+1));
+                        valColumn = Sheet.get('Range',Sheet.get('Cells',2,objCol+2),Sheet.get('Cells',numRows,objCol+2));
                         valRange = [];
                         for n = 1:numel(rowNums)
                             % Only add data for current frequency
