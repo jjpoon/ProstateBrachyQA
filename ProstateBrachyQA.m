@@ -4912,11 +4912,12 @@ try
             end
             
             % Create charts
-            knownValsCol = Sheet.get('Range',Sheet.get('Cells',2,3),Sheet.get('Cells',numRows,3)).Value;
-            if iscell(knownValsCol)
-                knownValsCol = cell2mat(knownValsCol);
+            [~,objCol] = find(strcmp(xlData(1,:),'Object'),1);
+            objectsCol = Sheet.get('Range',Sheet.get('Cells',2,objCol),Sheet.get('Cells',numRows,objCol)).Value;
+            if ~iscell(objectsCol)
+                objectsCol = {objectsCol};
             end
-            knownVals = unique(knownValsCol);
+            objects = unique(objectsCol);
             freqColumn = Sheet.get('Range',Sheet.get('Cells',2,2),Sheet.get('Cells',dateCell.Row,2));
             if numel(freqColumn.Value) == 1
                 freqs = freqColumn.Value;
@@ -4951,18 +4952,15 @@ try
                 % Set/update chart data
                 seriesCollection = Workbook.ActiveChart.SeriesCollection;
                 % Create series
-                for s = 1:numel(knownVals)
+                for s = 1:numel(objects)
                     % Get row numbers for this known value
-                    rowNums = find(knownValsCol==knownVals(s));
+                    rowNums = find(strcmp(objectsCol,objects(s)));
                     % Check if this known val exists for this frequency before
                     % creating new series
                     if ~isempty(intersect(rowNums,freqRows))
-                        if seriesCollection.Count < s
-                            % Create series
-                            seriesCollection.NewSeries;
-                        end
-                        series = seriesCollection.Item(s);
-                        series.Name = ['Known Value: ' num2str(knownVals(s))];
+                        % Create series
+                        series = seriesCollection.NewSeries;
+                        series.Name = objects{s};
                         
                         % X Data
                         % Get test dates for this known value
@@ -4980,7 +4978,7 @@ try
                         end
                         series.XValues = dateRange;
                         % Y Data
-                        valColumn = Sheet.get('Range',Sheet.get('Cells',2,4),Sheet.get('Cells',numRows,4));
+                        valColumn = Sheet.get('Range',Sheet.get('Cells',2,objCol+1),Sheet.get('Cells',numRows,objCol+1));
                         valRange = [];
                         for n = 1:numel(rowNums)
                             % Only add data for current frequency
