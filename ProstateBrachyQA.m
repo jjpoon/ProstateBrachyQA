@@ -3613,11 +3613,9 @@ try
                 chartShape{f}.Select;
                 % Set/update chart data
                 seriesCollection = Workbook.ActiveChart.SeriesCollection;
-                if seriesCollection.Count == 0
-                    % Create series
-                    for s = 1:numel(rowHeadersAxial)
-                        seriesCollection.NewSeries;
-                    end
+                % Create series
+                for s = 1:numel(rowHeadersAxial)
+                    seriesCollection.NewSeries;
                 end
                 for s = 1:numel(rowHeadersAxial)
                     series = seriesCollection.Item(s);
@@ -3691,11 +3689,9 @@ try
                 chartShape{chartNum}.Select;
                 % Set/update chart data
                 seriesCollection = Workbook.ActiveChart.SeriesCollection;
-                if seriesCollection.Count == 0
-                    % Create series
-                    for s = 1:numel(rowHeadersLong)
-                        seriesCollection.NewSeries;
-                    end
+                % Create series
+                for s = 1:numel(rowHeadersLong)
+                    seriesCollection.NewSeries;
                 end
                 for s = 1:numel(rowHeadersLong)
                     series = seriesCollection.Item(s);
@@ -3996,11 +3992,9 @@ try
                 chartShape{f}.Select;
                 % Set/update chart data
                 seriesCollection = Workbook.ActiveChart.SeriesCollection;
-                if seriesCollection.Count == 0
-                    % Create series
-                    for s = 1:numel(rowHeadersAxial)
-                        seriesCollection.NewSeries;
-                    end
+                % Create series
+                for s = 1:numel(rowHeadersAxial)
+                    seriesCollection.NewSeries;
                 end
                 for s = 1:numel(rowHeadersAxial)
                     series = seriesCollection.Item(s);
@@ -4074,11 +4068,9 @@ try
                 chartShape{chartNum}.Select;
                 % Set/update chart data
                 seriesCollection = Workbook.ActiveChart.SeriesCollection;
-                if seriesCollection.Count == 0
-                    % Create series
-                    for s = 1:numel(rowHeadersLong)
-                        seriesCollection.NewSeries;
-                    end
+                % Create series
+                for s = 1:numel(rowHeadersLong)
+                    seriesCollection.NewSeries;
                 end
                 for s = 1:numel(rowHeadersLong)
                     series = seriesCollection.Item(s);
@@ -4624,11 +4616,9 @@ try
                 chartShape{f}.Select;
                 % Set/update chart data
                 seriesCollection = Workbook.ActiveChart.SeriesCollection;
-                if seriesCollection.Count == 0
-                    % Create series
-                    for s = 1:numel(rowHeadersAxial)
-                        seriesCollection.NewSeries;
-                    end
+                % Create series
+                for s = 1:numel(rowHeadersAxial)
+                    seriesCollection.NewSeries;
                 end
                 for s = 1:numel(rowHeadersAxial)
                     series = seriesCollection.Item(s);
@@ -4702,11 +4692,9 @@ try
                 chartShape{chartNum}.Select;
                 % Set/update chart data
                 seriesCollection = Workbook.ActiveChart.SeriesCollection;
-                if seriesCollection.Count == 0
-                    % Create series
-                    for s = 1:numel(rowHeadersLong)
-                        seriesCollection.NewSeries;
-                    end
+                % Create series
+                for s = 1:numel(rowHeadersLong)
+                    seriesCollection.NewSeries;
                 end
                 for s = 1:numel(rowHeadersLong)
                     series = seriesCollection.Item(s);
@@ -5219,11 +5207,8 @@ try
                     % Check if this known val exists for this frequency before
                     % creating new series
                     if ~isempty(intersect(rowNums,freqRows))
-                        if seriesCollection.Count < s
-                            % Create series
-                            seriesCollection.NewSeries;
-                        end
-                        series = seriesCollection.Item(s);
+                        % Create series
+                        series = seriesCollection.NewSeries;
                         series.Name = ['Known Value: ' num2str(knownVals(s))];
                         
                         % X Data
@@ -5482,11 +5467,8 @@ try
                     % Check if this known val exists for this frequency before
                     % creating new series
                     if ~isempty(intersect(rowNums,freqRows))
-                        if seriesCollection.Count < s
-                            % Create series
-                            seriesCollection.NewSeries;
-                        end
-                        series = seriesCollection.Item(s);
+                        % Create series
+                        series = seriesCollection.NewSeries;
                         series.Name = ['Known Value: ' num2str(knownVals(s))];
                         
                         % X Data
@@ -5739,11 +5721,8 @@ try
             coords = unique(coordsCol(cellfun(@ischar,coordsCol)));
             seriesCollection = Workbook.ActiveChart.SeriesCollection;
             for s = 1:numel(coords)
-                if seriesCollection.Count < s
-                    % Create series
-                    seriesCollection.NewSeries;
-                end
-                series = seriesCollection.Item(s);
+                % Create series
+                series = seriesCollection.NewSeries;
                 series.Name = coords{s};
                 % Get row numbers for this coord
                 rowNums = find(strcmp(coordsCol,coords{s}));
