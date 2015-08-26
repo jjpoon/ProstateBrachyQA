@@ -22,7 +22,7 @@ function varargout = ProstateBrachyQA(varargin)
 
 % Edit the above text to modify the response to help ProstateBrachyQA
 
-% Last Modified by GUIDE v2.5 26-Aug-2015 11:32:54
+% Last Modified by GUIDE v2.5 26-Aug-2015 11:47:04
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1327,10 +1327,10 @@ function area_table_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to area_table (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-data = cell(1,5);
+data = cell(1,6);
 set(hObject,'Data',data);
 set(hObject,'RowName',{'Area'});
-set(hObject,'ColumnName',{'<html>Known (cm<sup>2</sup>)</html>','<html>Measured (cm<sup>2</sup>)</html>',...
+set(hObject,'ColumnName',{'Object','<html>Known (cm<sup>2</sup>)</html>','<html>Measured (cm<sup>2</sup>)</html>',...
     'Error (abs)','Error (%)','Result'});
 set(hObject,'ColumnEditable',false(1,size(data,2)));
 
@@ -1379,21 +1379,21 @@ try
             table = handles.area_table;
             data = get(table,'Data');
             % Modify table data
-            data{1,1} = sprintf('%.2f',knownVal);
-            data{1,2} = sprintf('%.2f',measuredVal);
+            data{1,2} = sprintf('%.2f',knownVal);
+            data{1,3} = sprintf('%.2f',measuredVal);
             % Absolute error
             absErr = abs(measuredVal-knownVal);
-            data{1,3} = sprintf('%.2f',absErr);
+            data{1,4} = sprintf('%.2f',absErr);
             % Percent difference
             percentErr = absErr/knownVal*100;
-            data{1,4} = sprintf('%.2f',percentErr);
+            data{1,5} = sprintf('%.2f',percentErr);
             % Result
             if isempty(result)
-                data{1,5} = [];
+                data{1,6} = [];
             elseif result == 1
-                data{1,5} = '<html><font color="green">PASS';
+                data{1,6} = '<html><font color="green">PASS';
             else
-                data{1,5} = '<html><font color="red">FAIL';
+                data{1,6} = '<html><font color="red">FAIL';
             end
             % Set table data
             set(table,'Data',data);
@@ -6058,7 +6058,7 @@ end
 % --- Executes on button press in overlay_button_colourTint1.
 function overlay_button_colourTint1_Callback(hObject, eventdata, handles)
 % hObject    handle to overlay_button_colourTint1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
+% eventdata  reserved - to be defined inPr a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % Pick colour to tint image
 colour = uisetcolor('Select Image 1 Tint Colour');
@@ -6082,3 +6082,127 @@ set(hObject,'RowName',{'Volume'});
 set(hObject,'ColumnName',{'<html>Known (cm<sup>3</sup>)</html>','<html>Measured (cm<sup>3</sup>)</html>',...
     'Error (abs)','Error (%)','Result'});
 set(hObject,'ColumnEditable',false(1,size(data,2)));
+
+
+% --- Executes on button press in area_button_setKnownVal.
+function area_button_setKnownVal_Callback(hObject, eventdata, handles)
+% hObject    handle to area_button_setKnownVal (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% Create popup dialog
+width = 300;
+height = 250;
+screenSize = get(0,'screensize');
+x = round(screenSize(3)/2 - width/2);
+y = round(screenSize(4)/2 - height/2);
+d = dialog('Name','Set Known Area','Position',[x y width height]);
+set(d,'WindowStyle','normal');
+% Create presets popup menu
+str = uicontrol('Parent',d,'Style','text','String','Object:',...
+    'Position',[20 height-40 width-40 20],'HorizontalAlignment','left',...
+    'FontWeight','bold');
+objects = {'4cc sphere','9cc sphere','20cc egg','Other'};
+menu = uicontrol('Parent',d,'Style','popup','String',objects,...
+    'Position',[20 height-50 width-40 10]);
+% Update menu choice
+objectName = handles.area_table.Data{1};
+knownVal = handles.area_table.Data{2};
+if strcmp(objectName,'4cc sphere') && strcmp(knownVal,'2.87')
+    menu.Value = 1;
+elseif strcmp(objectName,'9cc sphere') && strcmp(knownVal,'5.07')
+    menu.Value = 2;
+elseif strcmp(objectName,'20cc egg') && strcmp(knownVal,'6.79')
+    menu.Value = 3;
+else
+    menu.Value = 4;
+end
+
+% Create table
+data = cell(2,1);
+% Fill in table Object Name and Known Area
+switch menu.Value
+    case 1
+        data = {'4cc sphere';'2.87'};
+    case 2
+        data = {'9cc sphere';'5.07'};
+    case 3
+        data = {'20cc egg';'6.79'};
+    case 4
+        data = handles.area_table.Data(1:2)';
+end
+rowNames = {'Object Name','Known Area'};
+tab = uitable('Parent',d,'RowName',rowNames,'ColumnName',[],'Data',data,...
+    'ColumnEditable',true,'Position',[20 50 width-40 height-120],'RowStriping','off');
+set(tab,'CellEditCallback',@(obj,eventdata)updateObjectMenu(menu,tab));
+% Set callback for popup menu
+set(menu,'Callback',@(obj,eventdata)fillAreaTable(menu,tab));
+
+% Create OK button and set callback
+okBtn = uicontrol('Parent',d,'String','OK','Position',[width/2-55 10 50 30],...
+    'Callback',@(obj,eventdata)areaOK_Callback(tab,hObject,handles));
+% Create cancel button and set callback
+cancelBtn = uicontrol('Parent',d,'String','Cancel','Position',[width/2+5 10 50 30],...
+    'Callback','delete(gcf)');
+guidata(hObject,handles);
+
+function fillAreaTable(menuHandle,tableHandle)
+% Fill in table Object Name and Known Area
+switch menuHandle.Value
+    case 1
+        tableHandle.Data = {'4cc sphere';'2.87'};
+    case 2
+        tableHandle.Data = {'9cc sphere';'5.07'};
+    case 3
+        tableHandle.Data = {'20cc egg';'6.79'};
+    case 4
+        tableHandle.Data = cell(2,1);
+end
+
+function areaOK_Callback(tableHandle,hObject,handles)
+knownValStr = tableHandle.Data{2};
+% Write to baseline file
+if ~isempty(knownValStr)
+    knownVal = str2num(knownValStr);
+    % Save to baseline file
+    [num,txt,baselineFile] = xlsread('Baseline.xls');
+    for i = 1:size(baselineFile,1)
+        if ~isempty(strfind(baselineFile{i,1},'Area'))
+            oldVal = baselineFile{i,2};
+            baselineFile{i,2} = knownVal;
+        end
+    end
+    try
+        xlswrite('Baseline.xls',baselineFile);
+        
+        resultsTable = handles.area_table;
+        % If different than existing values in table, clear any existing results
+        if ~all(strcmp(tableHandle.Data(1:2)',resultsTable.Data(1:2)))
+            resultsTable.Data = cell(size(resultsTable.Data));
+        end
+        % Set results table Object and Known
+        resultsTable.Data(1:2) = tableHandle.Data(1:2)';
+    catch
+        warndlg('Unable to write to the baseline file. The file may be open in another application.',...
+            'Warning');
+    end
+end
+guidata(hObject,handles);
+
+% Update handles
+guidata(hObject,handles)
+% Close assign coords dialog
+delete(gcf);
+
+function updateObjectMenu(menuHandle,tableHandle)
+objectName = tableHandle.Data{1};
+knownVal = tableHandle.Data{2};
+if strcmp(objectName,'4cc sphere') && strcmp(knownVal,'2.87')
+    menuHandle.Value = 1;
+elseif strcmp(objectName,'9cc sphere') && strcmp(knownVal,'5.07')
+    menuHandle.Value = 2;
+elseif strcmp(objectName,'20cc egg') && strcmp(knownVal,'6.79')
+    menuHandle.Value = 3;
+else
+    menuHandle.Value = 4;
+end
+
