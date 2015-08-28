@@ -5700,22 +5700,23 @@ try
             % Autofit columns
             Sheet.UsedRange.Columns.AutoFit;
             
-            % Create/modify chart
-            if Sheet.ChartObjects.Count == 0
-                % If no chart exists, create one
-                if any(strcmp(methods(Sheet.Shapes),'AddChart'))
-                    chartShape = Sheet.Shapes.AddChart;
-                else
-                    chartShape = Sheet.Shapes.AddChart2;
-                end
-                chartShape.Select;
-                Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
-                Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
-            else
-                % Select existing chart
-                chartShape = Sheet.ChartObjects.Item(1);
-                chartShape.Select;
+            % Delete existing charts
+            if Sheet.ChartObjects.Count > 0
+                Sheet.ChartObjects.Delete;
             end
+            
+            % Create chart
+            if any(strcmp(methods(Sheet.Shapes),'AddChart'))
+                chartShape = Sheet.Shapes.AddChart;
+            else
+                chartShape = Sheet.Shapes.AddChart2;
+            end
+            chartShape.Select;
+            Workbook.ActiveChart.ChartType = 'xlXYScatterLines';
+            Workbook.ActiveChart.Axes(1).TickLabels.Orientation = 35;
+            % Clear default data
+            Workbook.ActiveChart.ChartArea.ClearContents;
+                
             % Set/update chart data
             coordsCol = Sheet.get('Range',Sheet.get('Cells',2,2),Sheet.get('Cells',numRows,2)).Value;
             coords = unique(coordsCol(cellfun(@ischar,coordsCol)));
