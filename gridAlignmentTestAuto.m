@@ -116,8 +116,8 @@ for i = 1:numel(imageInputs)
     end
     
     % Get size of grid template
-    rows = numel(find(centroids(:,1)==min(centroids(:,1))));
-    cols = numel(find(centroids(:,2)==min(centroids(:,2))));
+    rows = numel(find(centroids(:,1)==max(centroids(:,1))));
+    cols = numel(find(centroids(:,2)==max(centroids(:,2))));
     % Convert grid coordinates to row and column number
     colNum = double(upper(gridCoords{i}(1)))-64;
     % Grid template row coordinates increase going up
@@ -130,9 +130,18 @@ for i = 1:numel(imageInputs)
     % Region mask
     regionWidth = 100;
     regionHeight = 100;
-    regionMask = zeros(size(im_tight,1),size(im_tight,2));
-    regionMask(round(gridPoint(2)-regionHeight/2:gridPoint(2)+regionHeight/2),...
-        round(gridPoint(1)-regionWidth/2:gridPoint(1)+regionWidth/2)) = 1;
+    % Size of image
+    imageHeight = size(im_tight,1);
+    imageWidth = size(im_tight,2);
+    % Define borders of region, making sure they are within the image (not
+    % negative or greater than image width/height)
+    top = max(1,round(gridPoint(2)-regionHeight/2));
+    bottom = min(imageHeight,round(gridPoint(2)+regionHeight/2));
+    left = max(1,round(gridPoint(1)-regionWidth/2));
+    right = min(imageWidth,round(gridPoint(1)+regionWidth/2));
+    % Create region mask
+    regionMask = zeros(imageHeight,imageWidth);
+    regionMask(top:bottom,left:right) = 1;
     % Restrict image to region of interest
     reg = rgb2gray(im_tight).*uint8(regionMask);
     % Remove grid template from image

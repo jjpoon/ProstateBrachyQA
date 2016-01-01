@@ -2,6 +2,7 @@
 *.asv
 *.bmp
 *.zip
+*.db
 out.txt
 
 # Folders
