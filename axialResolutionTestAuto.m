@@ -1,5 +1,5 @@
 function [result,baselineVals,newVals,freq] = axialResolutionTestAuto(imageFile,varargin)
-% AXIALRESOLUTIONTEST is for the axial resolution quality control test.
+% AXIALRESOLUTIONTESTAUTO is for the axial resolution quality control test.
 % The function checks if the axial resolution has changed by
 % more than 1 mm from the baseline value.
 

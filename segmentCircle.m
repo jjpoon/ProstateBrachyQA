@@ -25,7 +25,7 @@ xOffset = cropX + min(col) - 2;
 yOffset = cropY + min(row) - 2;
 
 % Use adaptive thresholding to create binary image showing the circle
-% Use decreasing window size if no circle was found.
+% Use increasing window size if no circle was found.
 center = [];
 for ws = 70:10:170
     for s = 1:2

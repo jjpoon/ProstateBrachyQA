@@ -6,7 +6,7 @@ function [result,baselineVals,newVals,freq] = lateralResolutionTestAuto(imageFil
 % Input parser
 p = inputParser;
 addRequired(p,'imageFile',@isnumeric);
-addParameter(p,'UpperScale',[]);
+addParameter(p,'UpperScale',[]);    
 addParameter(p,'LowerScale',[]);
 addParameter(p,'AxesHandle',[]);
 % Parse inputs

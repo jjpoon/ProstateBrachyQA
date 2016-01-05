@@ -1,5 +1,5 @@
 function [result,knownVal,measuredVal,freq] = areaTestAuto(imageFile,varargin)
-% AREATEST is for the area measurement accuracy quality control test.
+% AREATESTAUTO is for the area measurement accuracy quality control test.
 % The function checks if the calculated area is within 5% of the actual
 % area value.
 

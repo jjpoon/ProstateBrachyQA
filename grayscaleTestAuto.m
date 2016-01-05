@@ -1,5 +1,5 @@
 function [result,baselineVal,newVal] = grayscaleTestAuto(imageFile,varargin)
-% GRAYSCALETEST is for the grayscale visibility quality control test.
+% GRAYSCALETESTAUTO is for the grayscale visibility quality control test.
 % The function checks if the length of the gradient strip has changed by
 % more than 10% from the baseline measurement.
 

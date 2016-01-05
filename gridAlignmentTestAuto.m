@@ -1,5 +1,5 @@
 function [result,errors,probeToG2] = gridAlignmentTestAuto(imageFile1,varargin)
-% GRIDALIGNMENTEST is for the needle template alignment quality control test.
+% GRIDALIGNMENTESTAUTO is for the needle template alignment quality control test.
 % The function checks the difference between the actual needle location 
 % (using the needle template) and the corresponding point on the electronic
 % grid overlay. The four corners and the center of the grid are tested. 

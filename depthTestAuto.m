@@ -1,5 +1,5 @@
 function [result,baselineVal,newVals,freq] = depthTestAuto(imageFile,varargin)
-% DEPTHTEST is for the depth of penetration quality control test.
+% DEPTHTESTAUTO is for the depth of penetration quality control test.
 % The function checks if the maximum depth of pentration has changed by
 % more than 1 cm from the baseline value.
 

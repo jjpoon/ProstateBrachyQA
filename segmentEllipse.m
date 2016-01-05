@@ -64,7 +64,7 @@ for ws = 70:10:170
                % Keep region if not unrealistically large
                circleInd = [];
             elseif regions(circleInd).MinorAxisLength < 0.1*max(size(im_tight))
-               % Keep region if not unrealistically large
+               % Keep region if not unrealistically small
                circleInd = [];
             else
                 % Keep region if in reasonable position

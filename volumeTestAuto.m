@@ -1,5 +1,5 @@
 function [result,knownVal,measuredVal,freq] = volumeTestAuto(imageFile1,varargin)
-% VOLUMETEST is for the volume measurement accuracy quality control test.
+% VOLUMETESTAUTO is for the volume measurement accuracy quality control test.
 % The function checks if the calculated volume is within 5% of the actual
 % volume.
 
